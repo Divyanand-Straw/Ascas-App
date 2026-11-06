@@ -18,3 +18,4 @@ class AppStrings {
   static const String getOtp = 'Get OTP';
   static const String verifyOtp = 'Verify OTP';
 }
+
