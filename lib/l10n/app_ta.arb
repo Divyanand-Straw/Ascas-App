@@ -1,0 +1,18 @@
+{
+  "appTitle": "தாய் செயாழி",
+  "welcome": "மீண்டும் வரவேற்கிறோம்",
+  "upcomingAppointments": "வரவிருக்கும் சந்திப்புகள்",
+  "treatmentOverview": "சிகிச்சை விவரங்கள்",
+  "notifications": "அறிவிப்புகள்",
+  "profile": "சுயவிவரம்",
+  "settings": "அமைப்புகள்",
+  "login": "உள்நுழைய",
+  "logout": "வெளியேறு",
+  "forgotPassword": "கடவுச்சொல்லை மறந்துவிட்டீர்களா?",
+  "continueText": "தொடரவும்",
+  "cancel": "ரத்து செய்",
+  "save": "சேமி",
+  "language": "விருப்பமான மொழி",
+  "english": "ஆங்கிலம்",
+  "tamil": "தமிழ்"
+}

@@ -1,0 +1,18 @@
+{
+  "appTitle": "Thaai Seyazhi",
+  "welcome": "Welcome back",
+  "upcomingAppointments": "Upcoming Appointments",
+  "treatmentOverview": "Treatment Overview",
+  "notifications": "Notifications",
+  "profile": "Profile",
+  "settings": "Settings",
+  "login": "Login",
+  "logout": "Logout",
+  "forgotPassword": "Forgot Password",
+  "continueText": "Continue",
+  "cancel": "Cancel",
+  "save": "Save",
+  "language": "Preferred Language",
+  "english": "English",
+  "tamil": "Tamil"
+}
