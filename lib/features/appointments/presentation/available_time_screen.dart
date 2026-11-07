@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'booking_request_screen.dart';
 import 'models/appointment_models.dart';
@@ -46,16 +48,28 @@ class _AvailableTimeScreenState extends State<AvailableTimeScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Choose a time'),
+        title: LocalizedText('Choose a time'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(widget.doctor.name,
-              style: const TextStyle(color: AppColors.primaryText, fontSize: 17, fontWeight: FontWeight.w700)),
+          Text(
+            widget.doctor.name,
+            style: const TextStyle(
+              color: AppColors.primaryText,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 5),
-          const Text('Sample time slots only. Actual availability must be confirmed by Thaai Seyazhi.',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 11, height: 1.4)),
+          LocalizedText(
+            'Sample time slots only. Actual availability must be confirmed by Thaai Seyazhi.',
+            style: TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
           const SizedBox(height: 18),
           _slotSection('MORNING SLOTS', _morningSlots),
           const SizedBox(height: 18),
@@ -65,26 +79,28 @@ class _AvailableTimeScreenState extends State<AvailableTimeScreen> {
             onPressed: _selected == null
                 ? null
                 : () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BookingRequestScreen(
-                          doctor: widget.doctor,
-                          selectedDate: widget.selectedDate,
-                          selectedTime: _selected!,
-                          patientName: widget.patientName,
-                          mobileNumber: widget.mobileNumber,
-                        ),
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BookingRequestScreen(
+                        doctor: widget.doctor,
+                        selectedDate: widget.selectedDate,
+                        selectedTime: _selected!,
+                        patientName: widget.patientName,
+                        mobileNumber: widget.mobileNumber,
                       ),
                     ),
+                  ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.burgundy,
               foregroundColor: AppColors.white,
               disabledBackgroundColor: AppColors.divider,
               minimumSize: const Size.fromHeight(48),
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(13),
+              ),
             ),
-            child: const Text('Continue'),
+            child: LocalizedText('Continue'),
           ),
         ],
       ),
@@ -123,8 +139,8 @@ class _AvailableTimeScreenState extends State<AvailableTimeScreen> {
                 color: unavailable
                     ? AppColors.secondaryText
                     : selected
-                        ? AppColors.white
-                        : AppColors.primaryText,
+                    ? AppColors.white
+                    : AppColors.primaryText,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -134,7 +150,7 @@ class _AvailableTimeScreenState extends State<AvailableTimeScreen> {
         if (slots.isEmpty)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: Text(
+            child: LocalizedText(
               'No sample slots are available.',
               style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
             ),

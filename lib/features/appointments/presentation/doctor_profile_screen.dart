@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'models/appointment_models.dart';
 import 'appointment_calendar_screen.dart';
@@ -23,7 +25,7 @@ class DoctorProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Doctor profile'),
+        title: LocalizedText('Doctor profile'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
@@ -31,23 +33,46 @@ class DoctorProfileScreen extends StatelessWidget {
           CircleAvatar(
             radius: 39,
             backgroundColor: AppColors.blushPink,
-            child: Text(doctor.initials,
-                style: const TextStyle(color: AppColors.burgundy, fontSize: 22, fontWeight: FontWeight.w800)),
+            child: Text(
+              doctor.initials,
+              style: const TextStyle(
+                color: AppColors.burgundy,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           Center(
-            child: Text(doctor.name,
-                style: const TextStyle(color: AppColors.primaryText, fontSize: 21, fontWeight: FontWeight.w700)),
+            child: Text(
+              doctor.name,
+              style: const TextStyle(
+                color: AppColors.primaryText,
+                fontSize: 21,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
           const SizedBox(height: 6),
           Center(
-            child: Text(doctor.specialty,
-                style: const TextStyle(color: AppColors.burgundy, fontSize: 12, fontWeight: FontWeight.w600)),
+            child: Text(
+              doctor.specialty,
+              style: const TextStyle(
+                color: AppColors.burgundy,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           const SizedBox(height: 5),
           Center(
-            child: Text(doctor.languages,
-                style: const TextStyle(color: AppColors.secondaryText, fontSize: 11)),
+            child: Text(
+              doctor.languages,
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 11,
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           Container(
@@ -57,9 +82,13 @@ class DoctorProfileScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(17),
               border: Border.all(color: AppColors.divider),
             ),
-            child: const Text(
+            child: LocalizedText(
               'Consultation information is sample data for this prototype. Live availability will be supplied by Thaai Seyazhi.',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12, height: 1.5),
+              style: TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
           ),
           const SizedBox(height: 18),
@@ -80,9 +109,11 @@ class DoctorProfileScreen extends StatelessWidget {
                 backgroundColor: AppColors.burgundy,
                 foregroundColor: AppColors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
               ),
-              child: const Text('Request appointment'),
+              child: LocalizedText('Request appointment'),
             ),
           ),
         ],

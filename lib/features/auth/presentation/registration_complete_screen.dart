@@ -1,8 +1,9 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/locale_service.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
+
 class RegistrationCompleteScreen extends StatelessWidget {
   final String fullName;
   final String dateOfBirth;
@@ -124,9 +125,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Column(
                   children: [
@@ -146,7 +145,20 @@ class RegistrationCompleteScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final language =
+                        preferredLanguage == 'Tamil' ||
+                            preferredLanguage == 'தமிழ்'
+                        ? 'ta'
+                        : 'en';
+                    final accountId = patientId.isEmpty
+                        ? mobileNumber
+                        : patientId;
+                    await LocaleService.setAccountLanguage(
+                      accountId: accountId,
+                      languageCode: language,
+                    );
+                    if (!context.mounted) return;
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
@@ -155,6 +167,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                           mobileNumber: mobileNumber,
                           dateOfBirth: dateOfBirth,
                           preferredLanguage: preferredLanguage,
+                          accountId: accountId,
                         ),
                       ),
                       (route) => false,
@@ -170,10 +183,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     'Continue to patient dashboard',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

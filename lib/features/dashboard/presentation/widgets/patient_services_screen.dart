@@ -1,11 +1,18 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/services/locale_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
+import '../../../medication/presentation/medication_screen.dart';
+import '../../../communication/presentation/communication_screen.dart';
+import '../../../education/presentation/education_screen.dart';
 import 'dashboard_home_content.dart';
 import 'patient_profile_screen.dart';
 import 'treatment_overview_screen.dart';
@@ -57,29 +64,27 @@ class PatientServicesScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PatientServicePlaceholderScreen(
-          title: title,
-          subtitle: subtitle,
-        ),
+        builder: (_) =>
+            PatientServicePlaceholderScreen(title: title, subtitle: subtitle),
       ),
     );
   }
 
   Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.only(top: 23, bottom: 9),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              color: AppColors.burgundy,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.3,
-            ),
-          ),
+    padding: const EdgeInsets.only(top: 23, bottom: 9),
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          color: AppColors.burgundy,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.3,
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _tile({
     required BuildContext context,
@@ -112,10 +117,7 @@ class PatientServicesScreen extends StatelessWidget {
         padding: const EdgeInsets.only(top: 3),
         child: Text(
           subtitle,
-          style: const TextStyle(
-            color: AppColors.secondaryText,
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
         ),
       ),
       trailing: const Icon(
@@ -126,26 +128,27 @@ class PatientServicesScreen extends StatelessWidget {
   }
 
   Widget _card(List<Widget> children) => Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Column(children: children),
-      );
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Column(children: children),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final language = preferredLanguage.isEmpty ? 'English' : preferredLanguage;
+    final l10n = AppLocalizations.of(context)!;
+    final language = LocaleService.locale.value.languageCode;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.primaryText,
-        title: const Text(
-          'More / Patient Services',
+        title: Text(
+          l10n.patientServices,
           style: TextStyle(
             color: AppColors.primaryText,
             fontSize: 17,
@@ -179,16 +182,16 @@ class PatientServicesScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            LocalizedText(
               'Patient ID: AS-20481',
               style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
             ),
-            _sectionTitle('App language'),
+            _sectionTitle(l10n.appLanguage),
             _card([
               ListTile(
-                title: const Text('English'),
+                title: Text(l10n.english),
                 trailing: Icon(
-                  language == 'English'
+                  language == 'en'
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
                   color: AppColors.burgundy,
@@ -196,9 +199,9 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => LocaleService.setLanguage('en'),
               ),
               ListTile(
-                title: const Text('தமிழ்'),
+                title: Text(l10n.tamil),
                 trailing: Icon(
-                  language == 'Tamil'
+                  language == 'ta'
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
                   color: AppColors.burgundy,
@@ -206,17 +209,16 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => LocaleService.setLanguage('ta'),
               ),
             ]),
-            _sectionTitle('Treatment & care'),
+            _sectionTitle(l10n.treatmentCare),
             _card([
               _tile(
                 context: context,
                 icon: Icons.medication_outlined,
-                title: 'Medication & Injections',
+                title: l10n.medicationInjections,
                 subtitle: 'Clinic prescription schedule.',
-                onTap: () => _open(
+                onTap: () => Navigator.push(
                   context,
-                  'Medication & Injections',
-                  'No clinic prescriptions are available in this prototype.',
+                  MaterialPageRoute(builder: (_) => const MedicationScreen()),
                 ),
               ),
               const Divider(height: 1, color: AppColors.divider),
@@ -260,7 +262,7 @@ class PatientServicesScreen extends StatelessWidget {
                 ),
               ),
             ]),
-            _sectionTitle('Planning & support'),
+            _sectionTitle(l10n.planningSupport),
             _card([
               _tile(
                 context: context,
@@ -318,17 +320,16 @@ class PatientServicesScreen extends StatelessWidget {
                 ),
               ),
             ]),
-            _sectionTitle('Learn & feel supported'),
+            _sectionTitle(l10n.learnSupported),
             _card([
               _tile(
                 context: context,
                 icon: Icons.menu_book_outlined,
-                title: 'Education Centre',
+                title: l10n.educationCentre,
                 subtitle: 'Clinic-reviewed resources.',
-                onTap: () => _open(
+                onTap: () => Navigator.push(
                   context,
-                  'Education Centre',
-                  'No clinic-reviewed resources are available yet.',
+                  MaterialPageRoute(builder: (_) => const EducationScreen()),
                 ),
               ),
               const Divider(height: 1, color: AppColors.divider),
@@ -369,17 +370,18 @@ class PatientServicesScreen extends StatelessWidget {
                 ),
               ),
             ]),
-            _sectionTitle('Account & clinic'),
+            _sectionTitle(l10n.accountClinic),
             _card([
               _tile(
                 context: context,
                 icon: Icons.chat_bubble_outline_rounded,
-                title: 'Clinic Communication',
+                title: l10n.clinicCommunication,
                 subtitle: 'Inbox, chat and support.',
-                onTap: () => _open(
+                onTap: () => Navigator.push(
                   context,
-                  'Clinic Communication',
-                  'No clinic messages are available.',
+                  MaterialPageRoute(
+                    builder: (_) => const CommunicationScreen(),
+                  ),
                 ),
               ),
               const Divider(height: 1, color: AppColors.divider),
@@ -430,7 +432,7 @@ class PatientServicesScreen extends StatelessWidget {
               ),
             ]),
             const SizedBox(height: 22),
-            const Text(
+            LocalizedText(
               'Medical information and instructions are provided from authorized Thaai Seyazhi clinic records.',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -458,38 +460,38 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: Text(title),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: AppColors.burgundy,
-                  size: 48,
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                ),
-              ],
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: Text(title),
+    ),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.burgundy,
+              size: 48,
             ),
-          ),
+            const SizedBox(height: 14),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class QuestionNotebookScreen extends StatefulWidget {
@@ -539,16 +541,18 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
           controller: controller,
           autofocus: true,
           maxLines: 3,
-          decoration: const InputDecoration(hintText: 'Your question'),
+          decoration: InputDecoration(
+            hintText: localizedText(context, 'Your question'),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: LocalizedText('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
+            child: LocalizedText('Save'),
           ),
         ],
       ),
@@ -577,56 +581,60 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Question Notebook'),
-          actions: [
-            IconButton(onPressed: _edit, icon: const Icon(Icons.add)),
-          ],
-        ),
-        body: _questions.isEmpty
-            ? const Center(
-                child: Text(
-                  'No questions saved yet.',
-                  style: TextStyle(color: AppColors.secondaryText),
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: LocalizedText('Question Notebook'),
+      actions: [IconButton(onPressed: _edit, icon: const Icon(Icons.add))],
+    ),
+    body: _questions.isEmpty
+        ? const Center(
+            child: LocalizedText(
+              'No questions saved yet.',
+              style: TextStyle(color: AppColors.secondaryText),
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: _questions.length,
+            itemBuilder: (context, index) {
+              final question = _questions[index];
+              return Card(
+                color: AppColors.white,
+                child: ListTile(
+                  title: Text(question['text'] as String),
+                  subtitle: Text(
+                    question['discussed'] as bool
+                        ? 'Marked as discussed'
+                        : 'Not discussed',
+                  ),
+                  leading: Checkbox(
+                    value: question['discussed'] as bool,
+                    activeColor: AppColors.burgundy,
+                    onChanged: (value) => _toggle(index, value ?? false),
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') _edit(index);
+                      if (value == 'delete') _delete(index);
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: LocalizedText('Edit'),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: LocalizedText('Delete'),
+                      ),
+                    ],
+                  ),
                 ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: _questions.length,
-                itemBuilder: (context, index) {
-                  final question = _questions[index];
-                  return Card(
-                    color: AppColors.white,
-                    child: ListTile(
-                      title: Text(question['text'] as String),
-                      subtitle: Text(
-                        question['discussed'] as bool
-                            ? 'Marked as discussed'
-                            : 'Not discussed',
-                      ),
-                      leading: Checkbox(
-                        value: question['discussed'] as bool,
-                        activeColor: AppColors.burgundy,
-                        onChanged: (value) => _toggle(index, value ?? false),
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') _edit(index);
-                          if (value == 'delete') _delete(index);
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-      );
+              );
+            },
+          ),
+  );
 }
 
 class WellnessJournalScreen extends StatefulWidget {
@@ -680,26 +688,30 @@ class _WellnessJournalScreenState extends State<WellnessJournalScreen> {
           children: [
             TextField(
               controller: moodController,
-              decoration: const InputDecoration(labelText: 'Mood'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Mood'),
+              ),
             ),
             TextField(
               controller: noteController,
               maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Reflection'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Reflection'),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: LocalizedText('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(
-              context,
-              [moodController.text.trim(), noteController.text.trim()],
-            ),
-            child: const Text('Save'),
+            onPressed: () => Navigator.pop(context, [
+              moodController.text.trim(),
+              noteController.text.trim(),
+            ]),
+            child: LocalizedText('Save'),
           ),
         ],
       ),
@@ -729,49 +741,53 @@ class _WellnessJournalScreenState extends State<WellnessJournalScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Wellness Journal'),
-          actions: [
-            IconButton(onPressed: _edit, icon: const Icon(Icons.add)),
-          ],
-        ),
-        body: _entries.isEmpty
-            ? const Center(
-                child: Text(
-                  'No private reflections saved yet.',
-                  style: TextStyle(color: AppColors.secondaryText),
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: LocalizedText('Wellness Journal'),
+      actions: [IconButton(onPressed: _edit, icon: const Icon(Icons.add))],
+    ),
+    body: _entries.isEmpty
+        ? const Center(
+            child: LocalizedText(
+              'No private reflections saved yet.',
+              style: TextStyle(color: AppColors.secondaryText),
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: _entries.length,
+            itemBuilder: (context, index) {
+              final entry = _entries[index];
+              return Card(
+                color: AppColors.white,
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.favorite_outline,
+                    color: AppColors.burgundy,
+                  ),
+                  title: Text(entry['mood'] as String),
+                  subtitle: Text(entry['note'] as String),
+                  trailing: PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') _edit(index);
+                      if (value == 'delete') _delete(index);
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: LocalizedText('Edit'),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: LocalizedText('Delete'),
+                      ),
+                    ],
+                  ),
                 ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: _entries.length,
-                itemBuilder: (context, index) {
-                  final entry = _entries[index];
-                  return Card(
-                    color: AppColors.white,
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.favorite_outline,
-                        color: AppColors.burgundy,
-                      ),
-                      title: Text(entry['mood'] as String),
-                      subtitle: Text(entry['note'] as String),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') _edit(index);
-                          if (value == 'delete') _delete(index);
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-      );
+              );
+            },
+          ),
+  );
 }

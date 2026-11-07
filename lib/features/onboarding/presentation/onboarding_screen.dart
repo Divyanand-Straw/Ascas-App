@@ -1,16 +1,13 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import 'welcome_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback? onFinished;
 
-  const OnboardingScreen({
-    super.key,
-    this.onFinished,
-  });
+  const OnboardingScreen({super.key, this.onFinished});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -25,18 +22,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     'assets/images/appointment.png',
     'assets/images/treatment.png',
     'assets/images/records.png',
-  ];
-
-  final List<String> _titles = [
-    'Care, right on schedule.',
-    'Every step, with clarity.',
-    'Your health, in one place.',
-  ];
-
-  final List<String> _descriptions = [
-    'Book appointments, prepare for your visits, and keep your consultations organized in one place.',
-    'Follow your treatment journey with clinic-confirmed milestones, updates, and guidance along the way.',
-    'Keep your medical reports, prescriptions, and visit summaries organized and easy to access.',
   ];
 
   void _nextPage() {
@@ -63,9 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const WelcomeScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
       );
     }
   }
@@ -79,6 +62,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final l10n = AppLocalizations.of(context)!;
+    final titles = [
+      'Care, right on schedule.',
+      'Every step, with clarity.',
+      'Your health, in one place.',
+    ];
+    final descriptions = [
+      'Book appointments, prepare for your visits, and keep your consultations organized in one place.',
+      'Follow your treatment journey with clinic-confirmed milestones, updates, and guidance along the way.',
+      'Keep your medical reports, prescriptions, and visit summaries organized and easy to access.',
+    ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -94,9 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               height: screenHeight * 0.53,
               child: ClipPath(
                 clipper: OnboardingCurveClipper(),
-                child: Container(
-                  color: AppColors.blushPink,
-                ),
+                child: Container(color: AppColors.blushPink),
               ),
             ),
 
@@ -107,14 +99,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Align(
                   alignment: Alignment.topRight,
                   child: Padding(
-                    padding: const EdgeInsets.only(
-                      right: 20,
-                      top: 8,
-                    ),
+                    padding: const EdgeInsets.only(right: 20, top: 8),
                     child: TextButton(
                       onPressed: _finishOnboarding,
-                      child: const Text(
-                        'Skip',
+                      child: Text(
+                        l10n.skip,
                         style: TextStyle(
                           color: AppColors.burgundy,
                           fontSize: 15,
@@ -126,7 +115,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
 
                 // ONBOARDING SLIDES
-
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
@@ -138,9 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                     itemBuilder: (context, index) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 28),
                         child: Column(
                           children: [
                             // ILLUSTRATION WITH WHITE CIRCULAR BACKGROUND
@@ -174,15 +160,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
 
                             // TEXT AREA
-
                             Expanded(
                               flex: 4,
                               child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    _titles[index],
+                                    titles[index],
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 25,
@@ -194,7 +178,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   const SizedBox(height: 14),
 
                                   Text(
-                                    _descriptions[index],
+                                    descriptions[index],
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 15,
@@ -213,7 +197,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
 
                 // PAGE INDICATORS
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -236,7 +219,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 22),
 
                 // BUTTONS
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
@@ -258,9 +240,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ),
                           child: Text(
-                            _currentPage == 2
-                                ? 'Choose to begin'
-                                : 'Continue',
+                            _currentPage == 2 ? 'Choose to begin' : 'Continue',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -270,7 +250,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
 
                       // BACK BUTTON
-
                       if (_currentPage > 0) ...[
                         const SizedBox(height: 4),
                         SizedBox(

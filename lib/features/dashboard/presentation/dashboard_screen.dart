@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/services/locale_service.dart';
+import '../../../core/services/biometric_service.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../appointments/presentation/appointment_dashboard_screen.dart';
 import '../../notifications/presentation/notifications_screen.dart';
+import '../../medical_records/presentation/medical_records_screen.dart';
 import 'widgets/dashboard_home_content.dart';
 import 'widgets/patient_profile_screen.dart';
 import 'widgets/patient_services_screen.dart';
+import 'widgets/treatment_overview_screen.dart';
 
 export 'widgets/dashboard_home_content.dart' show DashboardPatientState;
 
@@ -16,6 +23,7 @@ class DashboardScreen extends StatefulWidget {
   final String mobileNumber;
   final String dateOfBirth;
   final String preferredLanguage;
+  final String accountId;
 
   const DashboardScreen({
     super.key,
@@ -24,6 +32,7 @@ class DashboardScreen extends StatefulWidget {
     this.mobileNumber = '',
     this.dateOfBirth = '',
     this.preferredLanguage = '',
+    this.accountId = '',
   });
 
   @override
@@ -44,6 +53,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _mobileNumber = widget.mobileNumber;
     _dateOfBirth = widget.dateOfBirth;
     _preferredLanguage = widget.preferredLanguage;
+    final accountId = widget.accountId.isEmpty
+        ? widget.mobileNumber
+        : widget.accountId;
+    if (accountId.isNotEmpty) {
+      LocaleService.setAccount(accountId);
+      BiometricService.instance.startSession(accountId);
+    } else if (_preferredLanguage.isNotEmpty) {
+      LocaleService.setLanguage(
+        _preferredLanguage == 'Tamil' || _preferredLanguage == 'தமிழ்'
+            ? 'ta'
+            : 'en',
+      );
+    }
   }
 
   String get _initials {
@@ -67,14 +89,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _profilePage() {
+    return PatientProfileScreen(
+      patientName: _patientName,
+      patientInitials: _initials,
+      patientState: widget.patientState,
+      mobileNumber: _mobileNumber,
+      dateOfBirth: _dateOfBirth,
+      preferredLanguage: _currentLanguage,
+      onProfileUpdated: (profile) {
+        if (!mounted) return;
+        setState(() {
+          _patientName = profile.name;
+          _mobileNumber = profile.mobile;
+          _dateOfBirth = profile.dateOfBirth;
+          _preferredLanguage = profile.language;
+        });
+      },
+    );
+  }
+
+  String get _currentLanguage =>
+      LocaleService.locale.value.languageCode == 'ta' ? 'Tamil' : 'English';
+
   @override
   Widget build(BuildContext context) {
-    const navigationLabels = [
-      'Home',
-      'My Journey',
-      'Appointments',
-      'Health Records',
-      'More',
+    final l10n = AppLocalizations.of(context)!;
+    final navigationLabels = [
+      l10n.home,
+      l10n.myJourney,
+      l10n.appointments,
+      l10n.healthRecords,
+      l10n.profile,
     ];
 
     return Scaffold(
@@ -94,7 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     patientName: _patientName,
                     mobileNumber: _mobileNumber,
                     dateOfBirth: _dateOfBirth,
-                    preferredLanguage: _preferredLanguage,
+                    preferredLanguage: _currentLanguage,
                     patientState: widget.patientState,
                   ),
                 ),
@@ -111,7 +157,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(width: 10),
             const Expanded(
-              child: Text(
+              child: LocalizedText(
                 'Thaai Seyazhi',
                 style: TextStyle(
                   color: AppColors.burgundy,
@@ -168,44 +214,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               },
             ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PatientProfileScreen(
-                      patientName: _patientName,
-                      patientInitials: _initials,
-                      patientState: widget.patientState,
-                      mobileNumber: _mobileNumber,
-                      dateOfBirth: _dateOfBirth,
-                      preferredLanguage: _preferredLanguage,
-                      onProfileUpdated: (profile) {
-                        if (!mounted) return;
-                        setState(() {
-                          _patientName = profile.name;
-                          _mobileNumber = profile.mobile;
-                          _dateOfBirth = profile.dateOfBirth;
-                          _preferredLanguage = profile.language;
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: CircleAvatar(
-                radius: 17,
-                backgroundColor: AppColors.blushPink,
-                child: Text(
-                  _initials,
-                  style: const TextStyle(
-                    color: AppColors.burgundy,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -220,10 +228,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               )
             : _selectedIndex == 2
-                ? AppointmentDashboardScreen(
-                    patientName: _patientName,
-                    mobileNumber: _mobileNumber,
-                  )
+            ? AppointmentDashboardScreen(
+                patientName: _patientName,
+                mobileNumber: _mobileNumber,
+              )
+            : _selectedIndex == 1
+            ? TreatmentOverviewScreen(
+                treatmentName: _treatmentName,
+                currentStage: 'Ovarian stimulation',
+              )
+            : _selectedIndex == 3
+            ? const MedicalRecordsScreen()
+            : _selectedIndex == 4
+            ? _profilePage()
             : _placeholderPage(navigationLabels[_selectedIndex]),
       ),
       bottomNavigationBar: Container(
@@ -243,32 +260,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
             selectedFontSize: 9,
             unselectedFontSize: 9,
             elevation: 0,
-            items: const [
+            items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),
                 activeIcon: Icon(Icons.home_rounded),
-                label: 'Home',
+                label: l10n.home,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.favorite_outline),
-                label: 'My Journey',
+                label: l10n.myJourney,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_month_outlined),
-                label: 'Appointments',
+                label: l10n.appointments,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.folder_outlined),
-                label: 'Health Records',
+                label: l10n.healthRecords,
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.menu_rounded),
-                label: 'More',
+                icon: Icon(Icons.person_outline_rounded),
+                activeIcon: Icon(Icons.person_rounded),
+                label: l10n.profile,
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String get _treatmentName {
+    switch (widget.patientState) {
+      case DashboardPatientState.ivf:
+        return 'IVF Cycle 1';
+      case DashboardPatientState.iui:
+        return 'IUI Treatment';
+      case DashboardPatientState.embryoTransfer:
+        return 'Embryo Transfer';
+      case DashboardPatientState.twoWeekWait:
+        return 'Two-Week Wait';
+      case DashboardPatientState.followUpCare:
+      case DashboardPatientState.postProcedureRecovery:
+      case DashboardPatientState.newPatient:
+        return 'Follow-up Care';
+    }
   }
 }

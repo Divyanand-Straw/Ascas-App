@@ -42,19 +42,19 @@ class Appointment {
   });
 
   Map<String, Object?> toMap() => {
-        'title': title,
-        'date': date.toIso8601String(),
-        'time': time,
-        'clinic': clinic,
-        'status': status,
-        'doctorName': doctorName,
-        'specialty': specialty,
-        'appointmentType': appointmentType,
-        'consultationMode': consultationMode,
-        'patientName': patientName,
-        'notes': notes,
-        'reference': reference,
-      };
+    'title': title,
+    'date': date.toIso8601String(),
+    'time': time,
+    'clinic': clinic,
+    'status': status,
+    'doctorName': doctorName,
+    'specialty': specialty,
+    'appointmentType': appointmentType,
+    'consultationMode': consultationMode,
+    'patientName': patientName,
+    'notes': notes,
+    'reference': reference,
+  };
 
   factory Appointment.fromMap(Map<String, dynamic> map) {
     return Appointment(

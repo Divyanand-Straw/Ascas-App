@@ -2,9 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/locale_service.dart';
+import '../../../../core/services/biometric_service.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/login_screen.dart';
 import 'dashboard_home_content.dart';
 
@@ -51,7 +57,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   late String _mobile;
   late String _dateOfBirth;
   late String _language;
-  bool _biometricEnabled = false;
   Map<String, bool> _partnerPermissions = {
     'Appointments': false,
     'Treatment overview': false,
@@ -86,8 +91,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       _mobile = preferences.getString('profile_mobile') ?? _mobile;
       _dateOfBirth = preferences.getString('profile_dob') ?? _dateOfBirth;
       _language = preferences.getString('profile_language') ?? _language;
-      _biometricEnabled =
-          preferences.getBool('profile_biometric_enabled') ?? false;
       for (final entry in _partnerPermissions.entries) {
         _partnerPermissions[entry.key] =
             preferences.getBool('partner_${entry.key}') ?? false;
@@ -130,12 +133,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-        builder: (_) => LanguageAccessibilityScreen(
-          selectedLanguage: _language,
-        ),
+        builder: (_) =>
+            LanguageAccessibilityScreen(selectedLanguage: _language),
       ),
     );
     if (result == null) return;
+    final language = result == 'Tamil' || result == 'à®¤à®®à®¿à®´à¯'
+        ? 'ta'
+        : 'en';
+    await LocaleService.setLanguage(language);
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString('profile_language', result);
     if (!mounted) return;
@@ -153,9 +159,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final result = await Navigator.push<Map<String, bool>>(
       context,
       MaterialPageRoute(
-        builder: (_) => PartnerPermissionsScreen(
-          permissions: _partnerPermissions,
-        ),
+        builder: (_) =>
+            PartnerPermissionsScreen(permissions: _partnerPermissions),
       ),
     );
     if (result == null) return;
@@ -167,48 +172,69 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Future<void> _toggleBiometric(bool value) async {
-    if (value) {
+    final service = BiometricService.instance;
+    final availability = await service.availability();
+    if (!mounted) return;
+    if (!availability.available || !availability.enrolled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Biometric app lock is unavailable because no device authentication package is configured.',
+        SnackBar(
+          content: LocalizedText(
+            availability.available
+                ? 'No fingerprint or face is enrolled. Add one in your phone settings.'
+                : 'Biometric authentication is not supported on this device.',
           ),
         ),
       );
       return;
     }
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool('profile_biometric_enabled', false);
-    if (mounted) setState(() => _biometricEnabled = false);
+    final success = value ? await service.enable() : await service.disable();
+    if (!mounted) return;
+    if (success) {
+      setState(() {});
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: LocalizedText(
+            'Authentication failed or was cancelled. The setting was not changed.',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _exportData() async {
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(const SnackBar(content: Text('Preparing your data...')));
+    messenger.showSnackBar(
+      const SnackBar(content: LocalizedText('Preparing your data...')),
+    );
     try {
       final file = File(
         '${Directory.systemTemp.path}${Platform.pathSeparator}thaai_seyazhi_profile.json',
       );
-      await file.writeAsString(jsonEncode({
-        'profile': {
-          'name': _name,
-          'patientId': 'AS-20481',
-          'mobile': _mobile,
-          'dateOfBirth': _dateOfBirth,
-          'language': _language,
-        },
-        'appointments': 'Available appointment references',
-        'treatment': 'Available treatment overview references',
-        'healthRecords': 'No health records are available in this prototype',
-      }));
+      await file.writeAsString(
+        jsonEncode({
+          'profile': {
+            'name': _name,
+            'patientId': 'AS-20481',
+            'mobile': _mobile,
+            'dateOfBirth': _dateOfBirth,
+            'language': _language,
+          },
+          'appointments': 'Available appointment references',
+          'treatment': 'Available treatment overview references',
+          'healthRecords': 'No health records are available in this prototype',
+        }),
+      );
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Export created at ${file.path}')),
+        SnackBar(content: LocalizedText('Export created at ${file.path}')),
       );
     } catch (_) {
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Unable to export available data.')),
+          const SnackBar(
+            content: LocalizedText('Unable to export available data.'),
+          ),
         );
       }
     }
@@ -218,12 +244,12 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text('Your patient data will remain on this device.'),
+        title: LocalizedText('Log out?'),
+        content: LocalizedText('Your patient data will remain on this device.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: LocalizedText('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -231,12 +257,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               backgroundColor: AppColors.burgundy,
               foregroundColor: AppColors.white,
             ),
-            child: const Text('Log out'),
+            child: LocalizedText('Log out'),
           ),
         ],
       ),
     );
     if (confirmed == true && mounted) {
+      await LocaleService.resetForLogout();
+      BiometricService.instance.endSession();
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -249,20 +278,20 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: const Text(
+        title: LocalizedText('Delete account?'),
+        content: LocalizedText(
           'This prototype cannot permanently delete a clinic account. '
           'Account deletion requires hospital and backend processing.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: LocalizedText('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Request deletion'),
+            child: LocalizedText('Request deletion'),
           ),
         ],
       ),
@@ -270,27 +299,29 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     if (confirmed == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Deletion requests require hospital/backend processing.'),
+          content: LocalizedText(
+            'Deletion requests require hospital/backend processing.',
+          ),
         ),
       );
     }
   }
 
   Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.only(top: 24, bottom: 9),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              color: AppColors.burgundy,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.3,
-            ),
-          ),
+    padding: const EdgeInsets.only(top: 24, bottom: 9),
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          color: AppColors.burgundy,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.3,
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _option({
     required IconData icon,
@@ -322,10 +353,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         padding: const EdgeInsets.only(top: 3),
         child: Text(
           subtitle,
-          style: const TextStyle(
-            color: AppColors.secondaryText,
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
         ),
       ),
       trailing: const Icon(
@@ -336,14 +364,14 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Widget _card(List<Widget> children) => Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Column(children: children),
-      );
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Column(children: children),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +381,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.primaryText,
-        title: const Text(
+        title: LocalizedText(
           'Patient profile',
           style: TextStyle(
             color: AppColors.primaryText,
@@ -364,7 +392,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         actions: [
           TextButton(
             onPressed: _editProfile,
-            child: const Text(
+            child: LocalizedText(
               'Edit',
               style: TextStyle(color: AppColors.burgundy),
             ),
@@ -397,7 +425,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               ),
             ),
             const SizedBox(height: 5),
-            const Text(
+            LocalizedText(
               'Patient ID: AS-20481',
               style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
             ),
@@ -413,7 +441,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               _option(
                 icon: Icons.translate_rounded,
                 title: 'Language & Accessibility',
-                subtitle: '$_language · Standard text.',
+                subtitle: '$_language Â· Standard text.',
                 onTap: _openLanguage,
               ),
               const Divider(height: 1, color: AppColors.divider),
@@ -427,14 +455,14 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             _sectionTitle('Privacy & security'),
             _card([
               SwitchListTile(
-                value: _biometricEnabled,
+                value: BiometricService.instance.enabled,
                 onChanged: _toggleBiometric,
                 activeThumbColor: AppColors.burgundy,
                 secondary: const Icon(
                   Icons.fingerprint_rounded,
                   color: AppColors.burgundy,
                 ),
-                title: const Text(
+                title: LocalizedText(
                   'Biometric App Lock',
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -443,7 +471,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   ),
                 ),
                 subtitle: Text(
-                  _biometricEnabled ? 'Enabled' : 'Disabled',
+                  BiometricService.instance.enabled ? 'Enabled' : 'Disabled',
                   style: const TextStyle(
                     color: AppColors.secondaryText,
                     fontSize: 11,
@@ -478,9 +506,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 subtitle: 'FAQs and contact details.',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const HelpSupportScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
                 ),
               ),
             ]),
@@ -493,7 +519,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     Icons.logout_rounded,
                     color: AppColors.burgundy,
                   ),
-                  label: const Text(
+                  label: LocalizedText(
                     'Log out',
                     style: TextStyle(
                       color: AppColors.burgundy,
@@ -507,7 +533,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     Icons.delete_outline_rounded,
                     color: AppColors.error,
                   ),
-                  label: const Text(
+                  label: LocalizedText(
                     'Delete account',
                     style: TextStyle(
                       color: AppColors.error,
@@ -570,7 +596,9 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         !RegExp(r'^[6-9]\d{9}$').hasMatch(mobile) ||
         _dob.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter valid profile details.')),
+        const SnackBar(
+          content: LocalizedText('Please enter valid profile details.'),
+        ),
       );
       return;
     }
@@ -586,61 +614,63 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   }
 
   InputDecoration _dec(String hint) => InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: AppColors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.divider),
-        ),
-      );
+    hintText: hint,
+    filled: true,
+    fillColor: AppColors.white,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.divider),
+    ),
+  );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Personal & Medical Details'),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            TextField(controller: _name, decoration: _dec('Full name')),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _mobile,
-              keyboardType: TextInputType.phone,
-              decoration: _dec('Mobile number'),
-            ),
-            const SizedBox(height: 14),
-            TextField(controller: _dob, decoration: _dec('Date of birth')),
-            const SizedBox(height: 18),
-            const Text(
-              'Hospital-managed clinical records and treatment information cannot be edited here.',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
+        elevation: 0,
+        title: LocalizedText('Personal & Medical Details'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          TextField(controller: _name, decoration: _dec('Full name')),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _mobile,
+            keyboardType: TextInputType.phone,
+            decoration: _dec('Mobile number'),
+          ),
+          const SizedBox(height: 14),
+          TextField(controller: _dob, decoration: _dec('Date of birth')),
+          const SizedBox(height: 18),
+          LocalizedText(
+            'Hospital-managed clinical records and treatment information cannot be edited here.',
+            style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: LocalizedText('Cancel'),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _save,
-                    child: const Text('Save'),
-                  ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: LocalizedText('Save'),
                 ),
-              ],
-            ),
-          ],
-        ),
-      );
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class LanguageAccessibilityScreen extends StatefulWidget {
@@ -675,43 +705,49 @@ class _LanguageAccessibilityScreenState
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Language & Accessibility'),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: _language,
-              decoration: const InputDecoration(labelText: 'Preferred language'),
-              items: const [
-                DropdownMenuItem(value: 'English', child: Text('English')),
-                DropdownMenuItem(value: 'Tamil', child: Text('Tamil')),
-              ],
-              onChanged: (value) {
-                if (value != null) setState(() => _language = value);
-              },
-            ),
-            const SizedBox(height: 20),
-            const Text('Text size'),
-            Slider(
-              value: _textScale,
-              min: 0.9,
-              max: 1.2,
-              divisions: 3,
-              label: _textScale.toStringAsFixed(1),
-              activeColor: AppColors.burgundy,
-              onChanged: (value) => setState(() => _textScale = value),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: _save, child: const Text('Save preferences')),
-          ],
-        ),
-      );
+        elevation: 0,
+        title: LocalizedText('Language & Accessibility'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: _language,
+            decoration: InputDecoration(labelText: l10n.language),
+            items: [
+              DropdownMenuItem(value: 'English', child: Text(l10n.english)),
+              DropdownMenuItem(value: 'Tamil', child: Text(l10n.tamil)),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _language = value);
+            },
+          ),
+          const SizedBox(height: 20),
+          LocalizedText('Text size'),
+          Slider(
+            value: _textScale,
+            min: 0.9,
+            max: 1.2,
+            divisions: 3,
+            label: _textScale.toStringAsFixed(1),
+            activeColor: AppColors.burgundy,
+            onChanged: (value) => setState(() => _textScale = value),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _save,
+            child: LocalizedText('Save preferences'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class PartnerPermissionsScreen extends StatefulWidget {
@@ -735,37 +771,37 @@ class _PartnerPermissionsScreenState extends State<PartnerPermissionsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Partner Permissions'),
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: LocalizedText('Partner Permissions'),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        LocalizedText(
+          'Only permissions you enable will be available to an approved partner.',
+          style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'Only permissions you enable will be available to an approved partner.',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
-            ),
-            const SizedBox(height: 14),
-            ..._permissions.keys.map(
-              (permission) => SwitchListTile(
-                value: _permissions[permission]!,
-                activeThumbColor: AppColors.burgundy,
-                title: Text(permission),
-                onChanged: (value) =>
-                    setState(() => _permissions[permission] = value),
-              ),
-            ),
-            const SizedBox(height: 18),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, _permissions),
-              child: const Text('Save permissions'),
-            ),
-          ],
+        const SizedBox(height: 14),
+        ..._permissions.keys.map(
+          (permission) => SwitchListTile(
+            value: _permissions[permission]!,
+            activeThumbColor: AppColors.burgundy,
+            title: Text(permission),
+            onChanged: (value) =>
+                setState(() => _permissions[permission] = value),
+          ),
         ),
-      );
+        const SizedBox(height: 18),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, _permissions),
+          child: LocalizedText('Save permissions'),
+        ),
+      ],
+    ),
+  );
 }
 
 class ConsentManagementScreen extends StatefulWidget {
@@ -784,16 +820,16 @@ class _ConsentManagementScreenState extends State<ConsentManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Change $title?'),
-        content: const Text('Review this permission change before saving.'),
+        title: LocalizedText('Change $title?'),
+        content: LocalizedText('Review this permission change before saving.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: LocalizedText('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm'),
+            child: LocalizedText('Confirm'),
           ),
         ],
       ),
@@ -811,37 +847,39 @@ class _ConsentManagementScreenState extends State<ConsentManagementScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Consent Management'),
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: LocalizedText('Consent Management'),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        SwitchListTile(
+          value: _careUpdates,
+          activeThumbColor: AppColors.burgundy,
+          title: LocalizedText('Care updates'),
+          subtitle: LocalizedText('Receive care-related app updates.'),
+          onChanged: (value) => _changeConsent('Care updates', value),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            SwitchListTile(
-              value: _careUpdates,
-              activeThumbColor: AppColors.burgundy,
-              title: const Text('Care updates'),
-              subtitle: const Text('Receive care-related app updates.'),
-              onChanged: (value) => _changeConsent('Care updates', value),
-            ),
-            SwitchListTile(
-              value: _partnerSharing,
-              activeThumbColor: AppColors.burgundy,
-              title: const Text('Partner sharing'),
-              subtitle: const Text('Allow sharing based on partner permissions.'),
-              onChanged: (value) => _changeConsent('Partner sharing', value),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
-            ),
-          ],
+        SwitchListTile(
+          value: _partnerSharing,
+          activeThumbColor: AppColors.burgundy,
+          title: LocalizedText('Partner sharing'),
+          subtitle: LocalizedText(
+            'Allow sharing based on partner permissions.',
+          ),
+          onChanged: (value) => _changeConsent('Partner sharing', value),
         ),
-      );
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: LocalizedText('Done'),
+        ),
+      ],
+    ),
+  );
 }
 
 class HelpSupportScreen extends StatelessWidget {
@@ -849,43 +887,43 @@ class HelpSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: const Text('Help & Support'),
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: LocalizedText('Help & Support'),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.all(20),
+      children: const [
+        _Faq(
+          question: 'How do I register?',
+          answer: 'Use the registration option on the login screen and follow the verification steps.',
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(20),
-          children: const [
-            _Faq(
-              question: 'How do I register?',
-              answer: 'Use the registration option on the login screen and follow the verification steps.',
-            ),
-            _Faq(
-              question: 'How do appointments work?',
-              answer: 'Use Appointments to request, view, reschedule, or cancel appointments.',
-            ),
-            _Faq(
-              question: 'Where is my treatment overview?',
-              answer: 'Open My Journey from the dashboard navigation.',
-            ),
-            _Faq(
-              question: 'Are health records available?',
-              answer: 'Only records published by the clinic appear in the app.',
-            ),
-            _Faq(
-              question: 'How do I change account settings?',
-              answer: 'Open your profile from the dashboard avatar.',
-            ),
-            SizedBox(height: 18),
-            Text(
-              'Contact support details are not configured in this prototype.',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
-            ),
-          ],
+        _Faq(
+          question: 'How do appointments work?',
+          answer: 'Use Appointments to request, view, reschedule, or cancel appointments.',
         ),
-      );
+        _Faq(
+          question: 'Where is my treatment overview?',
+          answer: 'Open My Journey from the dashboard navigation.',
+        ),
+        _Faq(
+          question: 'Are health records available?',
+          answer: 'Only records published by the clinic appear in the app.',
+        ),
+        _Faq(
+          question: 'How do I change account settings?',
+          answer: 'Open your profile from the dashboard avatar.',
+        ),
+        SizedBox(height: 18),
+        LocalizedText(
+          'Contact support details are not configured in this prototype.',
+          style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Faq extends StatelessWidget {
@@ -896,26 +934,26 @@ class _Faq extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ExpansionTile(
-        title: Text(
-          question,
+    title: Text(
+      question,
+      style: const TextStyle(
+        color: AppColors.primaryText,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: Text(
+          answer,
           style: const TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+            color: AppColors.secondaryText,
+            fontSize: 12,
+            height: 1.45,
           ),
         ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Text(
-              answer,
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 12,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
-      );
+      ),
+    ],
+  );
 }

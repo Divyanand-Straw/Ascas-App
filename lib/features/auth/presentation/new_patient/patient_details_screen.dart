@@ -1,6 +1,9 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../../core/services/locale_service.dart';
+
 import 'package:flutter/services.dart';
+
 import 'profile_confirmation_screen.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
@@ -8,14 +11,10 @@ import '../../../../core/widgets/step_progress_bar.dart';
 class PatientDetailsScreen extends StatefulWidget {
   final String mobileNumber;
 
-  const PatientDetailsScreen({
-    super.key,
-    required this.mobileNumber,
-  });
+  const PatientDetailsScreen({super.key, required this.mobileNumber});
 
   @override
-  State<PatientDetailsScreen> createState() =>
-      _PatientDetailsScreenState();
+  State<PatientDetailsScreen> createState() => _PatientDetailsScreenState();
 }
 
 class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
@@ -71,16 +70,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppColors.secondaryText,
-        fontSize: 13,
-      ),
+      hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
       filled: true,
       fillColor: AppColors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -91,10 +84,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: AppColors.burgundy,
-          width: 1.4,
-        ),
+        borderSide: const BorderSide(color: AppColors.burgundy, width: 1.4),
       ),
     );
   }
@@ -141,7 +131,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           inputFormatters: inputFormatters,
           readOnly: readOnly,
           onTap: onTap,
-          validator: validator ??
+          validator:
+              validator ??
               (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter $label.';
@@ -149,10 +140,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 return null;
               },
           decoration: _inputDecoration(hint),
-          style: const TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.primaryText, fontSize: 14),
         ),
       ],
     );
@@ -222,10 +210,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.popUntil(
-                        context,
-                        (route) => route.isFirst,
-                      ),
+                      onPressed: () =>
+                          Navigator.popUntil(context, (route) => route.isFirst),
                       child: const Text(
                         'Exit',
                         style: TextStyle(
@@ -239,10 +225,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 16),
 
-                const Divider(
-                  color: AppColors.divider,
-                  height: 1,
-                ),
+                const Divider(color: AppColors.divider, height: 1),
 
                 const SizedBox(height: 16),
                 const StepProgressBar(currentStep: 4),
@@ -311,9 +294,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                       return 'Please enter your email address.';
                     }
 
-                    if (!RegExp(
-                      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                    ).hasMatch(value.trim())) {
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                        .hasMatch(value.trim())) {
                       return 'Please enter a valid email address.';
                     }
 
@@ -344,11 +326,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Container(
-                        width: 1,
-                        height: 24,
-                        color: AppColors.divider,
-                      ),
+                      Container(width: 1, height: 24, color: AppColors.divider),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -382,12 +360,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   ),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: _languageOption('English'),
-                      ),
-                      Expanded(
-                        child: _languageOption('தமிழ்'),
-                      ),
+                      Expanded(child: _languageOption('English')),
+                      Expanded(child: _languageOption('தமிழ்')),
                     ],
                   ),
                 ),
@@ -411,8 +385,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     final emergencyNumber = value.trim();
                     final mobileNumber = widget.mobileNumber.trim();
 
-                    if (!RegExp(r'^[6-9]\d{9}$')
-                        .hasMatch(emergencyNumber)) {
+                    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(emergencyNumber)) {
                       return 'Enter a valid 10-digit mobile number.';
                     }
 
@@ -466,26 +439,21 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         setState(() {
           _selectedLanguage = language;
         });
+        LocaleService.rememberLanguage(language == 'தமிழ்' ? 'ta' : 'en');
       },
       child: Container(
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.burgundy
-              : Colors.transparent,
+          color: isSelected ? AppColors.burgundy : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
         ),
         child: Text(
           language,
           style: TextStyle(
-            color: isSelected
-                ? AppColors.white
-                : AppColors.secondaryText,
+            color: isSelected ? AppColors.white : AppColors.secondaryText,
             fontSize: 13,
-            fontWeight: isSelected
-                ? FontWeight.w600
-                : FontWeight.w500,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
       ),

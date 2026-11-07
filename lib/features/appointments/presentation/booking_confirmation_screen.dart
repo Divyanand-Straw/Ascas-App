@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'models/appointment_models.dart';
 
@@ -24,7 +26,7 @@ class BookingConfirmationScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Booking request'),
+        title: LocalizedText('Booking request'),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -34,35 +36,57 @@ class BookingConfirmationScreen extends StatelessWidget {
               const CircleAvatar(
                 radius: 34,
                 backgroundColor: AppColors.blushPink,
-                child: Icon(Icons.pending_actions, color: AppColors.burgundy, size: 32),
+                child: Icon(
+                  Icons.pending_actions,
+                  color: AppColors.burgundy,
+                  size: 32,
+                ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              LocalizedText(
                 'REQUESTED',
-                style: TextStyle(color: AppColors.burgundy, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                style: TextStyle(
+                  color: AppColors.burgundy,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              LocalizedText(
                 'Your appointment request has been submitted. The clinic will confirm the appointment after checking availability.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.primaryText, fontSize: 15, height: 1.5),
+                style: TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 15,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 20),
-              Text(
+              LocalizedText(
                 '${doctor.name}\n${date.day} ${_month(date.month)} · $time\nFor $patientName',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.secondaryText, fontSize: 12, height: 1.6),
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 12,
+                  height: 1.6,
+                ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              LocalizedText(
                 'This request is awaiting clinic confirmation. It is not a confirmed appointment yet.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.secondaryText, fontSize: 11, height: 1.4),
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 26),
               OutlinedButton(
-                onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-                child: const Text('Done'),
+                onPressed: () =>
+                    Navigator.popUntil(context, (route) => route.isFirst),
+                child: LocalizedText('Done'),
               ),
             ],
           ),
@@ -71,6 +95,18 @@ class BookingConfirmationScreen extends StatelessWidget {
     );
   }
 
-  static String _month(int month) =>
-      const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1];
+  static String _month(int month) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 }

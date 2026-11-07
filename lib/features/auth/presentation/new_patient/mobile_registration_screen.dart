@@ -1,26 +1,23 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'new_patient_otp_screen.dart';
 import '../linked_member/linked_member_otp_screen.dart';
 
 class MobileRegistrationScreen extends StatefulWidget {
   final String patientType;
 
-  const MobileRegistrationScreen({
-    super.key,
-    required this.patientType,
-  });
+  const MobileRegistrationScreen({super.key, required this.patientType});
 
   @override
   State<MobileRegistrationScreen> createState() =>
       _MobileRegistrationScreenState();
 }
 
-class _MobileRegistrationScreenState
-    extends State<MobileRegistrationScreen> {
+class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
   final TextEditingController _mobileController = TextEditingController();
 
   @override
@@ -30,56 +27,51 @@ class _MobileRegistrationScreenState
   }
 
   void _continue() {
-  final mobile = _mobileController.text.trim();
-  final type = widget.patientType.trim().toLowerCase();
+    final mobile = _mobileController.text.trim();
+    final type = widget.patientType.trim().toLowerCase();
 
-  debugPrint('Selected patient type: ${widget.patientType}');
-  debugPrint('Entered mobile number: $mobile');
+    debugPrint('Selected patient type: ${widget.patientType}');
+    debugPrint('Entered mobile number: $mobile');
 
-  if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Enter a valid 10-digit mobile number.'),
-      ),
-    );
-    return;
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid 10-digit mobile number.')),
+      );
+      return;
+    }
+
+    if (type.contains('new patient')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NewPatientOtpScreen(mobileNumber: mobile),
+        ),
+      );
+    } else if (type.contains('existing')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NewPatientOtpScreen(
+            mobileNumber: mobile,
+            fromExistingPatient: true,
+          ),
+        ),
+      );
+    } else if (type.contains('linked member')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LinkedMemberOtpScreen(mobileNumber: mobile),
+        ),
+      );
+    } else {
+      debugPrint('Unknown patient type: ${widget.patientType}');
+    }
   }
-
-  if (type.contains('new patient')) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NewPatientOtpScreen(
-          mobileNumber: mobile,
-        ),
-      ),
-    );
-  } else if (type.contains('existing')) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NewPatientOtpScreen(
-          mobileNumber: mobile,
-          fromExistingPatient: true,
-        ),
-      ),
-    );
-  } else if (type.contains('linked member')) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LinkedMemberOtpScreen(
-          mobileNumber: mobile,
-        ),
-      ),
-    );
-  } else {
-    debugPrint('Unknown patient type: ${widget.patientType}');
-  }
-}
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -112,8 +104,8 @@ class _MobileRegistrationScreenState
                         SizedBox(height: 4),
                         Text(
                           widget.patientType.contains('Existing')
-                              ? 'Existing patient mobile'
-                              : 'Mobile registration',
+                              ? l10n.existingPatientMobile
+                              : l10n.mobileRegistration,
                           style: TextStyle(
                             color: AppColors.burgundy,
                             fontSize: 12,
@@ -124,12 +116,10 @@ class _MobileRegistrationScreenState
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
-                      'Exit',
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: Text(
+                      l10n.exit,
                       style: TextStyle(
                         color: AppColors.secondaryText,
                         fontSize: 10,
@@ -139,17 +129,14 @@ class _MobileRegistrationScreenState
                 ],
               ),
               const SizedBox(height: 16),
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
+              const Divider(color: AppColors.divider, height: 1),
               const SizedBox(height: 16),
               const StepProgressBar(currentStep: 2),
               const SizedBox(height: 28),
               Text(
                 widget.patientType.contains('Existing')
-                    ? 'EXISTING PATIENT'
-                    : 'MOBILE REGISTRATION',
+                    ? l10n.existingPatient
+                    : l10n.mobileRegistration,
                 style: TextStyle(
                   color: AppColors.burgundy,
                   fontSize: 10,
@@ -160,8 +147,8 @@ class _MobileRegistrationScreenState
               const SizedBox(height: 14),
               Text(
                 widget.patientType.contains('Existing')
-                    ? 'Enter your registered mobile number'
-                    : 'Verify your mobile number',
+                    ? l10n.registeredMobile
+                    : l10n.verifyMobile,
                 style: TextStyle(
                   color: AppColors.primaryText,
                   fontSize: 25,
@@ -172,8 +159,8 @@ class _MobileRegistrationScreenState
               const SizedBox(height: 10),
               Text(
                 widget.patientType.contains('Existing')
-                    ? 'Use the mobile number registered with your hospital record.'
-                    : 'We will send a one-time code to your Indian mobile number.',
+                    ? l10n.registeredMobileHint
+                    : l10n.sendOneTimeCode,
                 style: TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 13,
@@ -181,8 +168,8 @@ class _MobileRegistrationScreenState
                 ),
               ),
               const SizedBox(height: 30),
-              const Text(
-                'Mobile number',
+              Text(
+                l10n.mobileNumber,
                 style: TextStyle(
                   color: AppColors.primaryText,
                   fontSize: 13,
@@ -195,9 +182,7 @@ class _MobileRegistrationScreenState
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(13),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Row(
                   children: [
@@ -212,11 +197,7 @@ class _MobileRegistrationScreenState
                         ),
                       ),
                     ),
-                    Container(
-                      width: 1,
-                      height: 25,
-                      color: AppColors.divider,
-                    ),
+                    Container(width: 1, height: 25, color: AppColors.divider),
                     Expanded(
                       child: TextField(
                         controller: _mobileController,
@@ -229,17 +210,15 @@ class _MobileRegistrationScreenState
                           color: AppColors.primaryText,
                           fontSize: 14,
                         ),
-                        decoration: const InputDecoration(
-                          hintText: 'Enter mobile number',
+                        decoration: InputDecoration(
+                          hintText: l10n.enterMobileNumber,
                           hintStyle: TextStyle(
                             color: AppColors.secondaryText,
                             fontSize: 13,
                           ),
                           counterText: '',
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 14,
-                          ),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 14),
                         ),
                       ),
                     ),

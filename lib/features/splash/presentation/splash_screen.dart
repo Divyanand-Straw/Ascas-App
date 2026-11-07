@@ -1,7 +1,8 @@
-
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -9,15 +10,14 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => const OnboardingScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
           );
         },
         child: Container(
@@ -33,10 +33,7 @@ class SplashScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.white,
-                      width: 2,
-                    ),
+                    border: Border.all(color: AppColors.white, width: 2),
                   ),
                   child: ClipOval(
                     child: Image.asset(
@@ -48,7 +45,7 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 28),
-                const Text(
+                Text(
                   'THAAI SEYAZHI',
                   style: TextStyle(
                     fontSize: 25,
@@ -60,22 +57,19 @@ class SplashScreen extends StatelessWidget {
                 const SizedBox(height: 1),
                 const Text(
                   'தாய் செயழி',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: AppColors.white,
-                  ),
+                  style: TextStyle(fontSize: 18, color: AppColors.white),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Your journey, supported with care',
+                  l10n.journeySupportedCare,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.white,
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 80),
-                const Text(
-                  'TAP TO CONTINUE',
+                Text(
+                  l10n.tapToContinue,
                   style: TextStyle(
                     fontSize: 20,
                     letterSpacing: 2,

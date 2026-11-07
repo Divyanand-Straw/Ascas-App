@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../auth/presentation/patient_type_screen.dart';
 
@@ -23,6 +24,7 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -48,6 +50,16 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     const Text(
+                      'THAAI SEYAZHI',
+                      style: TextStyle(
+                        color: AppColors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    const Text(
                       'தாய் செயழி',
                       style: TextStyle(
                         color: AppColors.white,
@@ -57,8 +69,8 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const Text(
-                      'Your fertility\njourney,\nour care.',
+                    Text(
+                      l10n.yourFertilityJourney,
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 30,
@@ -68,8 +80,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Expert guidance, thoughtful support, and every step of '
-                      'your care in one private place.',
+                      l10n.welcomeDescription,
                       style: TextStyle(
                         color: AppColors.white.withValues(alpha: 0.9),
                         fontSize: 12,
@@ -86,8 +97,8 @@ class WelcomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
                 child: Column(
                   children: [
-                    const Text(
-                      'Private, connected care from Thaai Seyazhi Fertility and Women’s Centre.',
+                    Text(
+                      l10n.privateConnectedCare,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -100,7 +111,7 @@ class WelcomeScreen extends StatelessWidget {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () => _openPatientType(context),
-                        child: const Text('Get started'),
+                        child: Text(l10n.getStarted),
                       ),
                     ),
                     const SizedBox(height: 13),
@@ -116,12 +127,12 @@ class WelcomeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('Login'),
+                        child: Text(l10n.login),
                       ),
                     ),
                     const Spacer(),
-                    const Text(
-                      'Clinician-supported',
+                    Text(
+                      l10n.clinicianSupported,
                       style: TextStyle(color: AppColors.dustyPink, fontSize: 9),
                     ),
                   ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'cancellation_confirmation_screen.dart';
 import 'models/appointment_models.dart';
@@ -20,14 +22,14 @@ class AppointmentDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canChange = appointment.status != 'Cancelled' &&
-        appointment.status != 'Completed';
+    final canChange =
+        appointment.status != 'Cancelled' && appointment.status != 'Completed';
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Appointment details'),
+        title: LocalizedText('Appointment details'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -42,7 +44,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                LocalizedText(
                   'PROTOTYPE REFERENCE',
                   style: TextStyle(
                     color: AppColors.dustyPink,
@@ -100,28 +102,27 @@ class AppointmentDetailsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              child: const Text('Reschedule appointment'),
+              child: LocalizedText('Reschedule appointment'),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => CancellationConfirmationScreen(
-                    appointment: appointment,
-                  ),
+                  builder: (_) =>
+                      CancellationConfirmationScreen(appointment: appointment),
                 ),
               ),
-              child: const Text('Cancel appointment'),
+              child: LocalizedText('Cancel appointment'),
             ),
           ],
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Back to appointments'),
+            child: LocalizedText('Back to appointments'),
           ),
           const SizedBox(height: 12),
-          const Text(
+          LocalizedText(
             'Prototype sample data only. Status changes apply during this app session.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
@@ -167,10 +168,7 @@ class AppointmentDetailsScreen extends StatelessWidget {
 }
 
 class AppointmentDetailScreen extends AppointmentDetailsScreen {
-  const AppointmentDetailScreen({
-    super.key,
-    required super.appointment,
-  });
+  const AppointmentDetailScreen({super.key, required super.appointment});
 }
 
 class AppointmentInfoScreen extends StatelessWidget {

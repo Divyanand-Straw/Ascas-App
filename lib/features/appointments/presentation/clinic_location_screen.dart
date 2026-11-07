@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 
 class ClinicLocationScreen extends StatelessWidget {
@@ -12,7 +14,7 @@ class ClinicLocationScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Clinic location'),
+        title: LocalizedText('Clinic location'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -27,10 +29,13 @@ class ClinicLocationScreen extends StatelessWidget {
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined,
-                    color: AppColors.burgundy, size: 30),
+                Icon(
+                  Icons.location_on_outlined,
+                  color: AppColors.burgundy,
+                  size: 30,
+                ),
                 SizedBox(height: 13),
-                Text(
+                LocalizedText(
                   'Thaai Seyazhi Clinic',
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -39,7 +44,7 @@ class ClinicLocationScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 9),
-                Text(
+                LocalizedText(
                   'Clinic address will be supplied by the care team.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -48,7 +53,7 @@ class ClinicLocationScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 16),
-                Text(
+                LocalizedText(
                   'Directions placeholder',
                   style: TextStyle(
                     color: AppColors.burgundy,
@@ -57,7 +62,7 @@ class ClinicLocationScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 5),
-                Text(
+                LocalizedText(
                   'No map integration or verified clinic address is configured in this prototype.',
                   style: TextStyle(
                     color: AppColors.secondaryText,

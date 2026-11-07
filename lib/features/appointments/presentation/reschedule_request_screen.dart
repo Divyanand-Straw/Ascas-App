@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/notification_service.dart';
 import 'models/appointment_models.dart';
@@ -34,7 +36,7 @@ class _RescheduleRequestScreenState extends State<RescheduleRequestScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Reschedule request'),
+        title: LocalizedText('Reschedule request'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -48,7 +50,7 @@ class _RescheduleRequestScreenState extends State<RescheduleRequestScreen> {
             ),
           ),
           const SizedBox(height: 7),
-          Text(
+          LocalizedText(
             'Current: ${widget.appointment.date.day} ${_month(widget.appointment.date.month)} · ${widget.appointment.time}',
             style: const TextStyle(
               color: AppColors.secondaryText,
@@ -56,7 +58,7 @@ class _RescheduleRequestScreenState extends State<RescheduleRequestScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          LocalizedText(
             'Choose a new sample date',
             style: TextStyle(
               color: AppColors.primaryText,
@@ -83,7 +85,7 @@ class _RescheduleRequestScreenState extends State<RescheduleRequestScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          LocalizedText(
             'Choose a new sample time',
             style: TextStyle(
               color: AppColors.primaryText,
@@ -120,10 +122,10 @@ class _RescheduleRequestScreenState extends State<RescheduleRequestScreen> {
                 borderRadius: BorderRadius.circular(13),
               ),
             ),
-            child: const Text('Review rescheduling request'),
+            child: LocalizedText('Review rescheduling request'),
           ),
           const SizedBox(height: 12),
-          const Text(
+          LocalizedText(
             'A rescheduling request remains pending until the clinic approves it.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
@@ -137,36 +139,49 @@ class _RescheduleRequestScreenState extends State<RescheduleRequestScreen> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Submit rescheduling request?'),
-        content: Text(
+        title: LocalizedText('Submit rescheduling request?'),
+        content: LocalizedText(
           'New sample slot: ${_date!.day} ${_month(_date!.month)} · $_time',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Edit'),
+            child: LocalizedText('Edit'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              await NotificationService.instance
-                  .showReschedulingRequest(widget.appointment);
+              await NotificationService.instance.showReschedulingRequest(
+                widget.appointment,
+              );
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text(
+                  content: LocalizedText(
                     'Your rescheduling request has been submitted and is awaiting clinic confirmation.',
                   ),
                 ),
               );
             },
-            child: const Text('Submit request'),
+            child: LocalizedText('Submit request'),
           ),
         ],
       ),
     );
   }
 
-  static String _month(int month) =>
-      const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1];
+  static String _month(int month) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 }

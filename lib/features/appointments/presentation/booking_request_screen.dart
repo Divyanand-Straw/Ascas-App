@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'booking_review_screen.dart';
 import 'models/appointment_models.dart';
@@ -45,7 +47,7 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Booking request'),
+        title: LocalizedText('Booking request'),
       ),
       body: Form(
         key: _formKey,
@@ -56,32 +58,46 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
             const SizedBox(height: 18),
             DropdownButtonFormField<String>(
               initialValue: _appointmentType,
-              decoration: const InputDecoration(labelText: 'Appointment type'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Appointment type'),
+              ),
               items: ['Monitoring consultation', 'Fertility consultation']
-                  .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                  .map(
+                    (item) => DropdownMenuItem(value: item, child: Text(item)),
+                  )
                   .toList(),
               onChanged: (value) => setState(() => _appointmentType = value!),
             ),
             DropdownButtonFormField<String>(
               initialValue: _mode,
-              decoration: const InputDecoration(labelText: 'Consultation mode'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Consultation mode'),
+              ),
               items: ['In clinic', 'Video consultation']
-                  .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                  .map(
+                    (item) => DropdownMenuItem(value: item, child: Text(item)),
+                  )
                   .toList(),
               onChanged: (value) => setState(() => _mode = value!),
             ),
             TextFormField(
               initialValue: widget.patientName,
               readOnly: true,
-              decoration: const InputDecoration(labelText: 'Patient name'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Patient name'),
+              ),
               validator: _required,
             ),
             TextFormField(
               initialValue: widget.mobileNumber,
               readOnly: true,
-              decoration: const InputDecoration(labelText: 'Registered mobile number'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Registered mobile number'),
+              ),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Mobile number is required';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Mobile number is required';
+                }
                 if (!RegExp(r'^[0-9+ ()-]{7,}$').hasMatch(value.trim())) {
                   return 'Enter a valid mobile number';
                 }
@@ -90,12 +106,19 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
             ),
             TextFormField(
               controller: _reasonController,
-              decoration: const InputDecoration(labelText: 'Reason for consultation (optional)'),
+              decoration: InputDecoration(
+                labelText: localizedText(
+                  context,
+                  'Reason for consultation (optional)',
+                ),
+              ),
             ),
             TextFormField(
               controller: _notesController,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Additional notes'),
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Additional notes'),
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -122,9 +145,11 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
                 foregroundColor: AppColors.white,
                 minimumSize: const Size.fromHeight(48),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
               ),
-              child: const Text('Review booking'),
+              child: LocalizedText('Review booking'),
             ),
           ],
         ),
@@ -143,14 +168,27 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.doctor.name,
-              style: const TextStyle(color: AppColors.primaryText, fontSize: 15, fontWeight: FontWeight.w700)),
+          Text(
+            widget.doctor.name,
+            style: const TextStyle(
+              color: AppColors.primaryText,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 5),
-          Text(widget.doctor.specialty,
-              style: const TextStyle(color: AppColors.burgundy, fontSize: 11)),
+          Text(
+            widget.doctor.specialty,
+            style: const TextStyle(color: AppColors.burgundy, fontSize: 11),
+          ),
           const SizedBox(height: 8),
-          Text('${widget.selectedDate.day} ${_month(widget.selectedDate.month)} · ${widget.selectedTime}',
-              style: const TextStyle(color: AppColors.secondaryText, fontSize: 11)),
+          LocalizedText(
+            '${widget.selectedDate.day} ${_month(widget.selectedDate.month)} · ${widget.selectedTime}',
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     );
@@ -159,6 +197,18 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
   String? _required(String? value) =>
       value == null || value.trim().isEmpty ? 'This field is required' : null;
 
-  static String _month(int month) =>
-      const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1];
+  static String _month(int month) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 }

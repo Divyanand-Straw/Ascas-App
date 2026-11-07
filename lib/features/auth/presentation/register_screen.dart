@@ -1,8 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -45,16 +45,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Registration UI completed. Backend integration pending.'),
+        content: Text(
+          'Registration UI completed. Backend integration pending.',
+        ),
       ),
     );
   }
 
   void _showPendingMessage(String provider) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$provider sign-in integration is coming soon.'),
-      ),
+      SnackBar(content: Text('$provider sign-in integration is coming soon.')),
     );
   }
 
@@ -65,18 +65,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppColors.secondaryText,
-        fontSize: 14,
-      ),
+      hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 14),
       prefixIcon: prefix,
       suffixIcon: suffix,
       filled: true,
       fillColor: AppColors.background,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 17,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -87,10 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: AppColors.burgundy,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
       ),
     );
   }
@@ -133,10 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(width: 9),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -146,22 +134,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 25,
-            vertical: 20,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Center(
+                Center(
                   child: Text(
-                    'Create Account',
+                    l10n.createAccount,
                     style: TextStyle(
                       fontSize: 27,
                       fontWeight: FontWeight.bold,
@@ -172,8 +158,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 28),
 
-                const Text(
-                  'NEW PATIENT REGISTRATION',
+                Text(
+                  l10n.newPatientRegistration,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -184,8 +170,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 10),
 
-                const Text(
-                  "Let's begin with you",
+                Text(
+                  l10n.letsBegin,
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
@@ -195,8 +181,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 7),
 
-                const Text(
-                  'Your details stay encrypted and private.',
+                Text(
+                  l10n.encryptedPrivate,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.secondaryText,
@@ -205,17 +191,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 28),
 
-                _buildLabel('Full Name'),
+                _buildLabel(l10n.fullName),
                 TextFormField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: _fieldDecoration(
-                    hint: 'Enter your full name',
+                    hint: l10n.enterFullName,
                     prefix: const Icon(Icons.person_outline),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your name';
+                      return l10n.pleaseEnterName;
                     }
                     return null;
                   },
@@ -223,29 +209,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 18),
 
-                _buildLabel('Mobile Number'),
+                _buildLabel(l10n.mobileNumber),
                 TextFormField(
                   controller: _mobileController,
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
                   decoration: _fieldDecoration(
-                    hint: 'Enter mobile number',
+                    hint: l10n.enterMobileNumber,
                     prefix: const Padding(
                       padding: EdgeInsets.only(left: 14, right: 8),
                       child: Center(
                         widthFactor: 1,
                         child: Text(
                           '+91',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
                   ).copyWith(counterText: ''),
                   validator: (value) {
-                    if (value == null || !RegExp(r'^[0-9]{10}$').hasMatch(value)) {
-                      return 'Enter a valid 10-digit mobile number';
+                    if (value == null ||
+                        !RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                      return l10n.validMobileNumber;
                     }
                     return null;
                   },
@@ -253,19 +238,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 18),
 
-                _buildLabel('Email Address'),
+                _buildLabel(l10n.emailAddress),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: _fieldDecoration(
-                    hint: 'Enter your email address',
+                    hint: l10n.enterEmailAddress,
                     prefix: const Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
                     if (value == null ||
                         !RegExp(r'^[^@]+@[^@]+\.[^@]+$')
                             .hasMatch(value.trim())) {
-                      return 'Enter a valid email address';
+                      return l10n.validEmailAddress;
                     }
                     return null;
                   },
@@ -273,7 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 18),
 
-                _buildLabel('Create Password'),
+                _buildLabel(l10n.password),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -400,19 +385,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   children: [
                     _buildSocialButton(
-                      icon: const FaIcon(
-                        FontAwesomeIcons.google,
-                        size: 17,
-                      ),
+                      icon: const FaIcon(FontAwesomeIcons.google, size: 17),
                       label: 'Google',
                       onPressed: () => _showPendingMessage('Google'),
                     ),
                     const SizedBox(width: 12),
                     _buildSocialButton(
-                      icon: const FaIcon(
-                        FontAwesomeIcons.apple,
-                        size: 21,
-                      ),
+                      icon: const FaIcon(FontAwesomeIcons.apple, size: 21),
                       label: 'Apple',
                       onPressed: () => _showPendingMessage('Apple'),
                     ),

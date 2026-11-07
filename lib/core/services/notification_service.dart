@@ -46,9 +46,10 @@ class NotificationService extends ChangeNotifier {
         }
       },
     );
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.createNotificationChannel(
       const AndroidNotificationChannel(
         _channelId,
@@ -58,14 +59,11 @@ class NotificationService extends ChangeNotifier {
       ),
     );
     await androidPlugin?.requestNotificationsPermission();
-    final iosPlugin =
-        _plugin.resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-    await iosPlugin?.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    final iosPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
     _initialized = true;
   }
 
@@ -81,8 +79,7 @@ class NotificationService extends ChangeNotifier {
 
   Future<void> scheduleReminder(Appointment appointment) async {
     final appointmentTime = _appointmentDateTime(appointment);
-    final reminderTime =
-        appointmentTime.subtract(const Duration(days: 1));
+    final reminderTime = appointmentTime.subtract(const Duration(days: 1));
     if (appointmentTime.isBefore(DateTime.now()) ||
         !reminderTime.isAfter(DateTime.now())) {
       return;
@@ -129,7 +126,13 @@ class NotificationService extends ChangeNotifier {
     required String body,
     required Appointment appointment,
   }) async {
-    await _plugin.show(id, title, body, _details(), payload: appointment.reference);
+    await _plugin.show(
+      id,
+      title,
+      body,
+      _details(),
+      payload: appointment.reference,
+    );
     await _addToInbox(title, body, appointment.reference);
   }
 
@@ -137,6 +140,19 @@ class NotificationService extends ChangeNotifier {
     for (final notification in _inbox) {
       notification.isRead = true;
     }
+    await _saveInbox();
+    notifyListeners();
+  }
+
+  Future<void> markRead(InAppNotification notification) async {
+    if (notification.isRead) return;
+    notification.isRead = true;
+    await _saveInbox();
+    notifyListeners();
+  }
+
+  Future<void> clearAll() async {
+    _inbox.clear();
     await _saveInbox();
     notifyListeners();
   }
@@ -219,12 +235,38 @@ class NotificationService extends ChangeNotifier {
       _appointmentDateTime(appointment);
 }
 
+enum NotificationCategory {
+  medication,
+  appointment,
+  clinicMessage,
+  appointmentConfirmation,
+  appointmentUpdated,
+  journey,
+  medicalRecord,
+  general,
+}
+
 class InAppNotification {
   final String title;
   final String body;
   final String appointmentId;
   final DateTime createdAt;
   bool isRead;
+
+  NotificationCategory get category {
+    final normalized = title.toLowerCase();
+    if (normalized.contains('medication')) {
+      return NotificationCategory.medication;
+    }
+    if (normalized.contains('appointment') ||
+        normalized.contains('reschedul')) {
+      return NotificationCategory.appointment;
+    }
+    if (normalized.contains('clinic') || normalized.contains('message')) {
+      return NotificationCategory.clinicMessage;
+    }
+    return NotificationCategory.general;
+  }
 
   InAppNotification({
     required this.title,
@@ -235,12 +277,12 @@ class InAppNotification {
   });
 
   Map<String, Object?> toMap() => {
-        'title': title,
-        'body': body,
-        'appointmentId': appointmentId,
-        'createdAt': createdAt.toIso8601String(),
-        'isRead': isRead,
-      };
+    'title': title,
+    'body': body,
+    'appointmentId': appointmentId,
+    'createdAt': createdAt.toIso8601String(),
+    'isRead': isRead,
+  };
 
   static String encode(List<InAppNotification> notifications) {
     return jsonEncode(

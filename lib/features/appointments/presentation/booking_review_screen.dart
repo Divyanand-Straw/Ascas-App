@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'data/appointment_data.dart';
 import 'booking_confirmation_screen.dart';
@@ -32,7 +34,7 @@ class BookingReviewScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Review booking'),
+        title: LocalizedText('Review booking'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -51,7 +53,7 @@ class BookingReviewScreen extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Edit details'),
+                  child: LocalizedText('Edit details'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -85,7 +87,7 @@ class BookingReviewScreen extends StatelessWidget {
                     foregroundColor: AppColors.white,
                     elevation: 0,
                   ),
-                  child: const Text('Submit request'),
+                  child: LocalizedText('Submit request'),
                 ),
               ),
             ],
@@ -103,18 +105,41 @@ class BookingReviewScreen extends StatelessWidget {
         children: [
           SizedBox(
             width: 122,
-            child: Text(label,
-                style: const TextStyle(color: AppColors.secondaryText, fontSize: 11)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 11,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(color: AppColors.primaryText, fontSize: 12, fontWeight: FontWeight.w600)),
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: AppColors.primaryText,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  static String _month(int month) =>
-      const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1];
+  static String _month(int month) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 }

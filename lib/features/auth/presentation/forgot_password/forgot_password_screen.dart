@@ -1,6 +1,7 @@
-
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'forgot_password_otp_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -12,31 +13,37 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   bool get _isValidMobile =>
       RegExp(r'^[6-9]\d{9}$').hasMatch(_mobileController.text.trim());
+  bool get _isValidEmail =>
+      RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(_emailController.text.trim());
 
   @override
   void dispose() {
     _mobileController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
   void _continue() {
-  if (!_isValidMobile) return;
+    if (!_isValidMobile || !_isValidEmail) return;
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ForgotPasswordOtpScreen(
-        mobileNumber: _mobileController.text.trim(),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ForgotPasswordOtpScreen(
+          mobileNumber: _mobileController.text.trim(),
+          emailAddress: _emailController.text.trim(),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -70,7 +77,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              const Center(
+              Center(
                 child: Text(
                   'FORGOT PASSWORD',
                   style: TextStyle(
@@ -82,9 +89,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 13),
-              const Center(
+              Center(
                 child: Text(
-                  'Reset your password',
+                  l10n.forgotPasswordTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -94,8 +101,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Enter your registered mobile number. We will help you verify your identity and reset your password.',
+              Text(
+                l10n.resetPasswordDescription,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -104,8 +111,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 38),
-              const Text(
-                'Registered mobile number',
+              Text(
+                l10n.registeredMobileNumber,
                 style: TextStyle(
                   color: AppColors.primaryText,
                   fontSize: 13,
@@ -120,7 +127,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: 'Enter 10-digit mobile number',
+                  hintText: l10n.enterTenDigitMobile,
                   prefixIcon: const Icon(
                     Icons.phone_outlined,
                     color: AppColors.secondaryText,
@@ -129,15 +136,50 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   fillColor: AppColors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
-                    borderSide: const BorderSide(
-                      color: AppColors.divider,
-                    ),
+                    borderSide: const BorderSide(color: AppColors.divider),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(13),
                     borderSide: const BorderSide(
-                      color: AppColors.divider,
+                      color: AppColors.burgundy,
+                      width: 1.5,
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
+              Text(
+                l10n.registeredEmailAddress,
+                style: TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: l10n.enterRegisteredEmail,
+                  prefixIcon: const Icon(
+                    Icons.email_outlined,
+                    color: AppColors.secondaryText,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(13),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(13),
+                    borderSide: const BorderSide(color: AppColors.divider),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
@@ -153,7 +195,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 width: double.infinity,
                 height: 53,
                 child: ElevatedButton(
-                  onPressed: _isValidMobile ? _continue : null,
+                  onPressed: _isValidMobile && _isValidEmail ? _continue : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     disabledBackgroundColor: AppColors.dustyPink,
@@ -163,12 +205,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Text(
+                    l10n.continueText,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

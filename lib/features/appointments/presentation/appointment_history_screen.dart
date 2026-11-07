@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'appointment_detail_screen.dart';
 import 'data/appointment_data.dart';
@@ -16,11 +18,11 @@ class AppointmentHistoryScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Appointment history'),
+        title: LocalizedText('Appointment history'),
       ),
       body: sampleHistory.isEmpty
           ? const Center(
-              child: Text(
+              child: LocalizedText(
                 'No appointment history yet.',
                 style: TextStyle(color: AppColors.secondaryText),
               ),
@@ -68,7 +70,7 @@ class AppointmentHistoryScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Text(
+                  LocalizedText(
                     '${_date(appointment.date)} · ${appointment.appointmentType}',
                     style: const TextStyle(
                       color: AppColors.secondaryText,

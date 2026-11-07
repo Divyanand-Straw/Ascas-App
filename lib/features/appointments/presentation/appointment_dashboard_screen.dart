@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'data/appointment_data.dart';
 import 'widgets/appointment_widgets.dart';
@@ -31,7 +33,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          LocalizedText(
             'Appointments',
             style: TextStyle(
               color: AppColors.primaryText,
@@ -40,7 +42,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          const Text(
+          LocalizedText(
             'YOUR NEXT VISIT',
             style: TextStyle(
               color: AppColors.dustyPink,
@@ -65,7 +67,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
           else
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
-              child: Text(
+              child: LocalizedText(
                 'No upcoming appointments.',
                 style: TextStyle(color: AppColors.secondaryText),
               ),
@@ -116,10 +118,8 @@ class AppointmentDashboardScreen extends StatelessWidget {
                       icon: Icons.history_outlined,
                       title: 'HISTORY',
                       subtitle: 'Past consultations',
-                      onTap: () => _open(
-                        context,
-                        const AppointmentHistoryScreen(),
-                      ),
+                      onTap: () =>
+                          _open(context, const AppointmentHistoryScreen()),
                     ),
                   ),
                   SizedBox(
@@ -128,10 +128,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
                       icon: Icons.location_on_outlined,
                       title: 'CLINIC',
                       subtitle: 'Directions and details',
-                      onTap: () => _open(
-                        context,
-                        const ClinicLocationScreen(),
-                      ),
+                      onTap: () => _open(context, const ClinicLocationScreen()),
                     ),
                   ),
                 ],
@@ -142,7 +139,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
           Row(
             children: [
               const Expanded(
-                child: Text(
+                child: LocalizedText(
                   'APPOINTMENT REQUESTS',
                   style: TextStyle(
                     color: AppColors.dustyPink,
@@ -157,10 +154,11 @@ class AppointmentDashboardScreen extends StatelessWidget {
                   context,
                   const AppointmentInfoScreen(
                     title: 'Appointment requests',
-                    description: 'Submitted appointment requests will appear here.',
+                    description:
+                        'Submitted appointment requests will appear here.',
                   ),
                 ),
-                child: const Text('View all'),
+                child: LocalizedText('View all'),
               ),
             ],
           ),
@@ -173,14 +171,13 @@ class AppointmentDashboardScreen extends StatelessWidget {
             ),
             child: const Row(
               children: [
-                Icon(Icons.pending_actions_outlined,
-                    color: AppColors.burgundy),
+                Icon(Icons.pending_actions_outlined, color: AppColors.burgundy),
                 SizedBox(width: 11),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      LocalizedText(
                         'Requested',
                         style: TextStyle(
                           color: AppColors.primaryText,
@@ -189,7 +186,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text(
+                      LocalizedText(
                         'Fertility consultation',
                         style: TextStyle(
                           color: AppColors.primaryText,
@@ -198,7 +195,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text(
+                      LocalizedText(
                         '14 May · 10:30 AM · Sample slot',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -213,7 +210,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          const Text(
+          LocalizedText(
             'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.',
             style: TextStyle(
               color: AppColors.secondaryText,

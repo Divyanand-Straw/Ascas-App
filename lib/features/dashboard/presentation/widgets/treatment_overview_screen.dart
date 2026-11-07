@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../data/treatment_journey_data.dart';
 import '../../../appointments/presentation/appointment_detail_screen.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../appointments/presentation/models/appointment_models.dart';
 import 'dashboard_card.dart';
+import '../../../communication/presentation/communication_screen.dart';
+import '../../../education/presentation/education_screen.dart';
 
 class TreatmentOverviewScreen extends StatefulWidget {
   final String treatmentName;
@@ -44,7 +48,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.burgundy,
-        title: const Text(
+        title: LocalizedText(
           'My Fertility Journey',
           style: TextStyle(
             color: AppColors.burgundy,
@@ -52,6 +56,24 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: localizedText(context, 'Education centre'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EducationScreen()),
+            ),
+            icon: const Icon(Icons.menu_book_outlined),
+          ),
+          IconButton(
+            tooltip: localizedText(context, 'Support'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CommunicationScreen()),
+            ),
+            icon: const Icon(Icons.support_agent_outlined),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -69,7 +91,9 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               const SizedBox(height: 22),
               Row(
                 children: [
-                  const Expanded(child: _SectionHeading(title: 'Your journey timeline')),
+                  const Expanded(
+                    child: _SectionHeading(title: 'Your journey timeline'),
+                  ),
                   TextButton(
                     onPressed: () => setState(() {
                       if (_expanded.length == _pathway.milestones.length) {
@@ -91,7 +115,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               const SizedBox(height: 8),
               _timeline(),
               const SizedBox(height: 18),
-              const Text(
+              LocalizedText(
                 'Prototype pathway for demonstration only. Your clinic controls the confirmed journey and medical information.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -114,7 +138,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          LocalizedText(
             'CLINIC-MANAGED CARE JOURNEY',
             style: TextStyle(
               color: AppColors.dustyPink,
@@ -138,14 +162,14 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               ),
               IconButton(
                 onPressed: _changePathway,
-                tooltip: 'Change prototype pathway',
+                tooltip: localizedText(context, 'Change prototype pathway'),
                 icon: const Icon(Icons.swap_horiz, color: AppColors.white),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            '$completed Completed · ${_pathway.currentCount} Current · ${_pathway.upcomingCount} Upcoming',
+          LocalizedText(
+            '$completed Completed Â· ${_pathway.currentCount} Current Â· ${_pathway.upcomingCount} Upcoming',
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 11,
@@ -163,7 +187,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          LocalizedText(
             'Last updated by Thaai Seyazhi care team on 12 Apr 2025.',
             style: TextStyle(color: AppColors.white, fontSize: 10),
           ),
@@ -174,7 +198,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               padding: EdgeInsets.zero,
               foregroundColor: AppColors.white,
             ),
-            child: const Text('Change prototype pathway'),
+            child: LocalizedText('Change prototype pathway'),
           ),
         ],
       ),
@@ -227,7 +251,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          LocalizedText(
             'Follow only the instructions published by your Thaai Seyazhi care team.',
             style: TextStyle(
               color: AppColors.burgundy,
@@ -278,7 +302,11 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
                       shape: BoxShape.circle,
                       border: Border.all(color: color, width: 1.5),
                     ),
-                    child: Icon(_statusIcon(milestone.status), color: color, size: 16),
+                    child: Icon(
+                      _statusIcon(milestone.status),
+                      color: color,
+                      size: 16,
+                    ),
                   ),
                   if (milestone.number < _pathway.milestones.length)
                     Container(
@@ -301,10 +329,11 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            'Milestone ${milestone.number} · ${milestone.name}',
+                          child: LocalizedText(
+                            'Milestone ${milestone.number} Â· ${milestone.name}',
                             style: TextStyle(
-                              color: milestone.status ==
+                              color:
+                                  milestone.status ==
                                       TreatmentMilestoneStatus.current
                                   ? AppColors.burgundy
                                   : AppColors.primaryText,
@@ -393,7 +422,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            LocalizedText(
               'RELATED APPOINTMENT',
               style: TextStyle(
                 color: AppColors.burgundy,
@@ -403,8 +432,8 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              '${appointment.appointmentType}\n${_appointmentDate(appointment)} · ${appointment.time}',
+            LocalizedText(
+              '${appointment.appointmentType}\n${_appointmentDate(appointment)} Â· ${appointment.time}',
               style: const TextStyle(
                 color: AppColors.primaryText,
                 fontSize: 11,
@@ -413,8 +442,8 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               ),
             ),
             const SizedBox(height: 3),
-            Text(
-              '${appointment.doctorName} · ${appointment.status}',
+            LocalizedText(
+              '${appointment.doctorName} Â· ${appointment.status}',
               style: const TextStyle(
                 color: AppColors.secondaryText,
                 fontSize: 10,
@@ -424,16 +453,15 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AppointmentDetailsScreen(
-                    appointment: appointment,
-                  ),
+                  builder: (_) =>
+                      AppointmentDetailsScreen(appointment: appointment),
                 ),
               ),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 foregroundColor: AppColors.burgundy,
               ),
-              child: const Text('View appointment details'),
+              child: LocalizedText('View appointment details'),
             ),
           ],
         ),
@@ -450,7 +478,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          LocalizedText(
             'RELATED HEALTH RECORDS',
             style: TextStyle(
               color: AppColors.burgundy,
@@ -474,8 +502,8 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              subtitle: Text(
-                '${record.documentType} · ${record.uploadDate}',
+              subtitle: LocalizedText(
+                '${record.documentType} Â· ${record.uploadDate}',
                 style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 10,
@@ -483,7 +511,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               ),
               trailing: TextButton(
                 onPressed: () => _showUnavailableRecordMessage(),
-                child: const Text('View'),
+                child: LocalizedText('View'),
               ),
             ),
           ),
@@ -511,7 +539,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          LocalizedText(
             'CLINIC UPDATES',
             style: TextStyle(
               color: AppColors.dustyPink,
@@ -521,7 +549,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
             ),
           ),
           const SizedBox(height: 9),
-          const Text(
+          LocalizedText(
             'Last updated by Thaai Seyazhi care team',
             style: TextStyle(
               color: AppColors.primaryText,
@@ -530,12 +558,12 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            '12 April 2025 · 10:30 AM',
+          LocalizedText(
+            '12 April 2025 Â· 10:30 AM',
             style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
           ),
           const SizedBox(height: 9),
-          const Text(
+          LocalizedText(
             'Recently published milestones and instructions appear here when supplied by the clinic.',
             style: TextStyle(
               color: AppColors.secondaryText,
@@ -569,7 +597,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
   void _showUnavailableRecordMessage() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Health record viewing is not available yet.'),
+        content: LocalizedText('Health record viewing is not available yet.'),
       ),
     );
   }
@@ -586,7 +614,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           children: [
-            const Text(
+            LocalizedText(
               'Change prototype pathway',
               style: TextStyle(
                 color: AppColors.primaryText,
@@ -595,7 +623,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            LocalizedText(
               'This demonstration choice does not modify clinic records.',
               style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
             ),
@@ -628,14 +656,14 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
   }
 
   Widget _sectionTitle(String title) => Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.dustyPink,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.8,
-        ),
-      );
+    title,
+    style: const TextStyle(
+      color: AppColors.dustyPink,
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0.8,
+    ),
+  );
 
   Color _statusColor(TreatmentMilestoneStatus status) {
     switch (status) {
@@ -685,7 +713,7 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
     }
     if (milestone.scheduledDate != null) {
       return 'Date: ${milestone.scheduledDate}'
-          '${milestone.scheduledTime == null ? '' : ' · ${milestone.scheduledTime}'}';
+          '${milestone.scheduledTime == null ? '' : ' Â· ${milestone.scheduledTime}'}';
     }
     return 'Date: Not confirmed';
   }

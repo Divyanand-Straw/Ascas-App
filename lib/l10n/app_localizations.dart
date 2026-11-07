@@ -193,6 +193,414 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tamil'**
   String get tamil;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get getStarted;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// No description provided for @clinicianSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinician-supported'**
+  String get clinicianSupported;
+
+  /// No description provided for @yourFertilityJourney.
+  ///
+  /// In en, this message translates to:
+  /// **'Your fertility\njourney,\nour care.'**
+  String get yourFertilityJourney;
+
+  /// No description provided for @welcomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Expert guidance, thoughtful support, and every step of your care in one private place.'**
+  String get welcomeDescription;
+
+  /// No description provided for @privateConnectedCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Private, connected care from Thaai Seyazhi Fertility and Women’s Centre.'**
+  String get privateConnectedCare;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get createAccount;
+
+  /// No description provided for @newPatientRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW PATIENT REGISTRATION'**
+  String get newPatientRegistration;
+
+  /// No description provided for @letsBegin.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s begin with you'**
+  String get letsBegin;
+
+  /// No description provided for @encryptedPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Your details stay encrypted and private.'**
+  String get encryptedPrivate;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullName;
+
+  /// No description provided for @enterFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your full name'**
+  String get enterFullName;
+
+  /// No description provided for @pleaseEnterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name'**
+  String get pleaseEnterName;
+
+  /// No description provided for @mobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Number'**
+  String get mobileNumber;
+
+  /// No description provided for @enterMobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter mobile number'**
+  String get enterMobileNumber;
+
+  /// No description provided for @validMobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid 10-digit mobile number'**
+  String get validMobileNumber;
+
+  /// No description provided for @emailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get emailAddress;
+
+  /// No description provided for @enterEmailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address'**
+  String get enterEmailAddress;
+
+  /// No description provided for @validEmailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get validEmailAddress;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @enterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get enterPassword;
+
+  /// No description provided for @pleaseEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your password'**
+  String get pleaseEnterPassword;
+
+  /// No description provided for @forgotPasswordQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPasswordQuestion;
+
+  /// No description provided for @orLoginWith.
+  ///
+  /// In en, this message translates to:
+  /// **'OR LOGIN WITH'**
+  String get orLoginWith;
+
+  /// No description provided for @noAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? '**
+  String get noAccount;
+
+  /// No description provided for @patientType.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient type'**
+  String get patientType;
+
+  /// No description provided for @exit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get exit;
+
+  /// No description provided for @secureRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURE REGISTRATION'**
+  String get secureRegistration;
+
+  /// No description provided for @howJoining.
+  ///
+  /// In en, this message translates to:
+  /// **'How are you joining\nThaai Seyazhi?'**
+  String get howJoining;
+
+  /// No description provided for @relationshipClinic.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the option that matches your relationship with the clinic.'**
+  String get relationshipClinic;
+
+  /// No description provided for @newPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'New Patient'**
+  String get newPatient;
+
+  /// No description provided for @newPatientDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new Thaai Seyazhi patient account.'**
+  String get newPatientDescription;
+
+  /// No description provided for @existingPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing Thaai Seyazhi Patient'**
+  String get existingPatient;
+
+  /// No description provided for @existingPatientDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Securely link an existing clinic record.'**
+  String get existingPatientDescription;
+
+  /// No description provided for @linkedMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner / Linked Member'**
+  String get linkedMember;
+
+  /// No description provided for @linkedMemberDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a patient-authorized invitation.'**
+  String get linkedMemberDescription;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @myJourney.
+  ///
+  /// In en, this message translates to:
+  /// **'My Journey'**
+  String get myJourney;
+
+  /// No description provided for @appointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointments'**
+  String get appointments;
+
+  /// No description provided for @healthRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Records'**
+  String get healthRecords;
+
+  /// No description provided for @more.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get more;
+
+  /// No description provided for @appLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get appLanguage;
+
+  /// No description provided for @treatmentCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment & care'**
+  String get treatmentCare;
+
+  /// No description provided for @planningSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning & support'**
+  String get planningSupport;
+
+  /// No description provided for @learnSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn & feel supported'**
+  String get learnSupported;
+
+  /// No description provided for @accountClinic.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & clinic'**
+  String get accountClinic;
+
+  /// No description provided for @medicationInjections.
+  ///
+  /// In en, this message translates to:
+  /// **'Medication & Injections'**
+  String get medicationInjections;
+
+  /// No description provided for @educationCentre.
+  ///
+  /// In en, this message translates to:
+  /// **'Education Centre'**
+  String get educationCentre;
+
+  /// No description provided for @clinicCommunication.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic Communication'**
+  String get clinicCommunication;
+
+  /// No description provided for @patientServices.
+  ///
+  /// In en, this message translates to:
+  /// **'More / Patient Services'**
+  String get patientServices;
+
+  /// No description provided for @languageChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Language updated'**
+  String get languageChanged;
+
+  /// No description provided for @journeySupportedCare.
+  ///
+  /// In en, this message translates to:
+  /// **'Your journey, supported with care'**
+  String get journeySupportedCare;
+
+  /// No description provided for @tapToContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'TAP TO CONTINUE'**
+  String get tapToContinue;
+
+  /// No description provided for @mobileRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile registration'**
+  String get mobileRegistration;
+
+  /// No description provided for @existingPatientMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing patient mobile'**
+  String get existingPatientMobile;
+
+  /// No description provided for @verifyMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your mobile number'**
+  String get verifyMobile;
+
+  /// No description provided for @registeredMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your registered mobile number'**
+  String get registeredMobile;
+
+  /// No description provided for @sendOneTimeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'We will send a one-time code to your Indian mobile number.'**
+  String get sendOneTimeCode;
+
+  /// No description provided for @registeredMobileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the mobile number registered with your hospital record.'**
+  String get registeredMobileHint;
+
+  /// No description provided for @otpVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP verification'**
+  String get otpVerification;
+
+  /// No description provided for @pleaseEnterOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the 6-digit OTP.'**
+  String get pleaseEnterOtp;
+
+  /// No description provided for @incorrectOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect OTP. Please try again.'**
+  String get incorrectOtp;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @resetPasswordDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your registered mobile number and email address. We will help you verify your identity and reset your password.'**
+  String get resetPasswordDescription;
+
+  /// No description provided for @registeredMobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered mobile number'**
+  String get registeredMobileNumber;
+
+  /// No description provided for @registeredEmailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered email address'**
+  String get registeredEmailAddress;
+
+  /// No description provided for @enterTenDigitMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 10-digit mobile number'**
+  String get enterTenDigitMobile;
+
+  /// No description provided for @enterRegisteredEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter registered email address'**
+  String get enterRegisteredEmail;
 }
 
 class _AppLocalizationsDelegate

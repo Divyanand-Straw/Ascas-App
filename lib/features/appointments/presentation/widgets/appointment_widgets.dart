@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/localization/localized_text.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../models/appointment_models.dart';
 
@@ -19,8 +21,8 @@ class AppointmentStatusBadge extends StatelessWidget {
         color: isConfirmed
             ? AppColors.success.withValues(alpha: 0.12)
             : isCancelled
-                ? AppColors.error.withValues(alpha: 0.12)
-                : AppColors.blushPink,
+            ? AppColors.error.withValues(alpha: 0.12)
+            : AppColors.blushPink,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -29,8 +31,8 @@ class AppointmentStatusBadge extends StatelessWidget {
           color: isConfirmed
               ? AppColors.success
               : isCancelled
-                  ? AppColors.error
-                  : AppColors.burgundy,
+              ? AppColors.error
+              : AppColors.burgundy,
           fontSize: 10,
           fontWeight: FontWeight.w700,
         ),
@@ -51,12 +53,20 @@ class AppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFollowUp =
-        appointment.appointmentType.toLowerCase().contains('follow-up');
-    final cardColor = isFollowUp ? AppColors.burgundy : AppColors.white;
-    final primaryColor = isFollowUp ? AppColors.white : AppColors.primaryText;
-    final secondaryColor =
-        isFollowUp ? AppColors.white : AppColors.secondaryText;
+    final isFollowUp = appointment.appointmentType.toLowerCase().contains(
+      'follow-up',
+    );
+    final isMonitoring = appointment.appointmentType.toLowerCase().contains(
+      'monitoring consultation',
+    );
+    final usesBurgundyCard = isFollowUp || isMonitoring;
+    final cardColor = usesBurgundyCard ? AppColors.burgundy : AppColors.white;
+    final primaryColor = usesBurgundyCard
+        ? AppColors.white
+        : AppColors.primaryText;
+    final secondaryColor = usesBurgundyCard
+        ? AppColors.white
+        : AppColors.secondaryText;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -80,7 +90,7 @@ class AppointmentCard extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  LocalizedText(
                     '${appointment.date.day}',
                     style: TextStyle(
                       color: AppColors.burgundy,
@@ -113,20 +123,14 @@ class AppointmentCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Text(
-                    '${_weekday(appointment.date)}, ${appointment.date.day} ${_month(appointment.date)} · ${appointment.time}',
-                    style: TextStyle(
-                      color: secondaryColor,
-                      fontSize: 11,
-                    ),
+                  LocalizedText(
+                    '${_weekday(appointment.date)}, ${appointment.date.day} ${_month(appointment.date)} Â· ${appointment.time}',
+                    style: TextStyle(color: secondaryColor, fontSize: 11),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     appointment.clinic,
-                    style: TextStyle(
-                      color: secondaryColor,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: secondaryColor, fontSize: 10),
                   ),
                 ],
               ),
@@ -138,8 +142,20 @@ class AppointmentCard extends StatelessWidget {
     );
   }
 
-  static String _month(DateTime date) =>
-      const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1];
+  static String _month(DateTime date) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][date.month - 1];
 
   static String _weekday(DateTime date) =>
       const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1];
@@ -212,14 +228,13 @@ class AppointmentSectionTile extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class AppointmentActionTile extends StatelessWidget {
-    final IconData icon;
-    final String title;
-    final String subtitle;
-    final VoidCallback onTap;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   const AppointmentActionTile({
     super.key,

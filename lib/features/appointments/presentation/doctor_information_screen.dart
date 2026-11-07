@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'data/appointment_data.dart';
 import 'models/appointment_models.dart';
@@ -33,9 +35,11 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
   List<Doctor> get _doctors {
     final query = _searchController.text.toLowerCase();
     return sampleDoctors.where((doctor) {
-      final matchesSearch = doctor.name.toLowerCase().contains(query) ||
+      final matchesSearch =
+          doctor.name.toLowerCase().contains(query) ||
           doctor.specialty.toLowerCase().contains(query);
-      final matchesFilter = _filter == 'All' ||
+      final matchesFilter =
+          _filter == 'All' ||
           (_filter == 'Fertility' &&
               doctor.specialty.toLowerCase().contains('fertility')) ||
           (_filter == 'Andrology' &&
@@ -51,12 +55,12 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Our Doctors'),
+        title: LocalizedText('Our Doctors'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
-          const Text(
+          LocalizedText(
             'Search by doctor or specialty',
             style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
           ),
@@ -65,7 +69,7 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
             controller: _searchController,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              hintText: 'Search doctors',
+              hintText: localizedText(context, 'Search doctors'),
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: AppColors.white,
@@ -99,9 +103,13 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
           const SizedBox(height: 18),
           ..._doctors.map(_doctorCard),
           const SizedBox(height: 10),
-          const Text(
+          LocalizedText(
             'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.',
-            style: TextStyle(color: AppColors.secondaryText, fontSize: 10, height: 1.4),
+            style: TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 10,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -124,7 +132,10 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
             backgroundColor: AppColors.blushPink,
             child: Text(
               doctor.initials,
-              style: const TextStyle(color: AppColors.burgundy, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: AppColors.burgundy,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -132,14 +143,31 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(doctor.name,
-                    style: const TextStyle(color: AppColors.primaryText, fontSize: 13, fontWeight: FontWeight.w700)),
+                Text(
+                  doctor.name,
+                  style: const TextStyle(
+                    color: AppColors.primaryText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(doctor.specialty,
-                    style: const TextStyle(color: AppColors.burgundy, fontSize: 11, fontWeight: FontWeight.w600)),
+                Text(
+                  doctor.specialty,
+                  style: const TextStyle(
+                    color: AppColors.burgundy,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(doctor.languages,
-                    style: const TextStyle(color: AppColors.secondaryText, fontSize: 10)),
+                Text(
+                  doctor.languages,
+                  style: const TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 10,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -155,7 +183,7 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
                           ),
                         ),
                       ),
-                      child: const Text('View profile'),
+                      child: LocalizedText('View profile'),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.push(
@@ -173,7 +201,7 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
                         foregroundColor: AppColors.white,
                         elevation: 0,
                       ),
-                      child: const Text('Request'),
+                      child: LocalizedText('Request'),
                     ),
                   ],
                 ),

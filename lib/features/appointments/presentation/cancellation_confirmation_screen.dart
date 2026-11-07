@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'appointment_detail_screen.dart';
 import 'data/appointment_data.dart';
@@ -9,10 +11,7 @@ import 'widgets/appointment_widgets.dart';
 class CancellationConfirmationScreen extends StatefulWidget {
   final Appointment appointment;
 
-  const CancellationConfirmationScreen({
-    super.key,
-    required this.appointment,
-  });
+  const CancellationConfirmationScreen({super.key, required this.appointment});
 
   @override
   State<CancellationConfirmationScreen> createState() =>
@@ -31,7 +30,7 @@ class _CancellationConfirmationScreenState
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Cancel appointment'),
+        title: LocalizedText('Cancel appointment'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -47,7 +46,7 @@ class _CancellationConfirmationScreenState
               ),
             ),
             const SizedBox(height: 8),
-            Text(
+            LocalizedText(
               '${appointment.date.day} ${_month(appointment.date.month)} · ${appointment.time}',
               style: const TextStyle(
                 color: AppColors.secondaryText,
@@ -58,12 +57,9 @@ class _CancellationConfirmationScreenState
             if (_cancelled) ...[
               const AppointmentStatusBadge('Cancelled'),
               const SizedBox(height: 14),
-              const Text(
+              LocalizedText(
                 'Your appointment has been cancelled successfully.',
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: AppColors.primaryText, fontSize: 13),
               ),
               const Spacer(),
               SizedBox(
@@ -72,28 +68,24 @@ class _CancellationConfirmationScreenState
                   onPressed: () => Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AppointmentDetailsScreen(
-                        appointment: appointment,
-                      ),
+                      builder: (_) =>
+                          AppointmentDetailsScreen(appointment: appointment),
                     ),
                   ),
-                  child: const Text('View appointment details'),
+                  child: LocalizedText('View appointment details'),
                 ),
               ),
             ] else ...[
-              const Text(
+              LocalizedText(
                 'Are you sure you want to cancel this appointment?',
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppColors.primaryText, fontSize: 14),
               ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Keep appointment'),
+                  child: LocalizedText('Keep appointment'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -109,7 +101,7 @@ class _CancellationConfirmationScreenState
                     foregroundColor: AppColors.white,
                     elevation: 0,
                   ),
-                  child: const Text('Confirm cancellation'),
+                  child: LocalizedText('Confirm cancellation'),
                 ),
               ),
             ],
@@ -119,6 +111,18 @@ class _CancellationConfirmationScreenState
     );
   }
 
-  static String _month(int month) =>
-      const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1];
+  static String _month(int month) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][month - 1];
 }

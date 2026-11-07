@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String registeredMobile;
+  final String registeredEmail;
+
+  const ResetPasswordScreen({
+    super.key,
+    required this.registeredMobile,
+    required this.registeredEmail,
+  });
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -63,9 +71,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showSuccessDialog() {
@@ -121,9 +128,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    Navigator.of(context).popUntil(
-                      (route) => route.isFirst,
-                    );
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
@@ -135,10 +140,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                   child: const Text(
                     'Back to Login',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                 ),
               ),
@@ -174,10 +176,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           controller: controller,
           obscureText: obscureText,
           onChanged: onChanged,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: Colors.black, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
@@ -185,10 +184,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               fontSize: 13,
             ),
             errorText: errorText,
-            errorStyle: const TextStyle(
-              color: AppColors.error,
-              fontSize: 11,
-            ),
+            errorStyle: const TextStyle(color: AppColors.error, fontSize: 11),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(
@@ -207,9 +203,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.divider,
-              ),
+              borderSide: const BorderSide(color: AppColors.divider),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -303,6 +297,22 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
 
               const SizedBox(height: 38),
+
+              _registeredContact(
+                label: 'Registered mobile number',
+                value: '+91 ${widget.registeredMobile}',
+                icon: Icons.phone_outlined,
+              ),
+
+              const SizedBox(height: 14),
+
+              _registeredContact(
+                label: 'Registered email address',
+                value: widget.registeredEmail,
+                icon: Icons.email_outlined,
+              ),
+
+              const SizedBox(height: 28),
 
               _buildPasswordField(
                 label: 'New Password',
@@ -408,6 +418,46 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _registeredContact({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 9),
+        InputDecorator(
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppColors.secondaryText),
+            suffixIcon: const Icon(
+              Icons.verified_outlined,
+              color: AppColors.success,
+            ),
+            filled: true,
+            fillColor: AppColors.blushPink,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.divider),
+            ),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(color: AppColors.primaryText, fontSize: 14),
+          ),
+        ),
+      ],
     );
   }
 }

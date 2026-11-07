@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import 'appointment_detail_screen.dart';
 import 'data/appointment_data.dart';
@@ -26,11 +28,11 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Upcoming appointments'),
+        title: LocalizedText('Upcoming appointments'),
       ),
       body: appointments.isEmpty
           ? const Center(
-              child: Text(
+              child: LocalizedText(
                 'No upcoming appointments.',
                 style: TextStyle(color: AppColors.secondaryText),
               ),
@@ -42,7 +44,7 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
                   (appointment) => _card(context, appointment),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                LocalizedText(
                   'Prototype sample appointments only. They are not real bookings.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -82,7 +84,7 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 9),
-          Text(
+          LocalizedText(
             '${_date(appointment.date)} · ${appointment.time}',
             style: const TextStyle(
               color: AppColors.secondaryText,
@@ -90,7 +92,7 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          LocalizedText(
             '${appointment.appointmentType} · ${appointment.consultationMode}',
             style: const TextStyle(
               color: AppColors.secondaryText,
@@ -118,7 +120,7 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              child: const Text('View details'),
+              child: LocalizedText('View details'),
             ),
           ),
         ],

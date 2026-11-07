@@ -99,14 +99,14 @@ class AppointmentStore extends ChangeNotifier {
   List<Appointment> get history => List.unmodifiable(sampleHistory);
 
   Appointment? get nearestUpcoming {
-    final eligible = sampleAppointments.where((appointment) {
-      return appointment.status != 'Cancelled' &&
-          appointment.status != 'Completed' &&
-          appointmentDateTime(appointment).isAfter(DateTime.now());
-    }).toList()
-      ..sort(
-        (a, b) => appointmentDateTime(a).compareTo(appointmentDateTime(b)),
-      );
+    final eligible =
+        sampleAppointments.where((appointment) {
+          return appointment.status != 'Cancelled' &&
+              appointment.status != 'Completed' &&
+              appointmentDateTime(appointment).isAfter(DateTime.now());
+        }).toList()..sort(
+          (a, b) => appointmentDateTime(a).compareTo(appointmentDateTime(b)),
+        );
     return eligible.isEmpty ? null : eligible.first;
   }
 
@@ -150,18 +150,18 @@ Future<void> addAppointment({
 }) async {
   final id = 'PROTOTYPE-${DateTime.now().microsecondsSinceEpoch}';
   final appointment = Appointment(
-      title: appointmentType,
-      date: date,
-      time: time,
-      clinic: 'Thaai Seyazhi Clinic',
-      status: 'Requested',
-      doctorName: doctor.name,
-      specialty: doctor.specialty,
-      appointmentType: appointmentType,
-      consultationMode: consultationMode,
-      patientName: patientName,
-      notes: notes.isEmpty ? 'No additional notes.' : notes,
-      reference: id,
+    title: appointmentType,
+    date: date,
+    time: time,
+    clinic: 'Thaai Seyazhi Clinic',
+    status: 'Requested',
+    doctorName: doctor.name,
+    specialty: doctor.specialty,
+    appointmentType: appointmentType,
+    consultationMode: consultationMode,
+    patientName: patientName,
+    notes: notes.isEmpty ? 'No additional notes.' : notes,
+    reference: id,
   );
   sampleAppointments.add(appointment);
   await _save();
@@ -177,7 +177,9 @@ Future<void> cancelAppointment(Appointment appointment) async {
     sampleHistory.insert(0, appointment);
   }
   await _save();
-  await NotificationService.instance.cancelAppointmentNotifications(appointment);
+  await NotificationService.instance.cancelAppointmentNotifications(
+    appointment,
+  );
   await NotificationService.instance.showCancellation(appointment);
   appointmentStore.refresh();
 }
@@ -216,11 +218,15 @@ Future<void> _save() async {
   final preferences = await SharedPreferences.getInstance();
   await preferences.setString(
     _appointmentsKey,
-    jsonEncode(sampleAppointments.map((appointment) => appointment.toMap()).toList()),
+    jsonEncode(
+      sampleAppointments.map((appointment) => appointment.toMap()).toList(),
+    ),
   );
   await preferences.setString(
     _historyKey,
-    jsonEncode(sampleHistory.map((appointment) => appointment.toMap()).toList()),
+    jsonEncode(
+      sampleHistory.map((appointment) => appointment.toMap()).toList(),
+    ),
   );
 }
 

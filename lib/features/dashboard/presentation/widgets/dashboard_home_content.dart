@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+import '../../../../core/formatters/currency_formatter.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../appointments/presentation/appointment_detail_screen.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
@@ -36,7 +39,6 @@ class DashboardHomeContent extends StatefulWidget {
 }
 
 class _DashboardHomeContentState extends State<DashboardHomeContent> {
-  String? _selectedMood;
   final Set<int> _completedActions = {0};
   final Set<int> _completedTasks = {};
   final int _completedDoses = 2;
@@ -71,7 +73,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
       case DashboardPatientState.newPatient:
         return 'Getting started';
       case DashboardPatientState.ivf:
-        return 'IVF · Ovarian stimulation';
+        return 'IVF Â· Ovarian stimulation';
       case DashboardPatientState.iui:
         return 'IUI preparation';
       case DashboardPatientState.embryoTransfer:
@@ -84,7 +86,6 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
         return 'Follow-up care';
     }
   }
-
 
   String get _treatmentName {
     switch (widget.patientState) {
@@ -105,31 +106,13 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
     }
   }
 
-  bool get _hasTriggerReminder => widget.patientState == DashboardPatientState.ivf;
+  bool get _hasTriggerReminder =>
+      widget.patientState == DashboardPatientState.ivf;
 
   bool get _hasMedicationSchedule =>
       widget.patientState == DashboardPatientState.ivf ||
       widget.patientState == DashboardPatientState.iui ||
       widget.patientState == DashboardPatientState.postProcedureRecovery;
-
-  String _moodMessage(String mood) {
-    switch (mood) {
-      case 'Happy':
-        return "We're glad you're feeling happy today. Keep embracing the little moments.";
-      case 'Calm':
-        return "That's lovely. Take things one step at a time and enjoy this peaceful moment.";
-      case 'Good':
-        return "Glad to hear that you're doing well today. Keep taking care of yourself.";
-      case 'Anxious':
-        return "It's okay to feel anxious. Take a deep breath. Your care team is here to support you.";
-      case 'Okay':
-        return 'Every day can feel different. Take today at your own pace.';
-      case 'Tired':
-        return 'Remember to be gentle with yourself. Rest when you need to.';
-      default:
-        return '';
-    }
-  }
 
   void _openDetail({
     required String title,
@@ -197,93 +180,11 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Close'),
+                child: LocalizedText('Close'),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _moodPicker() {
-    const moods = [
-      ('😊', 'Happy'),
-      ('😌', 'Calm'),
-      ('🙂', 'Good'),
-      ('😟', 'Anxious'),
-      ('😐', 'Okay'),
-      ('😴', 'Tired'),
-    ];
-    return DashboardCard(
-      color: AppColors.white,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'HOW ARE YOU FEELING?',
-            style: TextStyle(
-              color: AppColors.dustyPink,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.9,
-            ),
-          ),
-          const SizedBox(height: 11),
-          Row(
-            children: moods.map((mood) {
-              final selected = _selectedMood == mood.$2;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedMood = mood.$2),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected ? AppColors.blushPink : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected ? AppColors.dustyPink : Colors.transparent,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          mood.$1,
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          mood.$2,
-                          style: TextStyle(
-                            color: selected
-                                ? AppColors.burgundy
-                                : AppColors.secondaryText,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          if (_selectedMood != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              _moodMessage(_selectedMood!),
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 10,
-                height: 1.35,
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -308,8 +209,8 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
           children: [
             Row(
               children: [
-                const Expanded(
-                  child: Text(
+                Expanded(
+                  child: LocalizedText(
                     'MY FERTILITY JOURNEY',
                     style: TextStyle(
                       color: AppColors.dustyPink,
@@ -319,8 +220,11 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_rounded,
-                    color: AppColors.white, size: 19),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: AppColors.white,
+                  size: 19,
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -363,7 +267,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
             const SizedBox(height: 9),
             const Row(
               children: [
-                Text(
+                LocalizedText(
                   '3 confirmed',
                   style: TextStyle(
                     color: AppColors.white,
@@ -372,7 +276,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                   ),
                 ),
                 Spacer(),
-                Text(
+                LocalizedText(
                   'View journey',
                   style: TextStyle(
                     color: AppColors.white,
@@ -387,7 +291,6 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
       ),
     );
   }
-
 
   Widget treatmentOverviewCard() {
     return GestureDetector(
@@ -423,8 +326,8 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                   ),
                 ),
                 const SizedBox(width: 11),
-                const Expanded(
-                  child: Text(
+                Expanded(
+                  child: LocalizedText(
                     'TREATMENT OVERVIEW',
                     style: TextStyle(
                       color: AppColors.dustyPink,
@@ -464,14 +367,10 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
             const SizedBox(height: 14),
             const Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  color: AppColors.dustyPink,
-                  size: 15,
-                ),
+                Icon(Icons.info_outline, color: AppColors.dustyPink, size: 15),
                 SizedBox(width: 6),
                 Expanded(
-                  child: Text(
+                  child: LocalizedText(
                     'View treatment details and progress',
                     style: TextStyle(
                       color: AppColors.burgundy,
@@ -504,7 +403,9 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
         rows: [
           DashboardDetailRow(
             label: 'Status',
-            value: completed ? 'Completed in this prototype' : 'Pending clinic task',
+            value: completed
+                ? 'Completed in this prototype'
+                : 'Pending clinic task',
             icon: completed ? Icons.check_circle_outline : icon,
           ),
           const DashboardDetailRow(
@@ -544,11 +445,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 ),
               ),
               if (index == 0)
-                Container(
-                  width: 2,
-                  height: 45,
-                  color: AppColors.divider,
-                ),
+                Container(width: 2, height: 45, color: AppColors.divider),
             ],
           ),
           const SizedBox(width: 12),
@@ -574,8 +471,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                       color: AppColors.primaryText,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      decoration:
-                          completed ? TextDecoration.lineThrough : null,
+                      decoration: completed ? TextDecoration.lineThrough : null,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -590,7 +486,11 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ),
             ),
           ),
-          const Icon(Icons.chevron_right, color: AppColors.secondaryText, size: 19),
+          const Icon(
+            Icons.chevron_right,
+            color: AppColors.secondaryText,
+            size: 19,
+          ),
         ],
       ),
     );
@@ -606,14 +506,14 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
             index: 0,
             date: 'NEXT',
             title: 'Take evening medication',
-            subtitle: 'Clinic reminder · 8:00 PM',
+            subtitle: 'Clinic reminder Â· 8:00 PM',
             icon: Icons.medication_outlined,
           ),
           _timelineAction(
             index: 1,
             date: '12 MAY',
             title: 'Attend confirmed clinic appointment',
-            subtitle: 'Thaai Seyazhi · 10:30 AM',
+            subtitle: 'Thaai Seyazhi Â· 10:30 AM',
             icon: Icons.calendar_month_outlined,
           ),
         ],
@@ -626,10 +526,14 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
       return const SizedBox.shrink();
     }
     final hours = _triggerRemaining.inHours.toString().padLeft(2, '0');
-    final minutes =
-        (_triggerRemaining.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds =
-        (_triggerRemaining.inSeconds % 60).toString().padLeft(2, '0');
+    final minutes = (_triggerRemaining.inMinutes % 60).toString().padLeft(
+      2,
+      '0',
+    );
+    final seconds = (_triggerRemaining.inSeconds % 60).toString().padLeft(
+      2,
+      '0',
+    );
     return DashboardCard(
       color: AppColors.burgundy,
       child: InkWell(
@@ -640,7 +544,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
           rows: const [
             DashboardDetailRow(
               label: 'Scheduled',
-              value: 'Today · 10:30 PM',
+              value: 'Today Â· 10:30 PM',
               icon: Icons.schedule_outlined,
             ),
             DashboardDetailRow(
@@ -653,7 +557,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            LocalizedText(
               'CLINIC-ENTERED TRIGGER REMINDER',
               style: TextStyle(
                 color: AppColors.dustyPink,
@@ -663,7 +567,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ),
             ),
             const SizedBox(height: 9),
-            Text(
+            LocalizedText(
               '$hours:$minutes:$seconds',
               style: const TextStyle(
                 color: AppColors.white,
@@ -673,8 +577,8 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Today · 10:30 PM · Reminder details',
+            LocalizedText(
+              'Today Â· 10:30 PM Â· Reminder details',
               style: TextStyle(color: AppColors.white, fontSize: 11),
             ),
           ],
@@ -691,7 +595,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            LocalizedText(
               'NEXT APPOINTMENT',
               style: TextStyle(
                 color: AppColors.dustyPink,
@@ -701,7 +605,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            LocalizedText(
               'No upcoming appointments',
               style: TextStyle(
                 color: AppColors.primaryText,
@@ -710,14 +614,11 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ),
             ),
             const SizedBox(height: 7),
-            const Text(
+            LocalizedText(
               'Book a visit with your care team.',
-              style: TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
             ),
-            const Spacer(),
+            const SizedBox(height: 18),
             TextButton(
               onPressed: () => Navigator.push(
                 context,
@@ -732,28 +633,28 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 padding: EdgeInsets.zero,
                 foregroundColor: AppColors.burgundy,
               ),
-              child: const Text('Book an appointment'),
+              child: LocalizedText('Book an appointment'),
             ),
           ],
         ),
       );
     }
 
-    final isFollowUp = appointment.appointmentType
-        .toLowerCase()
-        .contains('follow-up');
-    final foregroundColor =
-        isFollowUp ? AppColors.white : AppColors.primaryText;
-    final secondaryColor =
-        isFollowUp ? AppColors.white : AppColors.secondaryText;
+    final isFollowUp = appointment.appointmentType.toLowerCase().contains(
+      'follow-up',
+    );
+    final foregroundColor = isFollowUp
+        ? AppColors.white
+        : AppColors.primaryText;
+    final secondaryColor = isFollowUp
+        ? AppColors.white
+        : AppColors.secondaryText;
 
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => AppointmentDetailsScreen(
-            appointment: appointment,
-          ),
+          builder: (_) => AppointmentDetailsScreen(appointment: appointment),
         ),
       ),
       child: DashboardCard(
@@ -764,12 +665,14 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
           children: [
             Row(
               children: [
-                Icon(Icons.calendar_month_outlined,
-                    color: isFollowUp ? AppColors.white : AppColors.burgundy,
-                    size: 18),
+                Icon(
+                  Icons.calendar_month_outlined,
+                  color: isFollowUp ? AppColors.white : AppColors.burgundy,
+                  size: 18,
+                ),
                 SizedBox(width: 7),
                 Expanded(
-                  child: Text(
+                  child: LocalizedText(
                     'NEXT APPOINTMENT',
                     style: TextStyle(
                       color: AppColors.dustyPink,
@@ -813,21 +716,15 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
             Text(
               appointment.doctorName,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: secondaryColor,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: secondaryColor, fontSize: 10),
             ),
             const SizedBox(height: 4),
-            Text(
+            LocalizedText(
               'Status: ${_statusLabel(appointment.status)}',
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 10,
-              ),
+              style: const TextStyle(color: AppColors.white, fontSize: 10),
             ),
-            const Spacer(),
-            Text(
+            const SizedBox(height: 18),
+            LocalizedText(
               'View appointment details',
               style: TextStyle(
                 color: isFollowUp ? AppColors.white : AppColors.burgundy,
@@ -870,7 +767,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
       onTap: () => _openDetail(
         title: 'Medication schedule',
         eyebrow: 'PROTOTYPE SCHEDULE',
-        description: 'Today’s clinic-entered medication schedule',
+        description: 'Todayâ€™s clinic-entered medication schedule',
         rows: const [
           DashboardDetailRow(
             label: 'Next dose',
@@ -891,12 +788,15 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
           children: [
             const Row(
               children: [
-                Icon(Icons.medication_outlined,
-                    color: AppColors.burgundy, size: 18),
+                Icon(
+                  Icons.medication_outlined,
+                  color: AppColors.burgundy,
+                  size: 18,
+                ),
                 SizedBox(width: 7),
                 Expanded(
-                  child: Text(
-                    'TODAY’S MEDICATION',
+                  child: LocalizedText(
+                    'TODAYâ€™S MEDICATION',
                     style: TextStyle(
                       color: AppColors.dustyPink,
                       fontSize: 9,
@@ -908,7 +808,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ],
             ),
             const SizedBox(height: 15),
-            Text(
+            LocalizedText(
               '$_completedDoses of 3 completed',
               style: const TextStyle(
                 color: AppColors.primaryText,
@@ -929,16 +829,13 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               ),
             ),
             const SizedBox(height: 13),
-            const Text(
-              'Next dose · 8:00 PM',
+            LocalizedText(
+              'Next dose Â· 8:00 PM',
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
             ),
-            const Spacer(),
-            const Text(
+            const SizedBox(height: 18),
+            LocalizedText(
               'View schedule',
               style: TextStyle(
                 color: AppColors.burgundy,
@@ -982,15 +879,27 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
 
   Widget _pendingTasksCard() {
     const tasks = [
-      ('Upload previous blood test', 'Requested by your care coordinator', Icons.upload_file_outlined),
-      ('Confirm monitoring appointment', 'Response requested by Thaai Seyazhi', Icons.event_available_outlined),
-      ('Review consent form', 'Updated patient privacy consent', Icons.description_outlined),
+      (
+        'Upload previous blood test',
+        'Requested by your care coordinator',
+        Icons.upload_file_outlined,
+      ),
+      (
+        'Confirm monitoring appointment',
+        'Response requested by Thaai Seyazhi',
+        Icons.event_available_outlined,
+      ),
+      (
+        'Review consent form',
+        'Updated patient privacy consent',
+        Icons.description_outlined,
+      ),
     ];
     return DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          LocalizedText(
             '${tasks.length - _completedTasks.length} pending',
             style: const TextStyle(
               color: AppColors.dustyPink,
@@ -1020,7 +929,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                         rows: const [
                           DashboardDetailRow(
                             label: 'Appointment',
-                            value: 'Mon, 12 May · 10:30 AM · Thaai Seyazhi',
+                            value: 'Mon, 12 May Â· 10:30 AM Â· Thaai Seyazhi',
                             icon: Icons.calendar_month_outlined,
                           ),
                         ],
@@ -1090,8 +999,9 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                                   color: AppColors.primaryText,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  decoration:
-                                      completed ? TextDecoration.lineThrough : null,
+                                  decoration: completed
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -1105,8 +1015,11 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right,
-                            color: AppColors.secondaryText, size: 18),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.secondaryText,
+                          size: 18,
+                        ),
                       ],
                     ),
                   ),
@@ -1135,7 +1048,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
           ),
           DashboardDetailRow(
             label: 'File',
-            value: 'PDF · Sample record · Ready',
+            value: 'PDF Â· Sample record Â· Ready',
             icon: Icons.picture_as_pdf_outlined,
           ),
         ],
@@ -1155,15 +1068,17 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 color: AppColors.blushPink,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.picture_as_pdf_outlined,
-                  color: AppColors.burgundy),
+              child: const Icon(
+                Icons.picture_as_pdf_outlined,
+                color: AppColors.burgundy,
+              ),
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LocalizedText(
                     'Blood Test Report',
                     style: TextStyle(
                       color: AppColors.primaryText,
@@ -1172,8 +1087,8 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     ),
                   ),
                   SizedBox(height: 5),
-                  Text(
-                    'Added 12 Apr 2025 · PDF',
+                  LocalizedText(
+                    'Added 12 Apr 2025 Â· PDF',
                     style: TextStyle(
                       color: AppColors.secondaryText,
                       fontSize: 10,
@@ -1182,7 +1097,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 ],
               ),
             ),
-            const Text(
+            LocalizedText(
               'Ready',
               style: TextStyle(
                 color: AppColors.success,
@@ -1268,15 +1183,17 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               color: AppColors.blushPink,
               borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(Icons.account_balance_wallet_outlined,
-                color: AppColors.burgundy),
+            child: const Icon(
+              Icons.account_balance_wallet_outlined,
+              color: AppColors.burgundy,
+            ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                LocalizedText(
                   'PENDING BALANCE · SAMPLE DATA',
                   style: TextStyle(
                     color: AppColors.dustyPink,
@@ -1287,7 +1204,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  '₹24,500',
+                  formatIndianRupees(24500),
                   style: TextStyle(
                     color: AppColors.burgundy,
                     fontSize: 22,
@@ -1295,32 +1212,47 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                   ),
                 ),
                 SizedBox(height: 3),
-                Text(
+                LocalizedText(
                   'Next package payment due 20 May',
-                  style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
+                  style: TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () => _openDetail(
-              title: 'Billing',
-              eyebrow: 'PROTOTYPE SAMPLE DATA',
-              description: 'Payment summary',
-              rows: const [
-                DashboardDetailRow(
-                  label: 'Status',
-                  value: 'Pending payment',
-                  icon: Icons.pending_actions_outlined,
-                ),
-                DashboardDetailRow(
-                  label: 'Due date',
-                  value: '20 May',
-                  icon: Icons.event_outlined,
-                ),
-              ],
+          SizedBox(
+            width: 82,
+            child: TextButton(
+              onPressed: () => _openDetail(
+                title: 'Billing',
+                eyebrow: 'PROTOTYPE SAMPLE DATA',
+                description: 'Payment summary',
+                rows: const [
+                  DashboardDetailRow(
+                    label: 'Status',
+                    value: 'Pending payment',
+                    icon: Icons.pending_actions_outlined,
+                  ),
+                  DashboardDetailRow(
+                    label: 'Due date',
+                    value: '20 May',
+                    icon: Icons.event_outlined,
+                  ),
+                ],
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: LocalizedText(
+                'View billing',
+                textAlign: TextAlign.center,
+                softWrap: true,
+              ),
             ),
-            child: const Text('View billing'),
           ),
         ],
       ),
@@ -1331,7 +1263,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
     return InkWell(
       onTap: () => _openDetail(
         title: 'Clinic update',
-        eyebrow: 'THAAI SEYAZHI · 2 HOURS AGO',
+        eyebrow: 'THAAI SEYAZHI Â· 2 HOURS AGO',
         description: 'Preparation guidance for your next visit',
         rows: const [
           DashboardDetailRow(
@@ -1353,15 +1285,17 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.campaign_outlined,
-                  color: AppColors.burgundy),
+              child: const Icon(
+                Icons.campaign_outlined,
+                color: AppColors.burgundy,
+              ),
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LocalizedText(
                     'Clinic update',
                     style: TextStyle(
                       color: AppColors.burgundy,
@@ -1371,7 +1305,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     ),
                   ),
                   SizedBox(height: 6),
-                  Text(
+                  LocalizedText(
                     'Preparation guidance for your next visit.',
                     style: TextStyle(
                       color: AppColors.primaryText,
@@ -1380,9 +1314,12 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     ),
                   ),
                   SizedBox(height: 5),
-                  Text(
-                    'Thaai Seyazhi · 2 hours ago',
-                    style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
+                  LocalizedText(
+                    'Thaai Seyazhi Â· 2 hours ago',
+                    style: TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
@@ -1398,8 +1335,9 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
     return InkWell(
       onTap: () => _openDetail(
         title: 'Staying calm before a monitoring visit',
-        eyebrow: '5 MIN READ · CLINIC REVIEWED',
-        description: 'Small ways to feel prepared before you visit your care team.',
+        eyebrow: '5 MIN READ Â· CLINIC REVIEWED',
+        description:
+            'Small ways to feel prepared before you visit your care team.',
         rows: const [
           DashboardDetailRow(
             label: 'Article',
@@ -1424,8 +1362,11 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
               ),
               child: const Center(
-                child: Icon(Icons.self_improvement_outlined,
-                    color: AppColors.white, size: 52),
+                child: Icon(
+                  Icons.self_improvement_outlined,
+                  color: AppColors.white,
+                  size: 52,
+                ),
               ),
             ),
             const Padding(
@@ -1433,8 +1374,8 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '5 MIN READ · CLINIC REVIEWED',
+                  LocalizedText(
+                    '5 MIN READ Â· CLINIC REVIEWED',
                     style: TextStyle(
                       color: AppColors.dustyPink,
                       fontSize: 9,
@@ -1443,7 +1384,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     ),
                   ),
                   SizedBox(height: 7),
-                  Text(
+                  LocalizedText(
                     'Staying calm before a monitoring visit',
                     style: TextStyle(
                       color: AppColors.primaryText,
@@ -1452,7 +1393,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                     ),
                   ),
                   SizedBox(height: 8),
-                  Text(
+                  LocalizedText(
                     'Read article',
                     style: TextStyle(
                       color: AppColors.burgundy,
@@ -1490,7 +1431,7 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                LocalizedText(
                   'Need help from Thaai Seyazhi?',
                   style: TextStyle(
                     color: AppColors.white,
@@ -1499,12 +1440,12 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
                   ),
                 ),
                 SizedBox(height: 5),
-                Text(
+                LocalizedText(
                   'Message or call your clinic support team.',
                   style: TextStyle(color: AppColors.white, fontSize: 11),
                 ),
                 SizedBox(height: 8),
-                Text(
+                LocalizedText(
                   'Contact details: configured clinic information',
                   style: TextStyle(color: AppColors.white, fontSize: 10),
                 ),
@@ -1533,25 +1474,23 @@ class _DashboardHomeContentState extends State<DashboardHomeContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 18),
-        Text(
+        LocalizedText(
           'Good morning, ${widget.patientName}',
           style: const TextStyle(
             color: AppColors.burgundy,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 7),
-        const Text(
-          'How are you feeling today?',
-          style: TextStyle(
-            color: AppColors.primaryText,
             fontSize: 25,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 16),
-        _moodPicker(),
+        const SizedBox(height: 7),
+        LocalizedText(
+          'How are you feeling today?',
+          style: TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 20),
         _journeyCard(),
         const SizedBox(height: 20),

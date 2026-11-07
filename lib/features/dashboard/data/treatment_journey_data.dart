@@ -1,9 +1,4 @@
-enum TreatmentMilestoneStatus {
-  completed,
-  current,
-  upcoming,
-  awaitingUpdate,
-}
+enum TreatmentMilestoneStatus { completed, current, upcoming, awaitingUpdate }
 
 class TreatmentMilestone {
   final String id;
@@ -61,15 +56,21 @@ class TreatmentPathway {
   });
 
   int get completedCount => milestones
-      .where((milestone) => milestone.status == TreatmentMilestoneStatus.completed)
+      .where(
+        (milestone) => milestone.status == TreatmentMilestoneStatus.completed,
+      )
       .length;
 
   int get currentCount => milestones
-      .where((milestone) => milestone.status == TreatmentMilestoneStatus.current)
+      .where(
+        (milestone) => milestone.status == TreatmentMilestoneStatus.current,
+      )
       .length;
 
   int get upcomingCount => milestones
-      .where((milestone) => milestone.status == TreatmentMilestoneStatus.upcoming)
+      .where(
+        (milestone) => milestone.status == TreatmentMilestoneStatus.upcoming,
+      )
       .length;
 }
 
@@ -78,16 +79,28 @@ TreatmentPathway pathwayFor(String name, String fallbackStage) {
     return ivfCycleOne;
   }
   if (name == 'IUI Treatment') {
-    return _placeholderPathway('IUI Treatment', 'Clinic-published stage pending');
+    return _placeholderPathway(
+      'IUI Treatment',
+      'Clinic-published stage pending',
+    );
   }
   if (name == 'Embryo Transfer') {
-    return _placeholderPathway('Embryo Transfer', 'Clinic-published stage pending');
+    return _placeholderPathway(
+      'Embryo Transfer',
+      'Clinic-published stage pending',
+    );
   }
   if (name == 'Two-Week Wait') {
-    return _placeholderPathway('Two-Week Wait', 'Clinic-published stage pending');
+    return _placeholderPathway(
+      'Two-Week Wait',
+      'Clinic-published stage pending',
+    );
   }
   if (name == 'Follow-up Care') {
-    return _placeholderPathway('Follow-up Care', 'Clinic-published stage pending');
+    return _placeholderPathway(
+      'Follow-up Care',
+      'Clinic-published stage pending',
+    );
   }
   return _placeholderPathway(name, fallbackStage);
 }
@@ -125,8 +138,7 @@ final ivfCycleOne = TreatmentPathway(
       status: TreatmentMilestoneStatus.current,
       startDate: '12 April 2025',
       description: 'Current clinic-confirmed milestone.',
-      instructions:
-          'Follow only the instructions published by your Thaai Seyazhi care team.',
+      instructions: 'Follow only the instructions published by your Thaai Seyazhi care team.',
     ),
     const TreatmentMilestone(
       id: 'ivf-5',
@@ -143,7 +155,8 @@ final ivfCycleOne = TreatmentPathway(
       number: 6,
       name: 'Trigger injection',
       status: TreatmentMilestoneStatus.awaitingUpdate,
-      description: 'Date not confirmed. Details will be published by the clinic.',
+      description:
+          'Date not confirmed. Details will be published by the clinic.',
     ),
     const TreatmentMilestone(
       id: 'ivf-7',
