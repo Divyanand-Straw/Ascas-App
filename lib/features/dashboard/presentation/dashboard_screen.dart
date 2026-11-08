@@ -10,10 +10,10 @@ import '../../../l10n/app_localizations.dart';
 import '../../appointments/presentation/appointment_dashboard_screen.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../medical_records/presentation/medical_records_screen.dart';
+import 'journey_screen.dart';
 import 'widgets/dashboard_home_content.dart';
 import 'widgets/patient_profile_screen.dart';
 import 'widgets/patient_services_screen.dart';
-import 'widgets/treatment_overview_screen.dart';
 
 export 'widgets/dashboard_home_content.dart' show DashboardPatientState;
 
@@ -97,6 +97,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       mobileNumber: _mobileNumber,
       dateOfBirth: _dateOfBirth,
       preferredLanguage: _currentLanguage,
+      accountId: widget.accountId.isEmpty
+          ? widget.mobileNumber
+          : widget.accountId,
       onProfileUpdated: (profile) {
         if (!mounted) return;
         setState(() {
@@ -126,42 +129,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        titleSpacing: 20,
+        titleSpacing: 16,
         title: Row(
           children: [
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PatientServicesScreen(
-                    patientName: _patientName,
-                    mobileNumber: _mobileNumber,
-                    dateOfBirth: _dateOfBirth,
-                    preferredLanguage: _currentLanguage,
-                    patientState: widget.patientState,
+            Material(
+              color: AppColors.blushPink,
+              borderRadius: BorderRadius.circular(13),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(13),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PatientServicesScreen(
+                      patientName: _patientName,
+                      mobileNumber: _mobileNumber,
+                      dateOfBirth: _dateOfBirth,
+                      preferredLanguage: _currentLanguage,
+                      patientState: widget.patientState,
+                    ),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(11),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 38,
-                  height: 38,
-                  fit: BoxFit.cover,
-                ),
-              ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 9),
             const Expanded(
               child: LocalizedText(
                 'Thaai Seyazhi',
                 style: TextStyle(
                   color: AppColors.burgundy,
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -171,6 +182,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               builder: (context, child) {
                 final unread = NotificationService.instance.unreadCount;
                 return IconButton(
+                  tooltip: l10n.notifications,
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -183,6 +195,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const Icon(
                         Icons.notifications_none_rounded,
                         color: AppColors.primaryText,
+                        size: 23,
                       ),
                       if (unread > 0)
                         Positioned(
@@ -221,10 +234,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         top: false,
         child: _selectedIndex == 0
             ? SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: DashboardHomeContent(
                   patientName: _patientName,
                   patientState: widget.patientState,
+                  onNavigate: (index) => setState(() => _selectedIndex = index),
                 ),
               )
             : _selectedIndex == 2
@@ -233,12 +247,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 mobileNumber: _mobileNumber,
               )
             : _selectedIndex == 1
-            ? TreatmentOverviewScreen(
+            ? JourneyScreen(
                 treatmentName: _treatmentName,
-                currentStage: 'Ovarian stimulation',
+                patientState: widget.patientState,
               )
             : _selectedIndex == 3
-            ? const MedicalRecordsScreen()
+            ? MedicalRecordsScreen(patientName: _patientName)
             : _selectedIndex == 4
             ? _profilePage()
             : _placeholderPage(navigationLabels[_selectedIndex]),
@@ -257,30 +271,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: AppColors.white,
             selectedItemColor: AppColors.burgundy,
             unselectedItemColor: AppColors.secondaryText,
-            selectedFontSize: 9,
+            selectedFontSize: 10,
             unselectedFontSize: 9,
             elevation: 0,
+            showUnselectedLabels: true,
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              height: 1.2,
+            ),
+            selectedIconTheme: const IconThemeData(size: 23),
+            unselectedIconTheme: const IconThemeData(size: 21),
+            landscapeLayout: BottomNavigationBarLandscapeLayout.centered,
             items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home_rounded),
+                icon: const _NavigationIcon(
+                  icon: Icons.home_outlined,
+                  selected: false,
+                ),
+                activeIcon: const _NavigationIcon(
+                  icon: Icons.home_rounded,
+                  selected: true,
+                ),
                 label: l10n.home,
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_outline),
+                icon: const _NavigationIcon(
+                  icon: Icons.favorite_outline,
+                  selected: false,
+                ),
+                activeIcon: const _NavigationIcon(
+                  icon: Icons.favorite_rounded,
+                  selected: true,
+                ),
                 label: l10n.myJourney,
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_month_outlined),
+                icon: const _NavigationIcon(
+                  icon: Icons.calendar_month_outlined,
+                  selected: false,
+                ),
+                activeIcon: const _NavigationIcon(
+                  icon: Icons.calendar_month_rounded,
+                  selected: true,
+                ),
                 label: l10n.appointments,
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.folder_outlined),
+                icon: const _NavigationIcon(
+                  icon: Icons.folder_outlined,
+                  selected: false,
+                ),
+                activeIcon: const _NavigationIcon(
+                  icon: Icons.folder_rounded,
+                  selected: true,
+                ),
                 label: l10n.healthRecords,
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_rounded),
-                activeIcon: Icon(Icons.person_rounded),
+                icon: const _NavigationIcon(
+                  icon: Icons.person_outline_rounded,
+                  selected: false,
+                ),
+                activeIcon: const _NavigationIcon(
+                  icon: Icons.person_rounded,
+                  selected: true,
+                ),
                 label: l10n.profile,
               ),
             ],
@@ -306,4 +365,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return 'Follow-up Care';
     }
   }
+}
+
+class _NavigationIcon extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+
+  const _NavigationIcon({required this.icon, required this.selected});
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+    duration: const Duration(milliseconds: 180),
+    width: 42,
+    height: 28,
+    decoration: BoxDecoration(
+      color: selected ? AppColors.blushPink : Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    alignment: Alignment.center,
+    child: Icon(icon),
+  );
 }

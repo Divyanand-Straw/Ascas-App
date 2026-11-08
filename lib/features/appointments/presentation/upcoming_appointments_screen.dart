@@ -57,73 +57,113 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
   }
 
   Widget _card(BuildContext context, Appointment appointment) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: AppColors.divider),
+      elevation: 1,
+      shadowColor: AppColors.primaryText.withValues(alpha: 0.06),
+      color: AppColors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppColors.divider),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: InkWell(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AppointmentDetailsScreen(
+              appointment: appointment,
+              patientName: patientName,
+              mobileNumber: mobileNumber,
+            ),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  appointment.doctorName,
-                  style: const TextStyle(
-                    color: AppColors.primaryText,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.blushPink,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: const Icon(
+                      Icons.calendar_month_outlined,
+                      color: AppColors.burgundy,
+                      size: 20,
+                    ),
                   ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      appointment.doctorName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  AppointmentStatusBadge(appointment.status),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LocalizedText(
+                '${_date(appointment.date)} · ${appointment.time}',
+                style: const TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              AppointmentStatusBadge(appointment.status),
+              const SizedBox(height: 5),
+              LocalizedText(
+                '${appointment.appointmentType} · ${appointment.consultationMode}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                appointment.clinic,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AppointmentDetailsScreen(
+                        appointment: appointment,
+                        patientName: patientName,
+                        mobileNumber: mobileNumber,
+                      ),
+                    ),
+                  ),
+                  child: LocalizedText('View details'),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 9),
-          LocalizedText(
-            '${_date(appointment.date)} · ${appointment.time}',
-            style: const TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 4),
-          LocalizedText(
-            '${appointment.appointmentType} · ${appointment.consultationMode}',
-            style: const TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            appointment.clinic,
-            style: const TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 11,
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AppointmentDetailsScreen(
-                    appointment: appointment,
-                    patientName: patientName,
-                    mobileNumber: mobileNumber,
-                  ),
-                ),
-              ),
-              child: LocalizedText('View details'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

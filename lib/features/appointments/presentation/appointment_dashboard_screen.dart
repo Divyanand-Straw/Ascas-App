@@ -33,19 +33,19 @@ class AppointmentDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          LocalizedText(
+          const LocalizedText(
             'Appointments',
             style: TextStyle(
               color: AppColors.primaryText,
-              fontSize: 27,
+              fontSize: 28,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 22),
-          LocalizedText(
+          const SizedBox(height: 20),
+          const LocalizedText(
             'YOUR NEXT VISIT',
             style: TextStyle(
-              color: AppColors.dustyPink,
+              color: AppColors.burgundy,
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
@@ -67,13 +67,14 @@ class AppointmentDashboardScreen extends StatelessWidget {
           else
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
-              child: LocalizedText(
-                'No upcoming appointments.',
-                style: TextStyle(color: AppColors.secondaryText),
+              child: Center(
+                child: LocalizedText(
+                  'No upcoming appointments.',
+                  style: TextStyle(color: AppColors.secondaryText),
+                ),
               ),
             ),
           const SizedBox(height: 14),
-          const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
               final spacing = 12.0;
@@ -81,6 +82,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
               return Wrap(
                 spacing: spacing,
                 runSpacing: spacing,
+                alignment: WrapAlignment.spaceBetween,
                 children: [
                   SizedBox(
                     width: width,
@@ -135,14 +137,14 @@ class AppointmentDashboardScreen extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 25),
+          const SizedBox(height: 24),
           Row(
             children: [
               const Expanded(
                 child: LocalizedText(
                   'APPOINTMENT REQUESTS',
                   style: TextStyle(
-                    color: AppColors.dustyPink,
+                    color: AppColors.burgundy,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1,
@@ -163,15 +165,23 @@ class AppointmentDashboardScreen extends StatelessWidget {
             ],
           ),
           Container(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.divider),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryText.withValues(alpha: 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.pending_actions_outlined, color: AppColors.burgundy),
+                _AppointmentIcon(icon: Icons.pending_actions_outlined),
                 SizedBox(width: 11),
                 Expanded(
                   child: Column(
@@ -180,7 +190,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
                       LocalizedText(
                         'Requested',
                         style: TextStyle(
-                          color: AppColors.primaryText,
+                          color: AppColors.burgundy,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -199,7 +209,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
                         '14 May · 10:30 AM · Sample slot',
                         style: TextStyle(
                           color: AppColors.secondaryText,
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -222,4 +232,21 @@ class AppointmentDashboardScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AppointmentIcon extends StatelessWidget {
+  final IconData icon;
+
+  const _AppointmentIcon({required this.icon});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: AppColors.blushPink,
+      borderRadius: BorderRadius.circular(13),
+    ),
+    child: Icon(icon, color: AppColors.burgundy, size: 20),
+  );
 }

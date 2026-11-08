@@ -16,15 +16,20 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.divider),
+    return Material(
+      color: color,
+      elevation: 1,
+      shadowColor: AppColors.primaryText.withValues(alpha: 0.08),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppColors.divider),
       ),
-      child: child,
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        width: double.infinity,
+        child: Padding(padding: padding, child: child),
+      ),
     );
   }
 }
@@ -48,9 +53,11 @@ class DashboardSectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: AppColors.primaryText,
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -60,9 +67,11 @@ class DashboardSectionHeader extends StatelessWidget {
             onPressed: onAction,
             child: Text(
               action!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.burgundy,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -95,21 +104,21 @@ class DashboardListItem extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: completed
                   ? AppColors.success.withValues(alpha: 0.12)
                   : AppColors.blushPink,
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(13),
             ),
             child: Icon(
               completed ? Icons.check_rounded : icon,
               color: completed ? AppColors.success : iconColor,
-              size: 19,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 11),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

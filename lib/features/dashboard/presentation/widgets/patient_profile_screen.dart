@@ -12,6 +12,9 @@ import '../../../../core/services/locale_service.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/login_screen.dart';
+import '../../../auth/presentation/consent_privacy_screen.dart';
+import '../../../notifications/presentation/notifications_screen.dart';
+import 'dashboard_card.dart';
 import 'dashboard_home_content.dart';
 
 class PatientProfileData {
@@ -35,6 +38,7 @@ class PatientProfileScreen extends StatefulWidget {
   final String mobileNumber;
   final String dateOfBirth;
   final String preferredLanguage;
+  final String accountId;
   final ValueChanged<PatientProfileData>? onProfileUpdated;
 
   const PatientProfileScreen({
@@ -45,6 +49,7 @@ class PatientProfileScreen extends StatefulWidget {
     required this.mobileNumber,
     required this.dateOfBirth,
     required this.preferredLanguage,
+    this.accountId = '',
     this.onProfileUpdated,
   });
 
@@ -90,7 +95,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       _name = preferences.getString('profile_name') ?? _name;
       _mobile = preferences.getString('profile_mobile') ?? _mobile;
       _dateOfBirth = preferences.getString('profile_dob') ?? _dateOfBirth;
-      _language = preferences.getString('profile_language') ?? _language;
       for (final entry in _partnerPermissions.entries) {
         _partnerPermissions[entry.key] =
             preferences.getBool('partner_${entry.key}') ?? false;
@@ -103,7 +107,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     await preferences.setString('profile_name', profile.name);
     await preferences.setString('profile_mobile', profile.mobile);
     await preferences.setString('profile_dob', profile.dateOfBirth);
-    await preferences.setString('profile_language', profile.language);
     if (!mounted) return;
     setState(() {
       _name = profile.name;
@@ -138,12 +141,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
     );
     if (result == null) return;
-    final language = result == 'Tamil' || result == 'à®¤à®®à®¿à®´à¯'
-        ? 'ta'
-        : 'en';
-    await LocaleService.setLanguage(language);
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString('profile_language', result);
+    final language = result == 'Tamil' ? 'ta' : 'en';
+    if (widget.accountId.isEmpty) {
+      await LocaleService.setLanguage(language);
+    } else {
+      await LocaleService.setAccountLanguage(
+        accountId: widget.accountId,
+        languageCode: language,
+      );
+    }
     if (!mounted) return;
     final profile = PatientProfileData(
       name: _name,
@@ -308,16 +314,16 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Widget _sectionTitle(String title) => Padding(
-    padding: const EdgeInsets.only(top: 24, bottom: 9),
+    padding: const EdgeInsets.only(top: 22, bottom: 10),
     child: Align(
       alignment: Alignment.centerLeft,
       child: Text(
         title.toUpperCase(),
         style: const TextStyle(
           color: AppColors.burgundy,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w800,
-          letterSpacing: 1.3,
+          letterSpacing: 1.1,
         ),
       ),
     ),
@@ -329,47 +335,58 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.blushPink,
-          borderRadius: BorderRadius.circular(12),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+        minVerticalPadding: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.blushPink,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Icon(icon, color: AppColors.burgundy, size: 21),
         ),
-        child: Icon(icon, color: AppColors.burgundy, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.primaryText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+        title: Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 3),
-        child: Text(
-          subtitle,
-          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Text(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 12,
+              height: 1.3,
+            ),
+          ),
         ),
-      ),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-        color: AppColors.secondaryText,
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.secondaryText,
+          size: 21,
+        ),
       ),
     );
   }
 
-  Widget _card(List<Widget> children) => Container(
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.divider),
-    ),
+  Widget _card(List<Widget> children) => DashboardCard(
+    padding: EdgeInsets.zero,
     child: Column(children: children),
   );
 
@@ -400,34 +417,64 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CircleAvatar(
-              radius: 39,
-              backgroundColor: AppColors.blushPink,
-              child: Text(
-                _initials,
-                style: const TextStyle(
-                  color: AppColors.burgundy,
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                ),
+            DashboardCard(
+              padding: const EdgeInsets.all(17),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.dustyPink,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 32,
+                      backgroundColor: AppColors.blushPink,
+                      child: Text(
+                        _initials,
+                        style: const TextStyle(
+                          color: AppColors.burgundy,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        const LocalizedText(
+                          'Patient ID: AS-20481',
+                          style: TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 11),
-            Text(
-              _name,
-              style: const TextStyle(
-                color: AppColors.primaryText,
-                fontSize: 21,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 5),
-            LocalizedText(
-              'Patient ID: AS-20481',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
             ),
             _sectionTitle('Care preferences'),
             _card([
@@ -441,7 +488,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               _option(
                 icon: Icons.translate_rounded,
                 title: 'Language & Accessibility',
-                subtitle: '$_language Â· Standard text.',
+                subtitle: '$_language - Standard text.',
                 onTap: _openLanguage,
               ),
               const Divider(height: 1, color: AppColors.divider),
@@ -458,15 +505,28 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 value: BiometricService.instance.enabled,
                 onChanged: _toggleBiometric,
                 activeThumbColor: AppColors.burgundy,
-                secondary: const Icon(
-                  Icons.fingerprint_rounded,
-                  color: AppColors.burgundy,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 4,
+                ),
+                secondary: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.blushPink,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.fingerprint_rounded,
+                    color: AppColors.burgundy,
+                    size: 21,
+                  ),
                 ),
                 title: LocalizedText(
                   'Biometric App Lock',
                   style: TextStyle(
                     color: AppColors.primaryText,
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -474,7 +534,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   BiometricService.instance.enabled ? 'Enabled' : 'Disabled',
                   style: const TextStyle(
                     color: AppColors.secondaryText,
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -492,14 +552,45 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               ),
               const Divider(height: 1, color: AppColors.divider),
               _option(
+                icon: Icons.lock_outline_rounded,
+                title: 'Privacy & Consent',
+                subtitle: 'Review your privacy and consent information.',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ConsentPrivacyScreen(
+                      fullName: _name,
+                      dateOfBirth: _dateOfBirth,
+                      mobileNumber: _mobile,
+                      preferredLanguage: _language,
+                      isExistingPatient: true,
+                      patientId: 'AS-20481',
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: AppColors.divider),
+              _option(
                 icon: Icons.file_download_outlined,
                 title: 'Export My Data',
                 subtitle: 'Download your records.',
                 onTap: _exportData,
               ),
             ]),
-            _sectionTitle('Help & support'),
+            _sectionTitle('App settings'),
             _card([
+              _option(
+                icon: Icons.notifications_none_rounded,
+                title: 'Notification Settings',
+                subtitle: 'Review your clinic reminders and updates.',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: AppColors.divider),
               _option(
                 icon: Icons.help_outline_rounded,
                 title: 'Help & Support',
@@ -509,39 +600,64 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
                 ),
               ),
+              const Divider(height: 1, color: AppColors.divider),
+              _option(
+                icon: Icons.info_outline_rounded,
+                title: 'App Information',
+                subtitle: 'Thaai Seyazhi app details.',
+                onTap: () => showAboutDialog(
+                  context: context,
+                  applicationName: 'Thaai Seyazhi',
+                  applicationVersion: '1.0.0',
+                  applicationIcon: Image.asset(
+                    'assets/images/logo.png',
+                    width: 42,
+                    height: 42,
+                  ),
+                ),
+              ),
             ]),
             _sectionTitle('Account actions'),
-            Column(
-              children: [
-                TextButton.icon(
-                  onPressed: _logout,
-                  icon: const Icon(
-                    Icons.logout_rounded,
-                    color: AppColors.burgundy,
-                  ),
-                  label: LocalizedText(
-                    'Log out',
-                    style: TextStyle(
-                      color: AppColors.burgundy,
-                      fontWeight: FontWeight.w700,
+            DashboardCard(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: _logout,
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        color: AppColors.burgundy,
+                      ),
+                      label: LocalizedText(
+                        'Log out',
+                        style: TextStyle(
+                          color: AppColors.burgundy,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                TextButton.icon(
-                  onPressed: _deleteAccount,
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    color: AppColors.error,
-                  ),
-                  label: LocalizedText(
-                    'Delete account',
-                    style: TextStyle(
-                      color: AppColors.error,
-                      fontWeight: FontWeight.w700,
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: _deleteAccount,
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.error,
+                      ),
+                      label: LocalizedText(
+                        'Delete account',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

@@ -35,11 +35,18 @@ class AppointmentDetailsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(19),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.divider),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryText.withValues(alpha: 0.045),
+                  blurRadius: 16,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,6 +63,8 @@ class AppointmentDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   appointment.reference,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.primaryText,
                     fontSize: 13,
@@ -65,6 +74,8 @@ class AppointmentDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   appointment.title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.primaryText,
                     fontSize: 21,
@@ -138,19 +149,25 @@ class AppointmentDetailsScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 82,
+          Expanded(
+            flex: 2,
             child: Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.secondaryText,
                 fontSize: 11,
               ),
             ),
           ),
+          const SizedBox(width: 10),
           Expanded(
+            flex: 3,
             child: Text(
               value,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.primaryText,
                 fontSize: 12,
