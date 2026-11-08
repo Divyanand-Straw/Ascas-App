@@ -13,13 +13,8 @@ import '../../../education/presentation/education_screen.dart';
 
 class TreatmentOverviewScreen extends StatefulWidget {
   final String treatmentName;
-  final String currentStage;
 
-  const TreatmentOverviewScreen({
-    super.key,
-    required this.treatmentName,
-    required this.currentStage,
-  });
+  const TreatmentOverviewScreen({super.key, required this.treatmentName});
 
   @override
   State<TreatmentOverviewScreen> createState() =>
@@ -33,15 +28,17 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
   @override
   void initState() {
     super.initState();
-    _pathway = pathwayFor(widget.treatmentName, widget.currentStage);
+    _pathway = pathwayFor(widget.treatmentName);
   }
 
   @override
   Widget build(BuildContext context) {
-    final current = _pathway.milestones.firstWhere(
-      (milestone) => milestone.status == TreatmentMilestoneStatus.current,
-      orElse: () => _pathway.milestones.first,
-    );
+    final current = _pathway.milestones.isEmpty
+        ? null
+        : _pathway.milestones.firstWhere(
+            (milestone) => milestone.status == TreatmentMilestoneStatus.current,
+            orElse: () => _pathway.milestones.first,
+          );
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -89,34 +86,12 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
               const SizedBox(height: 22),
               _clinicUpdatesCard(),
               const SizedBox(height: 22),
-              Row(
-                children: [
-                  const Expanded(
-                    child: _SectionHeading(title: 'Your journey timeline'),
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() {
-                      if (_expanded.length == _pathway.milestones.length) {
-                        _expanded.clear();
-                      } else {
-                        _expanded
-                          ..clear()
-                          ..addAll(_pathway.milestones.map((item) => item.id));
-                      }
-                    }),
-                    child: Text(
-                      _expanded.length == _pathway.milestones.length
-                          ? 'Collapse'
-                          : 'View timeline',
-                    ),
-                  ),
-                ],
-              ),
+              const _SectionHeading(title: 'Your journey timeline'),
               const SizedBox(height: 8),
               _timeline(),
               const SizedBox(height: 18),
               LocalizedText(
-                'Prototype pathway for demonstration only. Your clinic controls the confirmed journey and medical information.',
+                'Your clinic controls the confirmed journey and medical information.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 10,
@@ -148,64 +123,80 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _pathway.name,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 23,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: _changePathway,
-                tooltip: localizedText(context, 'Change prototype pathway'),
-                icon: const Icon(Icons.swap_horiz, color: AppColors.white),
-              ),
-            ],
+          Text(
+            _pathway.name,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 23,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           LocalizedText(
-            '$completed Completed Â· ${_pathway.currentCount} Current Â· ${_pathway.upcomingCount} Upcoming',
+            total == 0
+                ? 'Clinic update pending'
+                : '$completed Completed · ${_pathway.currentCount} Current · ${_pathway.upcomingCount} Upcoming',
             style: const TextStyle(
               color: AppColors.white,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: completed / total,
-              minHeight: 7,
-              backgroundColor: AppColors.white.withValues(alpha: 0.22),
-              valueColor: const AlwaysStoppedAnimation(AppColors.dustyPink),
+          if (total > 0) ...[
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: completed / total,
+                minHeight: 7,
+                backgroundColor: AppColors.white.withValues(alpha: 0.22),
+                valueColor: const AlwaysStoppedAnimation(AppColors.dustyPink),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          LocalizedText(
-            'Last updated by Thaai Seyazhi care team on 12 Apr 2025.',
-            style: TextStyle(color: AppColors.white, fontSize: 10),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: _changePathway,
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              foregroundColor: AppColors.white,
-            ),
-            child: LocalizedText('Change prototype pathway'),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _currentStageCard(TreatmentMilestone milestone) {
+  Widget _currentStageCard(TreatmentMilestone? milestone) {
+    if (milestone == null) {
+      return DashboardCard(
+        color: AppColors.blushPink,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const LocalizedText(
+              'Clinic update pending',
+              style: TextStyle(
+                color: AppColors.burgundy,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const LocalizedText(
+              'Your current treatment stage will appear here when confirmed by your care team.',
+              style: TextStyle(
+                color: AppColors.primaryText,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const LocalizedText(
+              'Follow only the instructions published by your Thaai Seyazhi care team.',
+              style: TextStyle(
+                color: AppColors.burgundy,
+                fontSize: 11,
+                height: 1.4,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     final isPlaceholder =
         milestone.status == TreatmentMilestoneStatus.awaitingUpdate;
     return DashboardCard(
@@ -266,6 +257,26 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
   }
 
   Widget _timeline() {
+    if (_pathway.milestones.isEmpty) {
+      return DashboardCard(
+        child: Row(
+          children: [
+            const Icon(Icons.event_note_outlined, color: AppColors.burgundy),
+            const SizedBox(width: 11),
+            const Expanded(
+              child: LocalizedText(
+                'No treatment milestones have been published yet.',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Column(
       children: _pathway.milestones
           .map((milestone) => _timelineItem(milestone))
@@ -550,21 +561,16 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
           ),
           const SizedBox(height: 9),
           LocalizedText(
-            'Last updated by Thaai Seyazhi care team',
+            'No clinic updates have been published yet.',
             style: TextStyle(
               color: AppColors.primaryText,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
-          LocalizedText(
-            '12 April 2025 Â· 10:30 AM',
-            style: TextStyle(color: AppColors.secondaryText, fontSize: 10),
-          ),
           const SizedBox(height: 9),
           LocalizedText(
-            'Recently published milestones and instructions appear here when supplied by the clinic.',
+            'Clinic updates and instructions will appear here when supplied by your care team.',
             style: TextStyle(
               color: AppColors.secondaryText,
               fontSize: 10,
@@ -598,59 +604,6 @@ class _TreatmentOverviewScreenState extends State<TreatmentOverviewScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: LocalizedText('Health record viewing is not available yet.'),
-      ),
-    );
-  }
-
-  void _changePathway() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          children: [
-            LocalizedText(
-              'Change prototype pathway',
-              style: TextStyle(
-                color: AppColors.primaryText,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            LocalizedText(
-              'This demonstration choice does not modify clinic records.',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
-            ),
-            const SizedBox(height: 12),
-            ...[
-              'IVF Cycle 1',
-              'IUI Treatment',
-              'Embryo Transfer',
-              'Two-Week Wait',
-              'Follow-up Care',
-            ].map(
-              (pathway) => ListTile(
-                title: Text(pathway),
-                trailing: pathway == _pathway.name
-                    ? const Icon(Icons.check, color: AppColors.burgundy)
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _pathway = pathwayFor(pathway, '');
-                    _expanded.clear();
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

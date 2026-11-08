@@ -1396,37 +1396,39 @@ class _BillsPaymentsScreenState extends State<BillsPaymentsScreen> {
             style: AppTextStyles.bodyMedium,
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.65,
-            children: [
-              _BillingMetric(
-                icon: Icons.receipt_long_outlined,
-                label: 'Total bills',
-                value: _demoBills.length.toString(),
-              ),
-              _BillingMetric(
-                icon: Icons.account_balance_wallet_outlined,
-                label: 'Total amount',
-                value: formatIndianRupees(total),
-              ),
-              _BillingMetric(
-                icon: Icons.check_circle_outline_rounded,
-                label: 'Paid amount',
-                value: formatIndianRupees(paid),
-                color: AppColors.success,
-              ),
-              _BillingMetric(
-                icon: Icons.pending_outlined,
-                label: 'Pending amount',
-                value: formatIndianRupees(pending),
-                color: AppColors.warning,
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) => GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: constraints.maxWidth < 420 ? 0.85 : 1.65,
+              children: [
+                _BillingMetric(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Total bills',
+                  value: _demoBills.length.toString(),
+                ),
+                _BillingMetric(
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: 'Total amount',
+                  value: formatIndianRupees(total),
+                ),
+                _BillingMetric(
+                  icon: Icons.check_circle_outline_rounded,
+                  label: 'Paid amount',
+                  value: formatIndianRupees(paid),
+                  color: AppColors.success,
+                ),
+                _BillingMetric(
+                  icon: Icons.pending_outlined,
+                  label: 'Pending amount',
+                  value: formatIndianRupees(pending),
+                  color: AppColors.warning,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 22),
           _SearchField(

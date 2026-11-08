@@ -20,9 +20,17 @@ class UpcomingAppointmentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appointments = sampleAppointments
-        .where((appointment) => appointment.status != 'Cancelled')
-        .toList();
+    final now = DateTime.now();
+    final appointments =
+        sampleAppointments.where((appointment) {
+          return appointment.status != 'Cancelled' &&
+              appointment.status != 'Completed' &&
+              appointmentDateTime(appointment).isAfter(now);
+        }).toList()
+          ..sort(
+            (first, second) =>
+                appointmentDateTime(first).compareTo(appointmentDateTime(second)),
+          );
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

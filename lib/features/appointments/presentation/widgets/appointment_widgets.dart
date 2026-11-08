@@ -62,12 +62,12 @@ class AppointmentCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(17),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.burgundy,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: AppColors.burgundy),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryText.withValues(alpha: 0.045),
+              color: AppColors.burgundy.withValues(alpha: 0.16),
               blurRadius: 16,
               offset: const Offset(0, 5),
             ),
@@ -122,7 +122,7 @@ class AppointmentCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppColors.primaryText,
+                            color: AppColors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -137,7 +137,8 @@ class AppointmentCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: AppColors.secondaryText,
+                      color: AppColors.white,
+                      fontWeight: FontWeight.w500,
                       fontSize: 12,
                     ),
                   ),
@@ -147,7 +148,7 @@ class AppointmentCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: AppColors.secondaryText,
+                      color: AppColors.white,
                       fontSize: 11,
                     ),
                   ),

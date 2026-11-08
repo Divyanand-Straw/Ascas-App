@@ -243,6 +243,7 @@ enum NotificationCategory {
   appointmentUpdated,
   journey,
   medicalRecord,
+  payment,
   general,
 }
 
@@ -254,13 +255,30 @@ class InAppNotification {
   bool isRead;
 
   NotificationCategory get category {
-    final normalized = title.toLowerCase();
-    if (normalized.contains('medication')) {
+    final normalized = '$title $body'.toLowerCase();
+    if (normalized.contains('medication') ||
+        normalized.contains('prescription') ||
+        normalized.contains('dose')) {
       return NotificationCategory.medication;
     }
     if (normalized.contains('appointment') ||
         normalized.contains('reschedul')) {
       return NotificationCategory.appointment;
+    }
+    if (normalized.contains('payment') ||
+        normalized.contains('bill') ||
+        normalized.contains('invoice')) {
+      return NotificationCategory.payment;
+    }
+    if (normalized.contains('report') ||
+        normalized.contains('medical record') ||
+        normalized.contains('discharge')) {
+      return NotificationCategory.medicalRecord;
+    }
+    if (normalized.contains('journey') ||
+        normalized.contains('treatment') ||
+        normalized.contains('milestone')) {
+      return NotificationCategory.journey;
     }
     if (normalized.contains('clinic') || normalized.contains('message')) {
       return NotificationCategory.clinicMessage;

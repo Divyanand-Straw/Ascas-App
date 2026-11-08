@@ -34,6 +34,7 @@ class PatientProfileData {
 class PatientProfileScreen extends StatefulWidget {
   final String patientName;
   final String patientInitials;
+  final String patientId;
   final DashboardPatientState patientState;
   final String mobileNumber;
   final String dateOfBirth;
@@ -45,6 +46,7 @@ class PatientProfileScreen extends StatefulWidget {
     super.key,
     required this.patientName,
     required this.patientInitials,
+    this.patientId = '',
     required this.patientState,
     required this.mobileNumber,
     required this.dateOfBirth,
@@ -79,7 +81,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _name = widget.patientName.isEmpty ? 'Priya Sharma' : widget.patientName;
+    _name = widget.patientName;
     _mobile = widget.mobileNumber;
     _dateOfBirth = widget.dateOfBirth;
     _language = widget.preferredLanguage.isEmpty
@@ -221,7 +223,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         jsonEncode({
           'profile': {
             'name': _name,
-            'patientId': 'AS-20481',
+            if (widget.patientId.isNotEmpty) 'patientId': widget.patientId,
             'mobile': _mobile,
             'dateOfBirth': _dateOfBirth,
             'language': _language,
@@ -463,13 +465,14 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 5),
-                        const LocalizedText(
-                          'Patient ID: AS-20481',
-                          style: TextStyle(
-                            color: AppColors.secondaryText,
-                            fontSize: 12,
+                        if (widget.patientId.isNotEmpty)
+                          LocalizedText(
+                            '${localizedText(context, 'Patient ID')}: ${widget.patientId}',
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -564,7 +567,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                       mobileNumber: _mobile,
                       preferredLanguage: _language,
                       isExistingPatient: true,
-                      patientId: 'AS-20481',
+                      patientId: widget.patientId,
                     ),
                   ),
                 ),

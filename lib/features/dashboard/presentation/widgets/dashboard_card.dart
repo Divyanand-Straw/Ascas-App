@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class DashboardCard extends StatelessWidget {
@@ -51,7 +52,7 @@ class DashboardSectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
+          child: LocalizedText(
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -65,7 +66,7 @@ class DashboardSectionHeader extends StatelessWidget {
         if (action != null)
           TextButton(
             onPressed: onAction,
-            child: Text(
+            child: LocalizedText(
               action!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -123,7 +124,7 @@ class DashboardListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                LocalizedText(
                   title,
                   style: const TextStyle(
                     color: AppColors.primaryText,
@@ -132,7 +133,7 @@ class DashboardListItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
+                LocalizedText(
                   subtitle,
                   style: const TextStyle(
                     color: AppColors.secondaryText,

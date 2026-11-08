@@ -178,44 +178,20 @@ class AppointmentDashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
                 _AppointmentIcon(icon: Icons.pending_actions_outlined),
                 SizedBox(width: 11),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LocalizedText(
-                        'Requested',
-                        style: TextStyle(
-                          color: AppColors.burgundy,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      LocalizedText(
-                        'Fertility consultation',
-                        style: TextStyle(
-                          color: AppColors.primaryText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      LocalizedText(
-                        '14 May · 10:30 AM · Sample slot',
-                        style: TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                  child: LocalizedText(
+                    'Submitted appointment requests will appear here when available.',
+                    style: TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-                AppointmentStatusBadge('Requested'),
               ],
             ),
           ),

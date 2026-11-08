@@ -19,6 +19,7 @@ export 'widgets/dashboard_home_content.dart' show DashboardPatientState;
 
 class DashboardScreen extends StatefulWidget {
   final String patientName;
+  final String patientId;
   final DashboardPatientState patientState;
   final String mobileNumber;
   final String dateOfBirth;
@@ -28,6 +29,7 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     super.key,
     required this.patientName,
+    this.patientId = '',
     this.patientState = DashboardPatientState.ivf,
     this.mobileNumber = '',
     this.dateOfBirth = '',
@@ -93,6 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return PatientProfileScreen(
       patientName: _patientName,
       patientInitials: _initials,
+      patientId: widget.patientId,
       patientState: widget.patientState,
       mobileNumber: _mobileNumber,
       dateOfBirth: _dateOfBirth,
@@ -145,6 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   MaterialPageRoute(
                     builder: (_) => PatientServicesScreen(
                       patientName: _patientName,
+                      patientId: widget.patientId,
                       mobileNumber: _mobileNumber,
                       dateOfBirth: _dateOfBirth,
                       preferredLanguage: _currentLanguage,
@@ -237,6 +241,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: DashboardHomeContent(
                   patientName: _patientName,
+                  patientId: widget.patientId,
                   patientState: widget.patientState,
                   onNavigate: (index) => setState(() => _selectedIndex = index),
                 ),
@@ -247,10 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 mobileNumber: _mobileNumber,
               )
             : _selectedIndex == 1
-            ? JourneyScreen(
-                treatmentName: _treatmentName,
-                patientState: widget.patientState,
-              )
+            ? JourneyScreen(treatmentName: _treatmentName)
             : _selectedIndex == 3
             ? MedicalRecordsScreen(patientName: _patientName)
             : _selectedIndex == 4
@@ -353,16 +355,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (widget.patientState) {
       case DashboardPatientState.ivf:
         return 'IVF Cycle 1';
+      case DashboardPatientState.icsi:
+        return 'ICSI Treatment';
       case DashboardPatientState.iui:
         return 'IUI Treatment';
+      case DashboardPatientState.fet:
+        return 'Frozen Embryo Transfer (FET)';
       case DashboardPatientState.embryoTransfer:
         return 'Embryo Transfer';
       case DashboardPatientState.twoWeekWait:
         return 'Two-Week Wait';
       case DashboardPatientState.followUpCare:
       case DashboardPatientState.postProcedureRecovery:
-      case DashboardPatientState.newPatient:
         return 'Follow-up Care';
+      case DashboardPatientState.newPatient:
+        return 'Care pathway pending';
     }
   }
 }

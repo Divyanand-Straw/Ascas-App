@@ -44,18 +44,7 @@ class MedicationScreen extends StatefulWidget {
 }
 
 class _MedicationScreenState extends State<MedicationScreen> {
-  final _doses = <MedicationDose>[
-    MedicationDose(
-      id: 'clinic-dose-1',
-      medicine: 'Clinic prescription',
-      dosage: 'Details awaiting clinic update',
-      time: '—',
-      frequency: 'Not available',
-      instructions: 'No active clinic-authorized prescriptions are available.',
-      prescribedBy: 'Thaai Seyazhi care team',
-      confirmationAllowed: false,
-    ),
-  ];
+  final List<MedicationDose> _doses = [];
   bool _remindersEnabled = false;
   bool _loading = true;
 
@@ -168,7 +157,9 @@ class _MedicationScreenState extends State<MedicationScreen> {
                       ),
                       const SizedBox(height: 8),
                       LocalizedText(
-                        '${_doses.where((dose) => dose.status == DoseStatus.taken).length} doses completed',
+                        _doses.isEmpty
+                            ? 'No active prescriptions'
+                            : '${_doses.where((dose) => dose.status == DoseStatus.taken).length} doses completed',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 21,
@@ -198,13 +189,15 @@ class _MedicationScreenState extends State<MedicationScreen> {
                     ),
                     Switch(
                       value: _remindersEnabled,
-                      onChanged: _setReminders,
+                      onChanged: _doses.isEmpty ? null : _setReminders,
                       activeThumbColor: AppColors.burgundy,
                     ),
                   ],
                 ),
-                Text(
-                  _remindersEnabled
+                LocalizedText(
+                  _doses.isEmpty
+                      ? 'Reminders can be set after your clinic publishes a medication schedule.'
+                      : _remindersEnabled
                       ? 'Dose reminders are enabled on this device.'
                       : 'Reminders are disabled.',
                   style: const TextStyle(
@@ -213,23 +206,61 @@ class _MedicationScreenState extends State<MedicationScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                LocalizedText(
-                  'TODAY',
-                  style: TextStyle(
-                    color: AppColors.burgundy,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
+                if (_doses.isEmpty)
+                  DashboardCard(
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.medication_outlined,
+                          color: AppColors.dustyPink,
+                          size: 42,
+                        ),
+                        const SizedBox(height: 10),
+                        const LocalizedText(
+                          'No prescriptions available',
+                          style: TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        const LocalizedText(
+                          'Current prescriptions and schedules will appear here when published by your clinic.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CommunicationScreen(),
+                            ),
+                          ),
+                          icon: const Icon(Icons.support_agent_outlined),
+                          label: const LocalizedText('Contact care team'),
+                        ),
+                      ],
+                    ),
+                  )
+                else ...[
+                  const LocalizedText(
+                    'TODAY',
+                    style: TextStyle(
+                      color: AppColors.burgundy,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                ..._doses.map(_doseCard),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () => _showReminderPreview(context),
-                  icon: const Icon(Icons.notifications_none_rounded),
-                  label: LocalizedText('Preview reminder notification'),
-                ),
+                  const SizedBox(height: 8),
+                  ..._doses.map(_doseCard),
+                ],
               ],
             ),
     );
@@ -325,28 +356,6 @@ class _MedicationScreenState extends State<MedicationScreen> {
     );
   }
 
-  void _showReminderPreview(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: LocalizedText('Reminder preview'),
-        content: const ListTile(
-          leading: Icon(
-            Icons.notifications_active_outlined,
-            color: AppColors.burgundy,
-          ),
-          title: LocalizedText('Medication reminder'),
-          subtitle: LocalizedText('Your clinic-authorized dose is due now.'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: LocalizedText('Close'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class MedicationHistoryScreen extends StatelessWidget {

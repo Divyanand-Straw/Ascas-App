@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../appointments/presentation/appointment_detail_screen.dart';
 import '../../../appointments/presentation/models/appointment_models.dart';
+import '../../../communication/presentation/communication_screen.dart';
+import '../../../education/presentation/education_screen.dart';
+import '../../../medical_records/presentation/medical_records_screen.dart';
 import '../../../medication/presentation/medication_screen.dart';
+import '../../../notifications/presentation/notifications_screen.dart';
 import 'dashboard_card.dart';
 
 enum DashboardPatientState {
   newPatient,
   ivf,
+  icsi,
   iui,
+  fet,
   embryoTransfer,
   twoWeekWait,
   postProcedureRecovery,
@@ -19,12 +27,14 @@ enum DashboardPatientState {
 
 class DashboardHomeContent extends StatelessWidget {
   final String patientName;
+  final String patientId;
   final DashboardPatientState patientState;
   final ValueChanged<int> onNavigate;
 
   const DashboardHomeContent({
     super.key,
     required this.patientName,
+    this.patientId = '',
     required this.patientState,
     required this.onNavigate,
   });
@@ -39,7 +49,9 @@ class DashboardHomeContent extends StatelessWidget {
 
   String get _treatment => switch (patientState) {
     DashboardPatientState.ivf => 'IVF treatment',
+    DashboardPatientState.icsi => 'ICSI treatment',
     DashboardPatientState.iui => 'IUI treatment',
+    DashboardPatientState.fet => 'Frozen Embryo Transfer (FET)',
     DashboardPatientState.embryoTransfer => 'Embryo transfer',
     DashboardPatientState.twoWeekWait => 'Post-transfer care',
     DashboardPatientState.postProcedureRecovery => 'Post-procedure care',
@@ -53,7 +65,11 @@ class DashboardHomeContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _WelcomeSection(name: patientName, initials: _initials),
+        _WelcomeSection(
+          name: patientName,
+          initials: _initials,
+          patientId: patientId,
+        ),
         if (patientState == DashboardPatientState.postProcedureRecovery) ...[
           const SizedBox(height: 20),
           const _AdmissionCard(),
@@ -68,7 +84,7 @@ class DashboardHomeContent extends StatelessWidget {
         _AppointmentCard(appointment: appointment, onNavigate: onNavigate),
         const SizedBox(height: 22),
         DashboardSectionHeader(
-          title: 'Treatment Snapshot',
+          title: 'Fertility Journey',
           action: 'View Journey',
           onAction: () => onNavigate(1),
         ),
@@ -85,6 +101,33 @@ class DashboardHomeContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const _MedicationReminder(),
+        const SizedBox(height: 22),
+        DashboardSectionHeader(
+          title: 'Recent Clinic Updates',
+          action: 'View all',
+          onAction: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const RecentClinicUpdates(limit: 3),
+        const SizedBox(height: 22),
+        DashboardSectionHeader(
+          title: 'Billing Overview',
+          action: 'View bills',
+          onAction: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BillsPaymentsScreen()),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _BillingOverview(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BillsPaymentsScreen()),
+          ),
+        ),
         const SizedBox(height: 22),
         DashboardSectionHeader(
           title: 'Your Doctors',
@@ -115,8 +158,13 @@ class DashboardHomeContent extends StatelessWidget {
 class _WelcomeSection extends StatelessWidget {
   final String name;
   final String initials;
+  final String patientId;
 
-  const _WelcomeSection({required this.name, required this.initials});
+  const _WelcomeSection({
+    required this.name,
+    required this.initials,
+    required this.patientId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +196,7 @@ class _WelcomeSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                const LocalizedText(
                   'Good Morning',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -167,14 +215,16 @@ class _WelcomeSection extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Patient ID: TS-00124',
-                  style: TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 11,
+                if (patientId.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${localizedText(context, 'Patient ID')}: $patientId',
+                    style: const TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -208,17 +258,17 @@ class _AdmissionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ACTIVE ADMISSION',
+          const LocalizedText(
+            'ADMISSION INFORMATION',
             style: TextStyle(
-              color: AppColors.white,
+              color: AppColors.dustyPink,
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
             ),
           ),
           const SizedBox(height: 9),
-          const Text(
+          const LocalizedText(
             'Inpatient care',
             style: TextStyle(
               color: AppColors.white,
@@ -226,70 +276,15 @@ class _AdmissionCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 13),
-          const _WhiteDetail(label: 'Admission ID', value: 'ADM-2026-001'),
-          const _WhiteDetail(label: 'Admission date', value: '7 November 2026'),
-          const _WhiteDetail(
-            label: 'Ward / room',
-            value: 'Women’s Care / Room 204',
-          ),
-          const _WhiteDetail(
-            label: 'Treating doctor',
-            value: 'Dr. Meera Sharma',
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.white,
-              padding: EdgeInsets.zero,
-            ),
-            child: const Text('View Admission Details'),
+          const SizedBox(height: 10),
+          const LocalizedText(
+            'Admission details will appear here when confirmed by your care team.',
+            style: TextStyle(color: AppColors.white, fontSize: 12, height: 1.4),
           ),
         ],
       ),
     );
   }
-}
-
-class _WhiteDetail extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _WhiteDetail({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: AppColors.white.withValues(alpha: .76),
-              fontSize: 11,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _AppointmentCard extends StatelessWidget {
@@ -420,7 +415,7 @@ class _TreatmentSnapshot extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        LocalizedText(
           treatment,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -431,29 +426,32 @@ class _TreatmentSnapshot extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 5),
-        const Text(
-          'Current stage: Clinic-confirmed update pending',
+        const SizedBox(height: 7),
+        const LocalizedText(
+          'Current stage',
+          style: TextStyle(
+            color: AppColors.secondaryText,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const LocalizedText(
+          'Your treatment stage will appear when shared by your care team.',
           style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
         ),
-        const SizedBox(height: 13),
-        const LinearProgressIndicator(
-          value: .45,
-          minHeight: 7,
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          backgroundColor: AppColors.blushPink,
-          valueColor: AlwaysStoppedAnimation(AppColors.burgundy),
-        ),
-        const SizedBox(height: 13),
+        const SizedBox(height: 12),
+        const _StatusBadge(label: 'Awaiting clinic update'),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 4,
           alignment: WrapAlignment.spaceBetween,
           children: [
-            const Text(
-              'Progress placeholder',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
+            TextButton(
+              onPressed: onTap,
+              child: const LocalizedText('View Journey'),
             ),
-            TextButton(onPressed: onTap, child: const Text('View Journey')),
           ],
         ),
       ],
@@ -466,46 +464,286 @@ class _MedicationReminder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DashboardCard(
-    child: Row(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(11),
-          decoration: BoxDecoration(
-            color: AppColors.blushPink,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(
-            Icons.medication_outlined,
-            color: AppColors.burgundy,
+        const Row(
+          children: [
+            _FeatureIcon(icon: Icons.medication_outlined),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LocalizedText(
+                    'Medication schedule',
+                    style: TextStyle(
+                      color: AppColors.primaryText,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  _StatusBadge(label: 'Awaiting clinic update'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        const LocalizedText(
+          'Your clinic-authorized medication schedule will appear here when available.',
+          style: TextStyle(
+            color: AppColors.secondaryText,
+            fontSize: 12,
+            height: 1.4,
           ),
         ),
-        const SizedBox(width: 12),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Medication placeholder',
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Dosage placeholder  •  08:00 AM',
-                style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
-              ),
-            ],
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MedicationScreen()),
+            ),
+            child: const LocalizedText('View schedule'),
           ),
-        ),
-        const Padding(
-          padding: EdgeInsets.only(left: 8),
-          child: _StatusBadge(label: 'Upcoming'),
         ),
       ],
     ),
+  );
+}
+
+class RecentClinicUpdates extends StatelessWidget {
+  final int limit;
+
+  const RecentClinicUpdates({super.key, this.limit = 3});
+
+  @override
+  Widget build(BuildContext context) {
+    final service = NotificationService.instance;
+    return AnimatedBuilder(
+      animation: service,
+      builder: (context, _) {
+        final updates = [
+          ...service.inbox,
+        ]..sort((first, second) => second.createdAt.compareTo(first.createdAt));
+        if (updates.isEmpty) {
+          return const DashboardCard(
+            child: Row(
+              children: [
+                _FeatureIcon(icon: Icons.notifications_none_rounded),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LocalizedText(
+                        'No recent clinic updates',
+                        style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      LocalizedText(
+                        'Clinic updates will appear here when shared.',
+                        style: TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return Column(
+          children: updates
+              .take(limit)
+              .map((update) => _ClinicUpdateCard(notification: update))
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _ClinicUpdateCard extends StatelessWidget {
+  final InAppNotification notification;
+
+  const _ClinicUpdateCard({required this.notification});
+
+  @override
+  Widget build(BuildContext context) {
+    final category = _activityCategory(notification);
+    final time = TimeOfDay.fromDateTime(notification.createdAt).format(context);
+    final date =
+        '${notification.createdAt.day}/${notification.createdAt.month}/${notification.createdAt.year}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _FeatureIcon(icon: category.$1),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              localizedText(context, notification.title),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.primaryText,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _StatusBadge(
+                            label: notification.isRead ? 'Read' : 'Unread',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        localizedText(context, notification.body),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: LocalizedText(
+                              category.$2,
+                              style: const TextStyle(
+                                color: AppColors.burgundy,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '$date · $time',
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  (IconData, String) _activityCategory(InAppNotification notification) {
+    final text = '${notification.title} ${notification.body}'.toLowerCase();
+    if (text.contains('medication') || text.contains('prescription')) {
+      return (Icons.medication_outlined, 'Medication reminders');
+    }
+    if (text.contains('appointment') || text.contains('reschedul')) {
+      return (Icons.calendar_month_outlined, 'Appointments');
+    }
+    if (text.contains('report') ||
+        text.contains('record') ||
+        text.contains('discharge')) {
+      return (Icons.description_outlined, 'Medical records');
+    }
+    if (text.contains('payment') ||
+        text.contains('bill') ||
+        text.contains('invoice')) {
+      return (Icons.receipt_long_outlined, 'Payments');
+    }
+    if (text.contains('journey') ||
+        text.contains('milestone') ||
+        text.contains('treatment')) {
+      return (Icons.timeline_rounded, 'Treatment updates');
+    }
+    return (Icons.notifications_none_rounded, 'Clinic notifications');
+  }
+}
+
+class _BillingOverview extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _BillingOverview({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => DashboardCard(
+    child: Row(
+      children: [
+        const _FeatureIcon(icon: Icons.account_balance_wallet_outlined),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: LocalizedText(
+            'Your clinic billing summary will appear here when available.',
+            style: TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: localizedText(context, 'View bills'),
+          onPressed: onTap,
+          icon: const Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: AppColors.burgundy,
+            size: 17,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _FeatureIcon extends StatelessWidget {
+  final IconData icon;
+
+  const _FeatureIcon({required this.icon});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      color: AppColors.blushPink,
+      borderRadius: BorderRadius.circular(13),
+    ),
+    child: Icon(icon, color: AppColors.burgundy, size: 20),
   );
 }
 
@@ -581,10 +819,11 @@ class _QuickLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const links = [
-      (Icons.route_outlined, 'My Journey', 1),
-      (Icons.calendar_month_outlined, 'Appointments', 2),
-      (Icons.folder_outlined, 'Medical Records', 3),
-      (Icons.medication_outlined, 'Medication', 1),
+      (Icons.medication_outlined, 'Medications', -1),
+      (Icons.assessment_outlined, 'Reports', -1),
+      (Icons.receipt_long_outlined, 'Bills & Payments', -1),
+      (Icons.support_agent_outlined, 'Doctor Communication', -1),
+      (Icons.menu_book_outlined, 'Fertility Education', -1),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -600,13 +839,38 @@ class _QuickLinks extends StatelessWidget {
         final link = links[index];
         return InkWell(
           onTap: () {
-            if (link.$2 == 'Medication') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MedicationScreen()),
-              );
-            } else {
-              onNavigate(link.$3);
+            switch (link.$2) {
+              case 'Medications':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MedicationScreen()),
+                );
+              case 'Reports':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReportsScreen()),
+                );
+              case 'Bills & Payments':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BillsPaymentsScreen(),
+                  ),
+                );
+              case 'Doctor Communication':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CommunicationScreen(),
+                  ),
+                );
+              case 'Fertility Education':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EducationScreen()),
+                );
+              default:
+                onNavigate(link.$3);
             }
           },
           borderRadius: BorderRadius.circular(16),
@@ -625,7 +889,7 @@ class _QuickLinks extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: LocalizedText(
                     link.$2,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -657,7 +921,7 @@ class _StatusBadge extends StatelessWidget {
       color: AppColors.blushPink,
       borderRadius: BorderRadius.circular(20),
     ),
-    child: Text(
+    child: LocalizedText(
       label,
       style: const TextStyle(
         color: AppColors.burgundy,

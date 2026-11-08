@@ -19,6 +19,7 @@ import 'treatment_overview_screen.dart';
 
 class PatientServicesScreen extends StatelessWidget {
   final String patientName;
+  final String patientId;
   final String mobileNumber;
   final String dateOfBirth;
   final String preferredLanguage;
@@ -27,6 +28,7 @@ class PatientServicesScreen extends StatelessWidget {
   const PatientServicesScreen({
     super.key,
     required this.patientName,
+    this.patientId = '',
     required this.mobileNumber,
     required this.dateOfBirth,
     required this.preferredLanguage,
@@ -45,8 +47,12 @@ class PatientServicesScreen extends StatelessWidget {
     switch (patientState) {
       case DashboardPatientState.ivf:
         return 'IVF Cycle 1';
+      case DashboardPatientState.icsi:
+        return 'ICSI Treatment';
       case DashboardPatientState.iui:
         return 'IUI Treatment';
+      case DashboardPatientState.fet:
+        return 'Frozen Embryo Transfer (FET)';
       case DashboardPatientState.embryoTransfer:
         return 'Embryo Transfer';
       case DashboardPatientState.twoWeekWait:
@@ -56,7 +62,7 @@ class PatientServicesScreen extends StatelessWidget {
       case DashboardPatientState.postProcedureRecovery:
         return 'Follow-up Care';
       case DashboardPatientState.newPatient:
-        return 'Follow-up Care';
+        return 'Care pathway pending';
     }
   }
 
@@ -232,13 +238,14 @@ class PatientServicesScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const LocalizedText(
-                          'Patient ID: AS-20481',
-                          style: TextStyle(
-                            color: AppColors.secondaryText,
-                            fontSize: 12,
+                        if (patientId.isNotEmpty)
+                          LocalizedText(
+                            '${localizedText(context, 'Patient ID')}: $patientId',
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -290,10 +297,8 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => TreatmentOverviewScreen(
-                      treatmentName: _treatmentName,
-                      currentStage: 'Ovarian stimulation',
-                    ),
+                    builder: (_) =>
+                        TreatmentOverviewScreen(treatmentName: _treatmentName),
                   ),
                 ),
               ),

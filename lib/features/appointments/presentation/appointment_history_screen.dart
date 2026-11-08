@@ -13,6 +13,14 @@ class AppointmentHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final completed = sampleHistory
+        .where((appointment) => appointment.status == 'Completed')
+        .toList()
+      ..sort((first, second) => second.date.compareTo(first.date));
+    final cancelled = sampleHistory
+        .where((appointment) => appointment.status == 'Cancelled')
+        .toList()
+      ..sort((first, second) => second.date.compareTo(first.date));
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -20,7 +28,7 @@ class AppointmentHistoryScreen extends StatelessWidget {
         elevation: 0,
         title: LocalizedText('Appointment history'),
       ),
-      body: sampleHistory.isEmpty
+      body: completed.isEmpty && cancelled.isEmpty
           ? const Center(
               child: LocalizedText(
                 'No appointment history yet.',
@@ -29,9 +37,16 @@ class AppointmentHistoryScreen extends StatelessWidget {
             )
           : ListView(
               padding: const EdgeInsets.all(20),
-              children: sampleHistory
-                  .map((appointment) => _card(context, appointment))
-                  .toList(),
+              children: [
+                if (completed.isNotEmpty) ...[
+                  const _HistorySectionHeading(title: 'Completed'),
+                  ...completed.map((appointment) => _card(context, appointment)),
+                ],
+                if (cancelled.isNotEmpty) ...[
+                  const _HistorySectionHeading(title: 'Cancelled'),
+                  ...cancelled.map((appointment) => _card(context, appointment)),
+                ],
+              ],
             ),
     );
   }
@@ -93,7 +108,7 @@ class AppointmentHistoryScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   LocalizedText(
-                    '${_date(appointment.date)} · ${appointment.appointmentType}',
+                    '${_date(appointment.date)} · ${appointment.time} · ${appointment.appointmentType}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -123,4 +138,23 @@ class AppointmentHistoryScreen extends StatelessWidget {
 
   static String _date(DateTime date) =>
       '${date.day} ${const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1]} ${date.year}';
+}
+
+class _HistorySectionHeading extends StatelessWidget {
+  final String title;
+
+  const _HistorySectionHeading({required this.title});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10, top: 4),
+    child: LocalizedText(
+      title,
+      style: const TextStyle(
+        color: AppColors.burgundy,
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
 }

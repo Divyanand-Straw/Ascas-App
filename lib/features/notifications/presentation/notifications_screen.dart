@@ -20,6 +20,7 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _service = NotificationService.instance;
+  NotificationCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -39,7 +40,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final notifications = _service.inbox;
+    final notifications = [..._service.inbox]
+      ..sort((first, second) => second.createdAt.compareTo(first.createdAt));
+    final visibleNotifications = _selectedCategory == null
+        ? notifications
+        : notifications
+              .where((item) => item.category == _selectedCategory)
+              .toList();
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(
@@ -73,8 +80,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
                           children: [
                             _actions(context),
+                            const SizedBox(height: 8),
+                            _categoryFilters(),
                             const SizedBox(height: 14),
-                            ...notifications.map(_notificationCard),
+                            if (visibleNotifications.isEmpty)
+                              _filteredEmptyState()
+                            else
+                              ...visibleNotifications.map(_notificationCard),
                           ],
                         ),
                 ),
@@ -165,6 +177,84 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  Widget _categoryFilters() {
+    const categories = [
+      null,
+      NotificationCategory.appointment,
+      NotificationCategory.medication,
+      NotificationCategory.journey,
+      NotificationCategory.medicalRecord,
+      NotificationCategory.payment,
+      NotificationCategory.clinicMessage,
+      NotificationCategory.general,
+    ];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: categories.map((category) {
+          final selected = category == _selectedCategory;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: LocalizedText(
+                category == null ? 'All' : _categoryLabel(category),
+              ),
+              selected: selected,
+              onSelected: (_) => setState(() => _selectedCategory = category),
+              selectedColor: AppColors.burgundy,
+              backgroundColor: AppColors.white,
+              labelStyle: TextStyle(
+                color: selected ? AppColors.white : AppColors.primaryText,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+              side: const BorderSide(color: AppColors.divider),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  String _categoryLabel(NotificationCategory category) => switch (category) {
+    NotificationCategory.appointment ||
+    NotificationCategory.appointmentConfirmation ||
+    NotificationCategory.appointmentUpdated => 'Appointments',
+    NotificationCategory.medication => 'Medications',
+    NotificationCategory.journey => 'Treatment updates',
+    NotificationCategory.medicalRecord => 'Reports & records',
+    NotificationCategory.payment => 'Payments',
+    NotificationCategory.clinicMessage => 'Clinic updates',
+    NotificationCategory.general => 'General',
+  };
+
+  Widget _filteredEmptyState() => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.filter_alt_off_outlined,
+          color: AppColors.dustyPink,
+          size: 46,
+        ),
+        const SizedBox(height: 12),
+        const LocalizedText(
+          'No notifications in this category.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        TextButton(
+          onPressed: () => setState(() => _selectedCategory = null),
+          child: const LocalizedText('Show all notifications'),
+        ),
+      ],
+    ),
+  );
+
   Widget _notificationCard(InAppNotification notification) {
     final category = notification.category;
     return Padding(
@@ -220,6 +310,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           height: 1.4,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          LocalizedText(
+                            _categoryLabel(category),
+                            style: const TextStyle(
+                              color: AppColors.burgundy,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            _dateTime(notification.createdAt),
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -250,6 +363,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       NotificationCategory.clinicMessage => Icons.chat_bubble_outline_rounded,
       NotificationCategory.journey => Icons.timeline_rounded,
       NotificationCategory.medicalRecord => Icons.description_outlined,
+      NotificationCategory.payment => Icons.receipt_long_outlined,
       NotificationCategory.general => Icons.notifications_none_rounded,
     };
     return Container(
@@ -280,10 +394,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       NotificationCategory.medication => const MedicationScreen(),
       NotificationCategory.clinicMessage => const CommunicationScreen(),
       NotificationCategory.journey => const TreatmentOverviewScreen(
-        treatmentName: 'IVF Treatment',
-        currentStage: 'Current stage',
+        treatmentName: 'Treatment pathway',
       ),
       NotificationCategory.medicalRecord => const MedicalRecordsScreen(),
+      NotificationCategory.payment => const BillsPaymentsScreen(),
       _ => null,
     };
     if (page != null) {
@@ -422,4 +536,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
     return '$hour:${now.minute.toString().padLeft(2, '0')}';
   }
+
+  String _dateTime(DateTime value) =>
+      '${value.day}/${value.month}/${value.year} · ${TimeOfDay.fromDateTime(value).format(context)}';
 }

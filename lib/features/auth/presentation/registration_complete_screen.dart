@@ -168,6 +168,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                           dateOfBirth: dateOfBirth,
                           preferredLanguage: preferredLanguage,
                           accountId: accountId,
+                          patientId: patientId,
                         ),
                       ),
                       (route) => false,

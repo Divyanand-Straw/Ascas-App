@@ -3,6 +3,81 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 
 const Map<String, String> _tamilText = {
+  'Good Morning': 'காலை வணக்கம்',
+  'Patient ID': 'நோயாளர் அடையாள எண்',
+  'Fertility Journey': 'கருவுறுதல் பயணம்',
+  'IVF treatment': 'IVF சிகிச்சை',
+  'ICSI treatment': 'ICSI சிகிச்சை',
+  'IVF Cycle 1': 'IVF சுழற்சி 1',
+  'ICSI Treatment': 'ICSI சிகிச்சை',
+  'IUI treatment': 'IUI சிகிச்சை',
+  'Frozen Embryo Transfer (FET)': 'உறையவைத்த கரு மாற்றம் (FET)',
+  'Two-Week Wait': 'இரண்டு வாரக் காத்திருப்பு',
+  'Post-transfer care': 'கரு மாற்றத்திற்குப் பிந்தைய பராமரிப்பு',
+  'Post-procedure care': 'செயல்முறைக்குப் பிந்தைய பராமரிப்பு',
+  'Care pathway pending': 'பராமரிப்பு வழி இன்னும் உறுதிப்படுத்தப்படவில்லை',
+  'Recent Clinic Updates': 'சமீபத்திய மருத்துவமைய புதுப்பிப்புகள்',
+  'Billing Overview': 'கட்டணச் சுருக்கம்',
+  'View bills': 'கட்டணங்களைக் காண்க',
+  'ADMISSION INFORMATION': 'உள்நோயாளர் அனுமதி தகவல்',
+  'Inpatient care': 'உள்நோயாளர் பராமரிப்பு',
+  'Admission details will appear here when confirmed by your care team.': 'உங்கள் பராமரிப்புக் குழு உறுதிப்படுத்தியதும் அனுமதி விவரங்கள் இங்கே தோன்றும்.',
+  'Current stage': 'தற்போதைய நிலை',
+  'Clinic update pending': 'மருத்துவமைய புதுப்பிப்பு நிலுவையில் உள்ளது',
+  'Your treatment stage will appear when shared by your care team.':
+      'உங்கள் பராமரிப்புக் குழு பகிர்ந்ததும் சிகிச்சை நிலை இங்கே தோன்றும்.',
+  'Awaiting clinic update': 'மருத்துவமைய புதுப்பிப்புக்காக காத்திருக்கிறது',
+  'Your clinic-authorized medication schedule will appear here when available.': 'மருத்துவமையம் அங்கீகரித்த மருந்து அட்டவணை கிடைக்கும்போது இங்கே தோன்றும்.',
+  'No recent clinic updates': 'சமீபத்திய மருத்துவமைய புதுப்பிப்புகள் இல்லை',
+  'Clinic updates will appear here when shared.':
+      'மருத்துவமையம் பகிரும் புதுப்பிப்புகள் இங்கே தோன்றும்.',
+  'Read': 'படிக்கப்பட்டது',
+  'Unread': 'படிக்காதது',
+  'Medication reminders': 'மருந்து நினைவூட்டல்கள்',
+  'Payments': 'கட்டணங்கள்',
+  'Completed': 'முடிக்கப்பட்டவை',
+  'Cancelled': 'ரத்து செய்யப்பட்டவை',
+  'Reports & records': 'அறிக்கைகள் மற்றும் பதிவுகள்',
+  'General': 'பொது',
+  'No notifications in this category.': 'இந்த வகையில் அறிவிப்புகள் இல்லை.',
+  'Submitted appointment requests will appear here when available.':
+      'சமர்ப்பிக்கப்பட்ட சந்திப்பு கோரிக்கைகள் கிடைக்கும்போது இங்கே தோன்றும்.',
+  'No active prescriptions': 'செயலில் உள்ள மருந்துச் சீட்டுகள் இல்லை',
+  'No prescriptions available': 'மருந்துச் சீட்டுகள் எதுவும் கிடைக்கவில்லை',
+  'Reminders can be set after your clinic publishes a medication schedule.':
+      'மருத்துவமையம் மருந்து அட்டவணையை வெளியிட்ட பிறகு நினைவூட்டல்களை அமைக்கலாம்.',
+  'Treatment updates': 'சிகிச்சை புதுப்பிப்புகள்',
+  'Clinic notifications': 'மருத்துவமைய அறிவிப்புகள்',
+  'Your clinic billing summary will appear here when available.':
+      'மருத்துவமையக் கட்டணச் சுருக்கம் கிடைக்கும்போது இங்கே தோன்றும்.',
+  'Medications': 'மருந்துகள்',
+  'Doctor Communication': 'மருத்துவருடன் தொடர்பு',
+  'Fertility Education': 'கருவுறுதல் கல்வி',
+  'CURRENT TREATMENT': 'தற்போதைய சிகிச்சை',
+  'A simple view of your clinic-managed care pathway.':
+      'மருத்துவமையம் நிர்வகிக்கும் உங்கள் பராமரிப்பு வழியின் எளிய காட்சி.',
+  'Current treatment stage': 'தற்போதைய சிகிச்சை நிலை',
+  'Your care team has not published a stage update yet.':
+      'உங்கள் பராமரிப்புக் குழு இன்னும் நிலை புதுப்பிப்பை வெளியிடவில்லை.',
+  'Treatment progress': 'சிகிச்சை முன்னேற்றம்',
+  'Confirmed milestones and progress will appear here when available.': 'உறுதிப்படுத்தப்பட்ட மைல்கற்களும் முன்னேற்றமும் கிடைக்கும்போது இங்கே தோன்றும்.',
+  'Clinical stages are managed by your care team.':
+      'மருத்துவ நிலைகள் உங்கள் பராமரிப்புக் குழுவால் நிர்வகிக்கப்படுகின்றன.',
+  'Treatment timeline': 'சிகிச்சை காலவரிசை',
+  'No treatment milestones have been published yet.':
+      'சிகிச்சை மைல்கற்கள் இன்னும் வெளியிடப்படவில்லை.',
+  'No clinic updates have been published yet.':
+      'மருத்துவமைய புதுப்பிப்புகள் இன்னும் வெளியிடப்படவில்லை.',
+  'Your current treatment stage will appear here when confirmed by your care team.': 'உங்கள் பராமரிப்புக் குழு உறுதிப்படுத்தியதும் தற்போதைய சிகிச்சை நிலை இங்கே தோன்றும்.',
+  'Your clinic controls the confirmed journey and medical information.': 'உறுதிப்படுத்தப்பட்ட பயணத்தையும் மருத்துவத் தகவல்களையும் உங்கள் மருத்துவமையம் நிர்வகிக்கிறது.',
+  'Treatment pathway': 'சிகிச்சை வழி',
+  'Your clinic-confirmed treatment milestones will appear here.':
+      'மருத்துவமையம் உறுதிப்படுத்திய சிகிச்சை மைல்கற்கள் இங்கே தோன்றும்.',
+  'Treatment pathway:': 'சிகிச்சை வழி:',
+  'Next Appointment': 'அடுத்த சந்திப்பு',
+  'View appointment': 'சந்திப்பைக் காண்க',
+  'Prescription details will appear here when published by your clinic.':
+      'மருத்துவமையம் வெளியிடும் மருந்துச் சீட்டு விவரங்கள் இங்கே தோன்றும்.',
   'YOUR NEXT VISIT': 'உங்கள் அடுத்த வருகை',
   'No upcoming appointments.': 'வரவிருக்கும் சந்திப்புகள் இல்லை.',
   'REQUEST': 'கோரிக்கை',
