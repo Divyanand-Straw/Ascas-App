@@ -30,9 +30,6 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
     final mobile = _mobileController.text.trim();
     final type = widget.patientType.trim().toLowerCase();
 
-    debugPrint('Selected patient type: ${widget.patientType}');
-    debugPrint('Entered mobile number: $mobile');
-
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid 10-digit mobile number.')),

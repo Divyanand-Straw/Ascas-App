@@ -93,6 +93,13 @@ const _appointmentsKey = 'appointment_records';
 const _historyKey = 'appointment_history';
 
 final appointmentStore = AppointmentStore();
+final _defaultAppointments = sampleAppointments
+    .map((appointment) => Appointment.fromMap(appointment.toMap()))
+    .toList();
+final _defaultHistory = sampleHistory
+    .map((appointment) => Appointment.fromMap(appointment.toMap()))
+    .toList();
+String? _activeAppointmentAccountId;
 
 class AppointmentStore extends ChangeNotifier {
   List<Appointment> get upcoming => List.unmodifiable(sampleAppointments);
@@ -111,12 +118,49 @@ class AppointmentStore extends ChangeNotifier {
   }
 
   void refresh() => notifyListeners();
+
+  void clearActiveAccount() {
+    _activeAppointmentAccountId = null;
+    sampleAppointments
+      ..clear()
+      ..addAll(
+        _defaultAppointments.map(
+          (appointment) => Appointment.fromMap(appointment.toMap()),
+        ),
+      );
+    sampleHistory
+      ..clear()
+      ..addAll(
+        _defaultHistory.map(
+          (appointment) => Appointment.fromMap(appointment.toMap()),
+        ),
+      );
+    notifyListeners();
+  }
 }
 
-Future<void> initializeAppointmentData() async {
+Future<void> initializeAppointmentData({String? accountId}) async {
+  _activeAppointmentAccountId = accountId;
+  sampleAppointments
+    ..clear()
+    ..addAll(
+      _defaultAppointments.map(
+        (appointment) => Appointment.fromMap(appointment.toMap()),
+      ),
+    );
+  sampleHistory
+    ..clear()
+    ..addAll(
+      _defaultHistory.map(
+        (appointment) => Appointment.fromMap(appointment.toMap()),
+      ),
+    );
   final preferences = await SharedPreferences.getInstance();
-  final appointmentsJson = preferences.getString(_appointmentsKey);
-  final historyJson = preferences.getString(_historyKey);
+  final prefix = accountId == null || accountId.isEmpty
+      ? ''
+      : '${accountId}_';
+  final appointmentsJson = preferences.getString('$prefix$_appointmentsKey');
+  final historyJson = preferences.getString('$prefix$_historyKey');
   if (appointmentsJson != null) {
     sampleAppointments
       ..clear()
@@ -216,14 +260,18 @@ List<Appointment> _decode(String value) {
 
 Future<void> _save() async {
   final preferences = await SharedPreferences.getInstance();
+  final prefix = _activeAppointmentAccountId == null ||
+          _activeAppointmentAccountId!.isEmpty
+      ? ''
+      : '${_activeAppointmentAccountId}_';
   await preferences.setString(
-    _appointmentsKey,
+    '$prefix$_appointmentsKey',
     jsonEncode(
       sampleAppointments.map((appointment) => appointment.toMap()).toList(),
     ),
   );
   await preferences.setString(
-    _historyKey,
+    '$prefix$_historyKey',
     jsonEncode(
       sampleHistory.map((appointment) => appointment.toMap()).toList(),
     ),

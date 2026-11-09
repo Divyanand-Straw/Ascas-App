@@ -11,6 +11,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
   final String preferredLanguage;
   final bool isExistingPatient;
   final String patientId;
+  final String accountId;
 
   const ConsentPrivacyScreen({
     super.key,
@@ -20,6 +21,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
     required this.preferredLanguage,
     this.isExistingPatient = false,
     this.patientId = '',
+    this.accountId = '',
   });
 
   @override
@@ -370,6 +372,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                                 preferredLanguage: widget.preferredLanguage,
                                 isExistingPatient: widget.isExistingPatient,
                                 patientId: widget.patientId,
+                                accountId: widget.accountId,
                               ),
                             ),
                           );

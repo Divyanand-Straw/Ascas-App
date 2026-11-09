@@ -130,13 +130,18 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
           CircleAvatar(
             radius: 25,
             backgroundColor: AppColors.blushPink,
-            child: Text(
-              doctor.initials,
-              style: const TextStyle(
-                color: AppColors.burgundy,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            foregroundImage: doctor.profileImageUrl == null
+                ? null
+                : NetworkImage(doctor.profileImageUrl!),
+            child: doctor.profileImageUrl == null
+                ? Text(
+                    doctor.initials,
+                    style: const TextStyle(
+                      color: AppColors.burgundy,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -160,6 +165,14 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (doctor.qualifications?.isNotEmpty == true) ...[
+                  const SizedBox(height: 4),
+                  Text('Qualifications: ${doctor.qualifications}'),
+                ],
+                if (doctor.experience?.isNotEmpty == true) ...[
+                  const SizedBox(height: 4),
+                  Text('Experience: ${doctor.experience}'),
+                ],
                 const SizedBox(height: 4),
                 Text(
                   doctor.languages,

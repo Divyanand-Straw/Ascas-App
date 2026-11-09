@@ -13,6 +13,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
   final String preferredLanguage;
   final bool isExistingPatient;
   final String patientId;
+  final String accountId;
 
   const ProfileConfirmationScreen({
     super.key,
@@ -22,6 +23,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
     required this.preferredLanguage,
     this.isExistingPatient = false,
     this.patientId = '',
+    this.accountId = '',
   });
 
   String get _initials {
@@ -336,6 +338,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                             preferredLanguage: preferredLanguage,
                             isExistingPatient: true,
                             patientId: patientId,
+                            accountId: accountId,
                           )
                         : ConsentPrivacyScreen(
                             fullName: fullName,

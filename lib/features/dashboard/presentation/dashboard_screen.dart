@@ -7,9 +7,13 @@ import '../../../core/services/notification_service.dart';
 import '../../../core/services/locale_service.dart';
 import '../../../core/services/biometric_service.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/presentation/login_screen.dart';
 import '../../appointments/presentation/appointment_dashboard_screen.dart';
+import '../../appointments/presentation/data/appointment_data.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../medical_records/presentation/medical_records_screen.dart';
+import '../../auth/presentation/linked_member/linked_member_access_screen.dart';
+import '../../partner_access/data/partner_link_service.dart';
 import 'journey_screen.dart';
 import 'widgets/dashboard_home_content.dart';
 import 'widgets/patient_profile_screen.dart';
@@ -25,6 +29,12 @@ class DashboardScreen extends StatefulWidget {
   final String dateOfBirth;
   final String preferredLanguage;
   final String accountId;
+  final bool isLinkedPartner;
+  final String partnerUserName;
+  final String partnerMobile;
+  final String partnerLinkId;
+  final Map<String, bool> partnerPermissions;
+  final String dataOwnerAccountId;
 
   const DashboardScreen({
     super.key,
@@ -35,6 +45,12 @@ class DashboardScreen extends StatefulWidget {
     this.dateOfBirth = '',
     this.preferredLanguage = '',
     this.accountId = '',
+    this.isLinkedPartner = false,
+    this.partnerUserName = '',
+    this.partnerMobile = '',
+    this.partnerLinkId = '',
+    this.partnerPermissions = const {},
+    this.dataOwnerAccountId = '',
   });
 
   @override
@@ -47,6 +63,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late String _mobileNumber;
   late String _dateOfBirth;
   late String _preferredLanguage;
+  bool _partnerLinkActive = false;
+  bool _partnerAuthorizationLoading = true;
+  bool _accountContextLoading = true;
+  Map<String, bool> _activePartnerPermissions = const {};
 
   @override
   void initState() {
@@ -55,6 +75,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _mobileNumber = widget.mobileNumber;
     _dateOfBirth = widget.dateOfBirth;
     _preferredLanguage = widget.preferredLanguage;
+    if (widget.isLinkedPartner) {
+      PartnerLinkService.changes.addListener(_refreshPartnerAuthorization);
+    }
     final accountId = widget.accountId.isEmpty
         ? widget.mobileNumber
         : widget.accountId;
@@ -68,7 +91,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
             : 'en',
       );
     }
+    _loadAccountContext();
   }
+
+  Future<void> _loadAccountContext() async {
+    final dataOwner = widget.dataOwnerAccountId.isEmpty
+        ? (widget.isLinkedPartner ? '' : widget.accountId)
+        : widget.dataOwnerAccountId;
+    await initializeAppointmentData(
+      accountId: dataOwner.isEmpty ? null : dataOwner,
+    );
+    await NotificationService.instance.setAccount(
+      dataOwner.isEmpty ? 'guest' : dataOwner,
+    );
+    if (NotificationService.instance.isInitialized) {
+      await scheduleActiveAppointmentReminders();
+    }
+    if (widget.isLinkedPartner) await _refreshPartnerAuthorization();
+    if (mounted) setState(() => _accountContextLoading = false);
+  }
+
+  @override
+  void dispose() {
+    if (widget.isLinkedPartner) {
+      PartnerLinkService.changes.removeListener(_refreshPartnerAuthorization);
+    }
+    super.dispose();
+  }
+
+  Future<void> _refreshPartnerAuthorization() async {
+    final link = await PartnerLinkService().activeLinkForPartner(
+      widget.partnerMobile,
+      partnerUserId: widget.accountId,
+    );
+    if (!mounted) return;
+    setState(() {
+      _partnerLinkActive = link != null;
+      _activePartnerPermissions = link?.permissions ?? const <String, bool>{};
+      _partnerAuthorizationLoading = false;
+    });
+  }
+
+  Map<String, bool> get _effectivePartnerPermissions => widget.isLinkedPartner
+      ? _activePartnerPermissions
+      : widget.partnerPermissions;
 
   String get _initials {
     final parts = _patientName.trim().split(RegExp(r'\s+'));
@@ -92,6 +158,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _profilePage() {
+    if (widget.isLinkedPartner) {
+      return _PartnerAccountProfile(
+        name: widget.partnerUserName,
+        mobile: widget.partnerMobile,
+        linkId: widget.partnerLinkId,
+        onLogout: _logoutPartner,
+      );
+    }
     return PatientProfileScreen(
       patientName: _patientName,
       patientInitials: _initials,
@@ -118,6 +192,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String get _currentLanguage =>
       LocaleService.locale.value.languageCode == 'ta' ? 'Tamil' : 'English';
 
+  bool _hasPermission(String category) =>
+      !widget.isLinkedPartner ||
+      (_partnerLinkActive && _effectivePartnerPermissions[category] == true);
+
+  Widget _restricted(String category) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(28),
+      child: Text(
+        'The patient has not shared $category with this account.',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: AppColors.secondaryText,
+          fontSize: 14,
+          height: 1.5,
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _selectTab(int index) async {
+    if (widget.isLinkedPartner) await _refreshPartnerAuthorization();
+    if (mounted) setState(() => _selectedIndex = index);
+  }
+
+  Future<void> _logoutPartner() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log out?'),
+        content: const Text(
+          'Your saved records remain with their patient account.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Log out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await LocaleService.resetForLogout();
+    await NotificationService.instance.resetForLogout();
+    appointmentStore.clearActiveAccount();
+    BiometricService.instance.endSession();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -128,6 +259,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
       l10n.healthRecords,
       l10n.profile,
     ];
+    final selectedContent = _accountContextLoading
+        ? const Center(child: CircularProgressIndicator())
+        : switch (_selectedIndex) {
+            0 => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: DashboardHomeContent(
+                patientName: _patientName,
+                mobileNumber: _mobileNumber,
+                patientId: widget.patientId,
+                patientState: widget.patientState,
+                isLinkedPartner: widget.isLinkedPartner,
+                partnerPermissions: _effectivePartnerPermissions,
+                onNavigate: (index) => setState(() => _selectedIndex = index),
+              ),
+            ),
+            1 =>
+              _hasPermission('Treatment Journey')
+                  ? JourneyScreen(
+                      treatmentName: _treatmentName,
+                      isLinkedPartner: widget.isLinkedPartner,
+                      partnerPermissions: _effectivePartnerPermissions,
+                      onNavigate: (index) =>
+                          setState(() => _selectedIndex = index),
+                    )
+                  : _restricted('the Treatment Journey'),
+            2 =>
+              _hasPermission('Appointments')
+                  ? AppointmentDashboardScreen(
+                      patientName: _patientName,
+                      mobileNumber: _mobileNumber,
+                    )
+                  : _restricted('Appointments'),
+            3 =>
+              (_hasPermission('Medical Reports') ||
+                      _hasPermission('Discharge Summary') ||
+                      _hasPermission('Bills and Payments') ||
+                      _hasPermission('IP Billing') ||
+                      _hasPermission('Prescriptions'))
+                  ? MedicalRecordsScreen(
+                      patientName: _patientName,
+                      isLinkedPartner: widget.isLinkedPartner,
+                      partnerPermissions: _effectivePartnerPermissions,
+                    )
+                  : _restricted('Records'),
+            4 => _profilePage(),
+            _ => _placeholderPage(navigationLabels[_selectedIndex]),
+          };
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -143,19 +321,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               borderRadius: BorderRadius.circular(13),
               child: InkWell(
                 borderRadius: BorderRadius.circular(13),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PatientServicesScreen(
-                      patientName: _patientName,
-                      patientId: widget.patientId,
-                      mobileNumber: _mobileNumber,
-                      dateOfBirth: _dateOfBirth,
-                      preferredLanguage: _currentLanguage,
-                      patientState: widget.patientState,
-                    ),
-                  ),
-                ),
+                onTap: widget.isLinkedPartner
+                    ? null
+                    : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PatientServicesScreen(
+                            patientName: _patientName,
+                            patientId: widget.patientId,
+                            mobileNumber: _mobileNumber,
+                            dateOfBirth: _dateOfBirth,
+                            preferredLanguage: _currentLanguage,
+                            patientState: widget.patientState,
+                            accountId: widget.accountId.isEmpty
+                                ? widget.mobileNumber
+                                : widget.accountId,
+                          ),
+                        ),
+                      ),
                 child: Padding(
                   padding: const EdgeInsets.all(3),
                   child: ClipRRect(
@@ -184,15 +367,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
             AnimatedBuilder(
               animation: NotificationService.instance,
               builder: (context, child) {
-                final unread = NotificationService.instance.unreadCount;
+                final unread =
+                    !widget.isLinkedPartner ||
+                        _hasPermission('Notifications and clinic updates')
+                    ? NotificationService.instance.unreadCount
+                    : 0;
                 return IconButton(
                   tooltip: l10n.notifications,
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsScreen(),
-                    ),
-                  ),
+                  onPressed:
+                      widget.isLinkedPartner &&
+                          !_hasPermission('Notifications and clinic updates')
+                      ? null
+                      : () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => NotificationsScreen(
+                              isLinkedPartner: widget.isLinkedPartner,
+                              partnerPermissions: _effectivePartnerPermissions,
+                            ),
+                          ),
+                        ),
                   icon: Stack(
                     clipBehavior: Clip.none,
                     children: [
@@ -236,28 +430,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: _selectedIndex == 0
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: DashboardHomeContent(
-                  patientName: _patientName,
-                  patientId: widget.patientId,
-                  patientState: widget.patientState,
-                  onNavigate: (index) => setState(() => _selectedIndex = index),
+        child: Column(
+          children: [
+            if (widget.isLinkedPartner)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
-              )
-            : _selectedIndex == 2
-            ? AppointmentDashboardScreen(
-                patientName: _patientName,
-                mobileNumber: _mobileNumber,
-              )
-            : _selectedIndex == 1
-            ? JourneyScreen(treatmentName: _treatmentName)
-            : _selectedIndex == 3
-            ? MedicalRecordsScreen(patientName: _patientName)
-            : _selectedIndex == 4
-            ? _profilePage()
-            : _placeholderPage(navigationLabels[_selectedIndex]),
+                color: AppColors.blushPink,
+                child: Text(
+                  _partnerAuthorizationLoading
+                      ? 'Checking linked patient access...'
+                      : _partnerLinkActive
+                      ? "Viewing $_patientName's Linked Patient Profile"
+                      : 'Patient link is no longer active. Shared information is unavailable.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.burgundy,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            Expanded(child: selectedContent),
+          ],
+        ),
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -268,7 +467,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           top: false,
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
-            onTap: (index) => setState(() => _selectedIndex = index),
+            onTap: _selectTab,
             type: BottomNavigationBarType.fixed,
             backgroundColor: AppColors.white,
             selectedItemColor: AppColors.burgundy,
@@ -391,5 +590,71 @@ class _NavigationIcon extends StatelessWidget {
     ),
     alignment: Alignment.center,
     child: Icon(icon),
+  );
+}
+
+class _PartnerAccountProfile extends StatelessWidget {
+  final String name;
+  final String mobile;
+  final String linkId;
+  final VoidCallback onLogout;
+
+  const _PartnerAccountProfile({
+    required this.name,
+    required this.mobile,
+    required this.linkId,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(20),
+    children: [
+      Card(
+        color: AppColors.white,
+        elevation: 0,
+        child: ListTile(
+          leading: const CircleAvatar(
+            backgroundColor: AppColors.blushPink,
+            child: Icon(Icons.person_outline, color: AppColors.burgundy),
+          ),
+          title: Text(name),
+          subtitle: Text('Partner account · $mobile'),
+        ),
+      ),
+      const SizedBox(height: 12),
+      const Text(
+        'This is your separate partner account. It does not own a patient medical record.',
+        style: TextStyle(color: AppColors.secondaryText, height: 1.5),
+      ),
+      const SizedBox(height: 18),
+      OutlinedButton.icon(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LinkedMemberAccessScreen(mobileNumber: mobile),
+          ),
+        ),
+        icon: const Icon(Icons.link_rounded),
+        label: const Text('Link to Patient'),
+      ),
+      if (linkId.isNotEmpty)
+        const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: Text(
+            'To change shared access, ask the patient to update permissions or revoke the link.',
+            style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+          ),
+        ),
+      const SizedBox(height: 18),
+      SizedBox(
+        width: double.infinity,
+        child: TextButton.icon(
+          onPressed: onLogout,
+          icon: const Icon(Icons.logout_rounded),
+          label: const Text('Log out'),
+        ),
+      ),
+    ],
   );
 }

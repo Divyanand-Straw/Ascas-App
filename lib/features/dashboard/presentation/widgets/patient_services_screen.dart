@@ -14,8 +14,8 @@ import '../../../communication/presentation/communication_screen.dart';
 import '../../../education/presentation/education_screen.dart';
 import 'dashboard_card.dart';
 import 'dashboard_home_content.dart';
-import 'patient_profile_screen.dart';
 import 'treatment_overview_screen.dart';
+import '../../../partner_access/presentation/patient_partner_access_screen.dart';
 
 class PatientServicesScreen extends StatelessWidget {
   final String patientName;
@@ -24,6 +24,7 @@ class PatientServicesScreen extends StatelessWidget {
   final String dateOfBirth;
   final String preferredLanguage;
   final DashboardPatientState patientState;
+  final String accountId;
 
   const PatientServicesScreen({
     super.key,
@@ -33,6 +34,7 @@ class PatientServicesScreen extends StatelessWidget {
     required this.dateOfBirth,
     required this.preferredLanguage,
     required this.patientState,
+    this.accountId = '',
   });
 
   String get _initials {
@@ -243,7 +245,7 @@ class PatientServicesScreen extends StatelessWidget {
                             '${localizedText(context, 'Patient ID')}: $patientId',
                             style: const TextStyle(
                               color: AppColors.secondaryText,
-                              fontSize: 12,
+                              fontSize: 10,
                             ),
                           ),
                       ],
@@ -333,16 +335,19 @@ class PatientServicesScreen extends StatelessWidget {
                 context: context,
                 icon: Icons.people_outline_rounded,
                 title: 'Partner Access',
-                subtitle: 'Permission-based sharing.',
+                subtitle:
+                    'Invite a partner, review requests, and manage sharing.',
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const PartnerPermissionsScreen(
-                      permissions: {
-                        'Appointments': false,
-                        'Treatment overview': false,
-                        'Health records': false,
-                      },
+                    builder: (_) => PatientPartnerAccessScreen(
+                      patientUserId: accountId.isEmpty
+                          ? mobileNumber
+                          : accountId,
+                      patientId: patientId,
+                      patientName: patientName,
+                      patientMobile: mobileNumber,
+                      patientState: patientState,
                     ),
                   ),
                 ),
@@ -356,7 +361,8 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const QuestionNotebookScreen(),
+                    builder: (_) =>
+                        QuestionNotebookScreen(accountId: accountId),
                   ),
                 ),
               ),
@@ -382,7 +388,7 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const WellnessJournalScreen(),
+                    builder: (_) => WellnessJournalScreen(accountId: accountId),
                   ),
                 ),
               ),
@@ -503,14 +509,16 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
 }
 
 class QuestionNotebookScreen extends StatefulWidget {
-  const QuestionNotebookScreen({super.key});
+  final String accountId;
+
+  const QuestionNotebookScreen({super.key, this.accountId = ''});
 
   @override
   State<QuestionNotebookScreen> createState() => _QuestionNotebookScreenState();
 }
 
 class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
-  static const _storageKey = 'patient_question_notebook';
+  String get _storageKey => 'patient_question_notebook_${widget.accountId}';
   List<Map<String, dynamic>> _questions = [];
 
   @override
@@ -646,14 +654,16 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
 }
 
 class WellnessJournalScreen extends StatefulWidget {
-  const WellnessJournalScreen({super.key});
+  final String accountId;
+
+  const WellnessJournalScreen({super.key, this.accountId = ''});
 
   @override
   State<WellnessJournalScreen> createState() => _WellnessJournalScreenState();
 }
 
 class _WellnessJournalScreenState extends State<WellnessJournalScreen> {
-  static const _storageKey = 'patient_wellness_journal';
+  String get _storageKey => 'patient_wellness_journal_${widget.accountId}';
   List<Map<String, dynamic>> _entries = [];
 
   @override

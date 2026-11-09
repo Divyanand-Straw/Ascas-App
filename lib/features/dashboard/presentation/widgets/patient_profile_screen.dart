@@ -4,15 +4,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
+import '../../../../core/widgets/date_of_birth_picker.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/locale_service.dart';
 import '../../../../core/services/biometric_service.dart';
+import '../../../../core/services/notification_service.dart';
+import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../auth/presentation/consent_privacy_screen.dart';
+import '../../../partner_access/presentation/patient_partner_access_screen.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
 import 'dashboard_card.dart';
 import 'dashboard_home_content.dart';
@@ -64,12 +68,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   late String _mobile;
   late String _dateOfBirth;
   late String _language;
-  Map<String, bool> _partnerPermissions = {
-    'Appointments': false,
-    'Treatment overview': false,
-    'Health records': false,
-  };
-
   String get _initials {
     final parts = _name.trim().split(RegExp(r'\s+'));
     if (parts.length > 1 && parts.first.isNotEmpty && parts.last.isNotEmpty) {
@@ -77,6 +75,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     }
     return parts.first.isEmpty ? '' : parts.first[0].toUpperCase();
   }
+
+  String _profileKey(String field) =>
+      'profile_${widget.accountId.isEmpty ? widget.mobileNumber : widget.accountId}_$field';
 
   @override
   void initState() {
@@ -94,21 +95,17 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final preferences = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _name = preferences.getString('profile_name') ?? _name;
-      _mobile = preferences.getString('profile_mobile') ?? _mobile;
-      _dateOfBirth = preferences.getString('profile_dob') ?? _dateOfBirth;
-      for (final entry in _partnerPermissions.entries) {
-        _partnerPermissions[entry.key] =
-            preferences.getBool('partner_${entry.key}') ?? false;
-      }
+      _name = preferences.getString(_profileKey('name')) ?? _name;
+      _mobile = preferences.getString(_profileKey('mobile')) ?? _mobile;
+      _dateOfBirth = preferences.getString(_profileKey('dob')) ?? _dateOfBirth;
     });
   }
 
   Future<void> _saveProfile(PatientProfileData profile) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString('profile_name', profile.name);
-    await preferences.setString('profile_mobile', profile.mobile);
-    await preferences.setString('profile_dob', profile.dateOfBirth);
+    await preferences.setString(_profileKey('name'), profile.name);
+    await preferences.setString(_profileKey('mobile'), profile.mobile);
+    await preferences.setString(_profileKey('dob'), profile.dateOfBirth);
     if (!mounted) return;
     setState(() {
       _name = profile.name;
@@ -138,8 +135,12 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            LanguageAccessibilityScreen(selectedLanguage: _language),
+        builder: (_) => LanguageAccessibilityScreen(
+          selectedLanguage: _language,
+          accountId: widget.accountId.isEmpty
+              ? widget.mobileNumber
+              : widget.accountId,
+        ),
       ),
     );
     if (result == null) return;
@@ -164,19 +165,20 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Future<void> _openPermissions() async {
-    final result = await Navigator.push<Map<String, bool>>(
+    await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            PartnerPermissionsScreen(permissions: _partnerPermissions),
+        builder: (_) => PatientPartnerAccessScreen(
+          patientUserId: widget.accountId.isEmpty
+              ? widget.mobileNumber
+              : widget.accountId,
+          patientId: widget.patientId,
+          patientName: _name,
+          patientMobile: _mobile,
+          patientState: widget.patientState,
+        ),
       ),
     );
-    if (result == null) return;
-    final preferences = await SharedPreferences.getInstance();
-    for (final entry in result.entries) {
-      await preferences.setBool('partner_${entry.key}', entry.value);
-    }
-    if (mounted) setState(() => _partnerPermissions = result);
   }
 
   Future<void> _toggleBiometric(bool value) async {
@@ -272,6 +274,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     );
     if (confirmed == true && mounted) {
       await LocaleService.resetForLogout();
+      await NotificationService.instance.resetForLogout();
+      appointmentStore.clearActiveAccount();
       BiometricService.instance.endSession();
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
@@ -424,6 +428,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DashboardCard(
+              color: AppColors.burgundy,
               padding: const EdgeInsets.all(17),
               child: Row(
                 children: [
@@ -438,12 +443,12 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     ),
                     child: CircleAvatar(
                       radius: 32,
-                      backgroundColor: AppColors.blushPink,
+                      backgroundColor: AppColors.dustyPink,
                       child: Text(
                         _initials,
                         style: const TextStyle(
                           color: AppColors.burgundy,
-                          fontSize: 23,
+                          fontSize: 21,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -459,20 +464,39 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppColors.primaryText,
-                            fontSize: 19,
+                            color: AppColors.white,
+                            fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 7),
                         if (widget.patientId.isNotEmpty)
-                          LocalizedText(
-                            '${localizedText(context, 'Patient ID')}: ${widget.patientId}',
-                            style: const TextStyle(
-                              color: AppColors.secondaryText,
-                              fontSize: 12,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.white.withValues(alpha: .13),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${localizedText(context, 'Patient ID')}: ${widget.patientId}',
+                              style: const TextStyle(
+                                color: AppColors.dustyPink,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
+                        if (_mobile.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _profileContactRow(Icons.phone_outlined, _mobile),
+                        ],
+                        if (_dateOfBirth.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          _profileContactRow(Icons.cake_outlined, _dateOfBirth),
+                        ],
                       ],
                     ),
                   ),
@@ -497,8 +521,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               const Divider(height: 1, color: AppColors.divider),
               _option(
                 icon: Icons.people_outline_rounded,
-                title: 'Partner Permissions',
-                subtitle: 'Manage shared access.',
+                title: 'Partner Access',
+                subtitle:
+                    'Invite a partner, review requests, and manage sharing.',
                 onTap: _openPermissions,
               ),
             ]),
@@ -667,6 +692,25 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
     );
   }
+
+  Widget _profileContactRow(IconData icon, String value) => Row(
+    children: [
+      Icon(icon, size: 14, color: AppColors.dustyPink),
+      const SizedBox(width: 6),
+      Flexible(
+        child: Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontSize: 11,
+            height: 1.3,
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class PersonalDetailsScreen extends StatefulWidget {
@@ -713,7 +757,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     final mobile = _mobile.text.trim();
     if (name.length < 2 ||
         !RegExp(r'^[6-9]\d{9}$').hasMatch(mobile) ||
-        _dob.text.trim().isEmpty) {
+        parseDateOfBirth(_dob.text) == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: LocalizedText('Please enter valid profile details.'),
@@ -730,6 +774,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         language: widget.language,
       ),
     );
+  }
+
+  Future<void> _selectDate() async {
+    final selectedDate = await showDateOfBirthPicker(
+      context,
+      initialDate: parseDateOfBirth(_dob.text),
+    );
+    if (selectedDate != null) {
+      _dob.text = formatDateOfBirth(selectedDate);
+    }
   }
 
   InputDecoration _dec(String hint) => InputDecoration(
@@ -762,7 +816,14 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
             decoration: _dec('Mobile number'),
           ),
           const SizedBox(height: 14),
-          TextField(controller: _dob, decoration: _dec('Date of birth')),
+          TextField(
+            controller: _dob,
+            readOnly: true,
+            onTap: _selectDate,
+            decoration: _dec(
+              'Date of birth',
+            ).copyWith(suffixIcon: const Icon(Icons.calendar_today_outlined)),
+          ),
           const SizedBox(height: 18),
           LocalizedText(
             'Hospital-managed clinical records and treatment information cannot be edited here.',
@@ -794,10 +855,12 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
 
 class LanguageAccessibilityScreen extends StatefulWidget {
   final String selectedLanguage;
+  final String accountId;
 
   const LanguageAccessibilityScreen({
     super.key,
     required this.selectedLanguage,
+    required this.accountId,
   });
 
   @override
@@ -818,8 +881,14 @@ class _LanguageAccessibilityScreenState
 
   Future<void> _save() async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString('profile_language', _language);
-    await preferences.setDouble('profile_text_scale', _textScale);
+    await preferences.setString(
+      'profile_${widget.accountId}_language',
+      _language,
+    );
+    await preferences.setDouble(
+      'profile_${widget.accountId}_text_scale',
+      _textScale,
+    );
     if (mounted) Navigator.pop(context, _language);
   }
 
@@ -867,60 +936,6 @@ class _LanguageAccessibilityScreenState
       ),
     );
   }
-}
-
-class PartnerPermissionsScreen extends StatefulWidget {
-  final Map<String, bool> permissions;
-
-  const PartnerPermissionsScreen({super.key, required this.permissions});
-
-  @override
-  State<PartnerPermissionsScreen> createState() =>
-      _PartnerPermissionsScreenState();
-}
-
-class _PartnerPermissionsScreenState extends State<PartnerPermissionsScreen> {
-  late Map<String, bool> _permissions;
-
-  @override
-  void initState() {
-    super.initState();
-    _permissions = Map<String, bool>.from(widget.permissions);
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
-    appBar: AppBar(
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      title: LocalizedText('Partner Permissions'),
-    ),
-    body: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        LocalizedText(
-          'Only permissions you enable will be available to an approved partner.',
-          style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
-        ),
-        const SizedBox(height: 14),
-        ..._permissions.keys.map(
-          (permission) => SwitchListTile(
-            value: _permissions[permission]!,
-            activeThumbColor: AppColors.burgundy,
-            title: Text(permission),
-            onChanged: (value) =>
-                setState(() => _permissions[permission] = value),
-          ),
-        ),
-        const SizedBox(height: 18),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _permissions),
-          child: LocalizedText('Save permissions'),
-        ),
-      ],
-    ),
-  );
 }
 
 class ConsentManagementScreen extends StatefulWidget {

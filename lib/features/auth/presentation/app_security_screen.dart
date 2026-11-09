@@ -12,6 +12,7 @@ class AppSecurityScreen extends StatefulWidget {
   final String preferredLanguage;
   final bool isExistingPatient;
   final String patientId;
+  final String accountId;
 
   const AppSecurityScreen({
     super.key,
@@ -21,6 +22,7 @@ class AppSecurityScreen extends StatefulWidget {
     required this.preferredLanguage,
     this.isExistingPatient = false,
     this.patientId = '',
+    this.accountId = '',
   });
 
   @override
@@ -333,6 +335,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                                   preferredLanguage: widget.preferredLanguage,
                                   isExistingPatient: widget.isExistingPatient,
                                   patientId: widget.patientId,
+                                  accountId: widget.accountId,
                                 ),
                               ),
                             );

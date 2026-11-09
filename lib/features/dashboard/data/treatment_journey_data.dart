@@ -74,6 +74,57 @@ class TreatmentPathway {
       .length;
 }
 
+List<String> workflowStagesFor(String treatmentName) {
+  final treatment = treatmentName.toLowerCase();
+  if (treatment.contains('icsi')) {
+    return const [
+      'Treatment planning',
+      'Ovarian stimulation',
+      'Clinic monitoring',
+      'Egg retrieval',
+      'ICSI fertilisation and embryo culture',
+      'Embryo transfer or freezing',
+      'Clinic-directed follow-up',
+    ];
+  }
+  if (treatment.contains('iui')) {
+    return const [
+      'Treatment planning',
+      'Cycle monitoring as directed by your clinic',
+      'Insemination',
+      'Clinic-directed follow-up',
+    ];
+  }
+  if (treatment.contains('fet') || treatment.contains('frozen')) {
+    return const [
+      'Treatment planning',
+      'Cycle preparation as directed by your clinic',
+      'Clinic monitoring',
+      'Frozen embryo transfer',
+      'Clinic-directed follow-up',
+    ];
+  }
+  if (treatment.contains('ivf')) {
+    return const [
+      'Treatment planning',
+      'Ovarian stimulation',
+      'Clinic monitoring',
+      'Egg retrieval',
+      'Fertilisation and embryo culture',
+      'Embryo transfer or freezing',
+      'Clinic-directed follow-up',
+    ];
+  }
+  if (treatment.toLowerCase().contains('embryo transfer') ||
+      treatment.contains('two-week')) {
+    return const ['Embryo transfer', 'Post-transfer care and follow-up'];
+  }
+  if (treatment.contains('follow-up') || treatment.contains('recovery')) {
+    return const ['Clinic-directed follow-up care'];
+  }
+  return const [];
+}
+
 TreatmentPathway pathwayFor(String name) => TreatmentPathway(
   name: name,
   currentStage: 'Clinic update pending',

@@ -3,12 +3,18 @@ class Doctor {
   final String initials;
   final String specialty;
   final String languages;
+  final String? qualifications;
+  final String? experience;
+  final String? profileImageUrl;
 
   const Doctor({
     required this.name,
     required this.initials,
     required this.specialty,
     required this.languages,
+    this.qualifications,
+    this.experience,
+    this.profileImageUrl,
   });
 }
 

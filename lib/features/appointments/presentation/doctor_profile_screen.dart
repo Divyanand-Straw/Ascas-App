@@ -33,14 +33,19 @@ class DoctorProfileScreen extends StatelessWidget {
           CircleAvatar(
             radius: 39,
             backgroundColor: AppColors.blushPink,
-            child: Text(
-              doctor.initials,
-              style: const TextStyle(
-                color: AppColors.burgundy,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            foregroundImage: doctor.profileImageUrl == null
+                ? null
+                : NetworkImage(doctor.profileImageUrl!),
+            child: doctor.profileImageUrl == null
+                ? Text(
+                    doctor.initials,
+                    style: const TextStyle(
+                      color: AppColors.burgundy,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: 12),
           Center(
@@ -74,6 +79,10 @@ class DoctorProfileScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (doctor.qualifications?.isNotEmpty == true)
+            Center(child: Text('Qualifications: ${doctor.qualifications}')),
+          if (doctor.experience?.isNotEmpty == true)
+            Center(child: Text('Experience: ${doctor.experience}')),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'new_patient/profile_confirmation_screen.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/step_progress_bar.dart';
+import '../../../core/widgets/date_of_birth_picker.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
   final String mobileNumber;
@@ -37,32 +38,11 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   Future<void> _selectDate() async {
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.burgundy,
-              onPrimary: AppColors.white,
-              surface: AppColors.white,
-              onSurface: AppColors.primaryText,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
+    final selectedDate = await showDateOfBirthPicker(context);
 
     if (selectedDate != null) {
       setState(() {
-        _dobController.text =
-            '${selectedDate.day.toString().padLeft(2, '0')}/'
-            '${selectedDate.month.toString().padLeft(2, '0')}/'
-            '${selectedDate.year}';
+        _dobController.text = formatDateOfBirth(selectedDate);
       });
     }
   }

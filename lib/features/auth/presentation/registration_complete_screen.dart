@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/locale_service.dart';
+import '../data/account_identity_service.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
 
 class RegistrationCompleteScreen extends StatelessWidget {
@@ -11,6 +12,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
   final String preferredLanguage;
   final bool isExistingPatient;
   final String patientId;
+  final String accountId;
 
   const RegistrationCompleteScreen({
     super.key,
@@ -20,7 +22,59 @@ class RegistrationCompleteScreen extends StatelessWidget {
     required this.preferredLanguage,
     this.isExistingPatient = false,
     this.patientId = '',
+    this.accountId = '',
   });
+
+  Future<void> _continue(BuildContext context) async {
+    try {
+      final accounts = AccountIdentityService();
+      final identity = isExistingPatient
+          ? await accounts.resolveExistingPatient(
+              mobileNumber: mobileNumber,
+              patientId: patientId,
+              dateOfBirth: dateOfBirth,
+            )
+          : await accounts.createOrGetNewPatient(
+              mobileNumber: mobileNumber,
+              fullName: fullName,
+              dateOfBirth: dateOfBirth,
+              preferredLanguage: preferredLanguage,
+            );
+      if (accountId.isNotEmpty && identity.accountId != accountId) {
+        throw StateError(
+          'The verified account changed during registration. Please sign in again.',
+        );
+      }
+      final language =
+          identity.preferredLanguage == 'Tamil' ||
+              identity.preferredLanguage == 'தமிழ்'
+          ? 'ta'
+          : 'en';
+      await LocaleService.setAccountLanguage(
+        accountId: identity.accountId,
+        languageCode: language,
+      );
+      if (!context.mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DashboardScreen(
+            patientName: identity.fullName,
+            mobileNumber: identity.mobileNumber,
+            dateOfBirth: identity.dateOfBirth,
+            preferredLanguage: identity.preferredLanguage,
+            accountId: identity.accountId,
+            patientId: identity.patientId,
+          ),
+        ),
+        (route) => false,
+      );
+    } on StateError catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message.toString())));
+    }
+  }
 
   Widget _verificationItem(String title) {
     return Padding(
@@ -145,35 +199,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final language =
-                        preferredLanguage == 'Tamil' ||
-                            preferredLanguage == 'தமிழ்'
-                        ? 'ta'
-                        : 'en';
-                    final accountId = patientId.isEmpty
-                        ? mobileNumber
-                        : patientId;
-                    await LocaleService.setAccountLanguage(
-                      accountId: accountId,
-                      languageCode: language,
-                    );
-                    if (!context.mounted) return;
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DashboardScreen(
-                          patientName: fullName,
-                          mobileNumber: mobileNumber,
-                          dateOfBirth: dateOfBirth,
-                          preferredLanguage: preferredLanguage,
-                          accountId: accountId,
-                          patientId: patientId,
-                        ),
-                      ),
-                      (route) => false,
-                    );
-                  },
+                  onPressed: () => _continue(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     foregroundColor: AppColors.white,

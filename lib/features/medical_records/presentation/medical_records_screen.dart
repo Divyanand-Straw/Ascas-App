@@ -5,6 +5,7 @@ import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../communication/presentation/communication_screen.dart';
+import '../../medication/presentation/medication_screen.dart';
 
 enum RecordCategory {
   patientDetails,
@@ -204,8 +205,18 @@ const _demoDischargeSummary = DischargeSummary(
 
 class MedicalRecordsScreen extends StatelessWidget {
   final String patientName;
+  final bool isLinkedPartner;
+  final Map<String, bool> partnerPermissions;
 
-  const MedicalRecordsScreen({super.key, this.patientName = ''});
+  const MedicalRecordsScreen({
+    super.key,
+    this.patientName = '',
+    this.isLinkedPartner = false,
+    this.partnerPermissions = const {},
+  });
+
+  bool _can(String category) =>
+      !isLinkedPartner || partnerPermissions[category] == true;
 
   @override
   Widget build(BuildContext context) {
@@ -233,55 +244,80 @@ class MedicalRecordsScreen extends StatelessWidget {
             style: AppTextStyles.bodyMedium,
           ),
           const SizedBox(height: 16),
-          _PatientSummary(patientName: patientName),
+          if (_can('Patient profile information'))
+            _PatientSummary(patientName: patientName),
           const SizedBox(height: 22),
           const _SectionLabel('RECORD CATEGORIES'),
           const SizedBox(height: 9),
-          _CategoryCard(
-            icon: Icons.folder_shared_outlined,
-            title: 'EMR',
-            description: 'View your electronic medical records.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EmrScreen()),
+          if (!isLinkedPartner)
+            _CategoryCard(
+              icon: Icons.folder_shared_outlined,
+              title: 'EMR',
+              description: 'View your electronic medical records.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EmrScreen()),
+              ),
             ),
-          ),
-          _CategoryCard(
-            icon: Icons.assessment_outlined,
-            title: 'Reports',
-            description: 'Review laboratory and imaging reports.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ReportsScreen()),
+          if (_can('Medical Reports'))
+            _CategoryCard(
+              icon: Icons.assessment_outlined,
+              title: 'Reports',
+              description: 'Review laboratory and imaging reports.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReportsScreen()),
+              ),
             ),
-          ),
-          _CategoryCard(
-            icon: Icons.description_outlined,
-            title: 'Discharge Summary',
-            description: 'Access your discharge documentation.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DischargeSummaryScreen()),
+          if (_can('Discharge Summary'))
+            _CategoryCard(
+              icon: Icons.description_outlined,
+              title: 'Discharge Summary',
+              description: 'Access your discharge documentation.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const DischargeSummaryScreen(),
+                ),
+              ),
             ),
-          ),
-          _CategoryCard(
-            icon: Icons.receipt_long_outlined,
-            title: 'Bills & Payments',
-            description: 'Review your billing history and payment status.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BillsPaymentsScreen()),
+          if (isLinkedPartner &&
+              (_can('Prescriptions') || _can('Medication schedules')))
+            _CategoryCard(
+              icon: Icons.medication_outlined,
+              title: 'Medication schedules & prescriptions',
+              description: 'View shared medication information.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MedicationScreen(
+                    isLinkedPartner: isLinkedPartner,
+                    canViewMedicationSchedule: _can('Medication schedules'),
+                    canViewPrescriptions: _can('Prescriptions'),
+                  ),
+                ),
+              ),
             ),
-          ),
-          _CategoryCard(
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'IP Billing',
-            description: 'View inpatient admission billing details.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const IpBillingScreen()),
+          if (_can('Bills and Payments'))
+            _CategoryCard(
+              icon: Icons.receipt_long_outlined,
+              title: 'Bills & Payments',
+              description: 'Review your billing history and payment status.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BillsPaymentsScreen()),
+              ),
             ),
-          ),
+          if (_can('IP Billing'))
+            _CategoryCard(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'IP Billing',
+              description: 'View inpatient admission billing details.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const IpBillingScreen()),
+              ),
+            ),
         ],
       ),
     );

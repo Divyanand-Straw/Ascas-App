@@ -37,7 +37,16 @@ class MedicationDose {
 }
 
 class MedicationScreen extends StatefulWidget {
-  const MedicationScreen({super.key});
+  final bool isLinkedPartner;
+  final bool canViewMedicationSchedule;
+  final bool canViewPrescriptions;
+
+  const MedicationScreen({
+    super.key,
+    this.isLinkedPartner = false,
+    this.canViewMedicationSchedule = true,
+    this.canViewPrescriptions = true,
+  });
 
   @override
   State<MedicationScreen> createState() => _MedicationScreenState();
@@ -120,7 +129,11 @@ class _MedicationScreenState extends State<MedicationScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: LocalizedText('Medication Management'),
+        title: LocalizedText(
+          widget.isLinkedPartner && !widget.canViewMedicationSchedule
+              ? 'Prescriptions'
+              : 'Medication Management',
+        ),
         actions: [
           IconButton(
             tooltip: localizedText(context, 'Support'),
@@ -139,6 +152,23 @@ class _MedicationScreenState extends State<MedicationScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
+          : widget.isLinkedPartner && !widget.canViewMedicationSchedule
+          ? ListView(
+              padding: const EdgeInsets.all(18),
+              children: [
+                DashboardCard(
+                  child: LocalizedText(
+                    widget.canViewPrescriptions
+                        ? 'No prescriptions have been published for this patient.'
+                        : 'No medication information is shared with this account.',
+                    style: const TextStyle(
+                      color: AppColors.secondaryText,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            )
           : ListView(
               padding: const EdgeInsets.all(18),
               children: [
@@ -158,7 +188,10 @@ class _MedicationScreenState extends State<MedicationScreen> {
                       const SizedBox(height: 8),
                       LocalizedText(
                         _doses.isEmpty
-                            ? 'No active prescriptions'
+                            ? widget.isLinkedPartner &&
+                                      !widget.canViewPrescriptions
+                                  ? 'No scheduled doses'
+                                  : 'No active prescriptions'
                             : '${_doses.where((dose) => dose.status == DoseStatus.taken).length} doses completed',
                         style: const TextStyle(
                           color: AppColors.white,
@@ -189,7 +222,9 @@ class _MedicationScreenState extends State<MedicationScreen> {
                     ),
                     Switch(
                       value: _remindersEnabled,
-                      onChanged: _doses.isEmpty ? null : _setReminders,
+                      onChanged: _doses.isEmpty || widget.isLinkedPartner
+                          ? null
+                          : _setReminders,
                       activeThumbColor: AppColors.burgundy,
                     ),
                   ],
@@ -355,7 +390,6 @@ class _MedicationScreenState extends State<MedicationScreen> {
       MaterialPageRoute(builder: (_) => const MedicationHistoryScreen()),
     );
   }
-
 }
 
 class MedicationHistoryScreen extends StatelessWidget {

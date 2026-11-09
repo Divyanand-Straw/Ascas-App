@@ -1,268 +1,330 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/step_progress_bar.dart';
-import 'linked_member_profile_confirmation_screen.dart';  
+import '../../data/account_identity_service.dart';
+import '../../../dashboard/presentation/dashboard_screen.dart';
+import '../../../partner_access/data/partner_link_service.dart';
 
 class LinkedMemberAccessScreen extends StatefulWidget {
   final String mobileNumber;
 
-  const LinkedMemberAccessScreen({
-    super.key,
-    required this.mobileNumber,
-  });
+  const LinkedMemberAccessScreen({super.key, required this.mobileNumber});
 
   @override
   State<LinkedMemberAccessScreen> createState() =>
       _LinkedMemberAccessScreenState();
 }
 
-class _LinkedMemberAccessScreenState
-    extends State<LinkedMemberAccessScreen> {
+class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
+  final _service = PartnerLinkService();
+  final _accounts = AccountIdentityService();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _invitationCodeController = TextEditingController();
+  final _codeController = TextEditingController();
+  PartnerRelationship? _invitation;
+  List<PartnerRelationship> _relationships = [];
+  bool _working = false;
 
-  void _verifyAccess() {
-  if (!_formKey.currentState!.validate()) return;
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => LinkedMemberProfileConfirmationScreen(
-        fullName: _nameController.text.trim(),
-        mobileNumber: widget.mobileNumber,
-      ),
-    ),
-  );
-}
+  @override
+  void initState() {
+    super.initState();
+    PartnerLinkService.changes.addListener(_refresh);
+    _refresh();
+  }
 
   @override
   void dispose() {
+    PartnerLinkService.changes.removeListener(_refresh);
     _nameController.dispose();
-    _invitationCodeController.dispose();
+    _codeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    final relationships = await _service.forPartner(widget.mobileNumber);
+    if (!mounted) return;
+    setState(() {
+      _relationships = relationships;
+      _invitation = null;
+    });
+  }
+
+  void _showError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
+    );
+  }
+
+  Future<void> _validateInvitation() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _working = true);
+    try {
+      final invitation = await _service.validateInvitation(
+        _codeController.text,
+      );
+      if (!mounted) return;
+      setState(() => _invitation = invitation);
+    } catch (error) {
+      _showError(error);
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  Future<void> _submitRequest() async {
+    final invitation = _invitation;
+    if (invitation == null) return;
+    setState(() => _working = true);
+    try {
+      final partner = await _accounts.createOrGetPartner(
+        mobileNumber: widget.mobileNumber,
+        fullName: _nameController.text,
+      );
+      final request = await _service.submitRequest(
+        code: _codeController.text,
+        partnerName: partner.fullName,
+        partnerMobile: partner.mobileNumber,
+        partnerUserId: partner.accountId,
+      );
+      await NotificationService.instance.showPartnerLinkRequest(
+        partnerName: request.partnerName,
+        partnerMobile: request.partnerMobile,
+        linkId: request.linkId,
+      );
+      await _refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Request sent. The patient must approve before access is available.',
+          ),
+        ),
+      );
+    } catch (error) {
+      _showError(error);
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  void _openActiveLink(PartnerRelationship relationship) {
+    final patientState = DashboardPatientState.values.firstWhere(
+      (state) => state.name == relationship.patientState,
+      orElse: () => DashboardPatientState.newPatient,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DashboardScreen(
+          patientName: relationship.patientName,
+          patientId: relationship.patientId,
+          patientState: patientState,
+          mobileNumber: relationship.patientMobile,
+          accountId: relationship.partnerUserId,
+          isLinkedPartner: true,
+          partnerUserName: relationship.partnerName,
+          partnerMobile: relationship.partnerMobile,
+          partnerPermissions: relationship.permissions,
+          partnerLinkId: relationship.linkId,
+          dataOwnerAccountId: relationship.patientUserId,
+        ),
+      ),
+    );
+  }
+
+  Widget _linkCard(PartnerRelationship relationship) {
+    final active = relationship.status == PartnerLinkStatus.active;
+    final status = switch (relationship.status) {
+      PartnerLinkStatus.invitation => 'Invitation entered',
+      PartnerLinkStatus.pending => 'Request pending',
+      PartnerLinkStatus.rejected => 'Request rejected',
+      PartnerLinkStatus.active => 'Link active',
+      PartnerLinkStatus.revoked => 'Link revoked',
+      PartnerLinkStatus.expired => 'Invitation expired',
+    };
+    return Card(
+      color: AppColors.white,
+      elevation: 0,
+      child: ListTile(
+        leading: Icon(
+          active ? Icons.verified_user_rounded : Icons.hourglass_top_rounded,
+          color: AppColors.burgundy,
+        ),
+        title: Text('${relationship.patientName} · $status'),
+        subtitle: Text(
+          active
+              ? 'Patient ID: ${relationship.patientId.isEmpty ? 'Not provided' : relationship.patientId}'
+              : 'No patient information is available until approval.',
+        ),
+        trailing: active
+            ? IconButton(
+                tooltip: 'View linked patient',
+                onPressed: () => _openActiveLink(relationship),
+                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 17),
+              )
+            : null,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final active = _relationships.where(
+      (relationship) => relationship.status == PartnerLinkStatus.active,
+    );
+    final pending = _relationships.where(
+      (relationship) => relationship.status == PartnerLinkStatus.pending,
+    );
+    final otherStatuses = _relationships.where(
+      (relationship) =>
+          relationship.status != PartnerLinkStatus.active &&
+          relationship.status != PartnerLinkStatus.pending,
+    );
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(26, 12, 26, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        title: const Text('Link to Patient'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        children: [
+          const Text(
+            'Use your own account and mobile number. Linking gives access only after the patient approves.',
+            style: TextStyle(color: AppColors.secondaryText, height: 1.5),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            color: AppColors.white,
+            elevation: 0,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.chevron_left),
-                    color: AppColors.primaryText,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const Expanded(
+                  Text('Partner account · ${widget.mobileNumber}'),
+                  const SizedBox(height: 16),
+                  Form(
+                    key: _formKey,
                     child: Column(
                       children: [
-                        Text(
-                          'STEP 4 OF 8',
-                          style: TextStyle(
-                            color: AppColors.dustyPink,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
+                        TextFormField(
+                          controller: _nameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Your name',
                           ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? 'Enter your name.'
+                              : null,
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Clinic record access',
-                          style: TextStyle(
-                            color: AppColors.burgundy,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _codeController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: const InputDecoration(
+                            labelText: 'Patient invitation code',
                           ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? 'Enter the invitation code.'
+                              : null,
                         ),
                       ],
                     ),
                   ),
-                  TextButton(
-                    onPressed: () =>
-                        Navigator.popUntil(context, (route) => route.isFirst),
-                    child: const Text(
-                      'Exit',
-                      style: TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 9,
-                      ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _working ? null : _validateInvitation,
+                      child: const Text('Validate invitation'),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: AppColors.divider, height: 1),
-              const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 4),
-              const SizedBox(height: 30),
-              const Text(
-                'CLINIC RECORD ACCESS',
-                style: TextStyle(
-                  color: AppColors.burgundy,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.3,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Linked member access',
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Thaai Seyazhi must verify the provided details before releasing any record access.',
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 11,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Your full name',
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                  if (_invitation != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.blushPink,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _nameController,
-                      textCapitalization: TextCapitalization.words,
-                      style: const TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 12,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Confirm the patient',
+                            style: TextStyle(
+                              color: AppColors.burgundy,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          Text(_invitation!.patientName),
+                          if (_invitation!.patientId.isNotEmpty)
+                            Text('Patient ID: ${_invitation!.patientId}'),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Submitting sends a request only; no patient records are available before approval.',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _working ? null : _submitRequest,
+                              child: const Text('Send linking request'),
+                            ),
+                          ),
+                        ],
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your full name',
-                        filled: true,
-                        fillColor: AppColors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.divider,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.divider,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.burgundy,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your full name.';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Clinic invitation code',
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _invitationCodeController,
-                      textCapitalization: TextCapitalization.characters,
-                      style: const TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 12,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter clinic invitation code',
-                        filled: true,
-                        fillColor: AppColors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.divider,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.divider,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.burgundy,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter the clinic invitation code.';
-                        }
-                        return null;
-                      },
                     ),
                   ],
-                ),
+                ],
               ),
-              const SizedBox(height: 22),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.blushPink,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Linked access is limited to permissions granted by the patient.',
-                  style: TextStyle(
-                    color: AppColors.burgundy,
-                    fontSize: 10,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _verifyAccess,
-                  child: const Text('Verify clinic access'),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 20),
+          const Text(
+            'Your linking status',
+            style: TextStyle(
+              color: AppColors.burgundy,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Refresh status'),
+          ),
+          ...active.map(_linkCard),
+          ...pending.map(_linkCard),
+          ...otherStatuses.map(_linkCard),
+          if (_relationships.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Text(
+                'No linked patient. A request is required before patient information can be viewed.',
+                style: TextStyle(color: AppColors.secondaryText),
+              ),
+            ),
+          const SizedBox(height: 10),
+          const Text(
+            'Prototype only: account identity and link state are local and are not authenticated by a server.',
+            style: TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }

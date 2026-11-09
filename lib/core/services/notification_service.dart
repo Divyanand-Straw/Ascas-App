@@ -7,6 +7,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../features/appointments/presentation/models/appointment_models.dart';
+import '../../features/medication/data/medication_reminder.dart';
 
 class NotificationService extends ChangeNotifier {
   NotificationService._();
@@ -16,16 +17,53 @@ class NotificationService extends ChangeNotifier {
   static const _channelName = 'Appointments';
   static const _channelDescription =
       'Appointment requests and appointment reminders';
+  static const _medicationChannelId = 'medication_reminders';
+  static const _medicationChannelName = 'Medication reminders';
+  static const _medicationChannelDescription =
+      'Scheduled medication reminder notifications';
+  static const _scheduledMedicationIdsKey = 'scheduled_medication_ids';
 
   final _plugin = FlutterLocalNotificationsPlugin();
   void Function(String appointmentId)? onAppointmentNotificationTap;
   bool _initialized = false;
+  bool? _notificationsPermissionGranted;
   final List<InAppNotification> _inbox = [];
   static const _inboxKey = 'appointment_notification_inbox';
+  String _activeAccountId = 'guest';
 
   List<InAppNotification> get inbox => List.unmodifiable(_inbox);
   int get unreadCount =>
       _inbox.where((notification) => !notification.isRead).length;
+  bool get isInitialized => _initialized;
+  String get activeAccountId => _activeAccountId;
+  bool get _supportsLocalNotifications =>
+      _initialized &&
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  Future<void> setAccount(String accountId) async {
+    if (accountId == _activeAccountId) return;
+    await _saveInbox();
+    await _cancelMedicationNotificationsForAccount(_activeAccountId);
+    _activeAccountId = accountId;
+    _inbox.clear();
+    await _loadInbox();
+    notifyListeners();
+  }
+
+  Future<void> resetForLogout() async {
+    await _saveInbox();
+    await _cancelMedicationNotificationsForAccount(_activeAccountId);
+    _activeAccountId = 'guest';
+    _inbox.clear();
+    await _loadInbox();
+    notifyListeners();
+  }
+
+  String get _accountInboxKey => _activeAccountId == 'guest'
+      ? _inboxKey
+      : '${_inboxKey}_$_activeAccountId';
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -58,13 +96,67 @@ class NotificationService extends ChangeNotifier {
         importance: Importance.high,
       ),
     );
-    await androidPlugin?.requestNotificationsPermission();
+    final androidPermission = await androidPlugin
+        ?.requestNotificationsPermission();
+    if (androidPermission != null) {
+      _notificationsPermissionGranted = androidPermission;
+    }
     final iosPlugin = _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >();
-    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
+    final iosPermission = await iosPlugin?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    if (iosPermission != null) _notificationsPermissionGranted = iosPermission;
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _medicationChannelId,
+            _medicationChannelName,
+            description: _medicationChannelDescription,
+            importance: Importance.high,
+          ),
+        );
     _initialized = true;
+  }
+
+  Future<bool> scheduleMedicationReminders(
+    Iterable<MedicationReminder> reminders,
+  ) async {
+    if (!_supportsLocalNotifications ||
+        _notificationsPermissionGranted == false) {
+      return false;
+    }
+
+    final scheduledIds = <String>{};
+    for (final reminder in reminders) {
+      final id = _medicationNotificationId(_activeAccountId, reminder.id);
+      scheduledIds.add('$id');
+      final scheduledAt = reminder.nextScheduledAt(DateTime.now());
+      await _plugin.zonedSchedule(
+        id,
+        'Medication reminder · sample',
+        '${reminder.name} · Scheduled time: ${_timeLabel(reminder.hour, reminder.minute)}',
+        tz.TZDateTime.from(scheduledAt, tz.local),
+        _medicationDetails(),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: 'medication:${reminder.id}',
+      );
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      _scheduledMedicationIdsPreferenceKey(_activeAccountId),
+      scheduledIds.toList(),
+    );
+    return true;
   }
 
   Future<void> showBookingSubmitted(Appointment appointment) async {
@@ -78,6 +170,7 @@ class NotificationService extends ChangeNotifier {
   }
 
   Future<void> scheduleReminder(Appointment appointment) async {
+    if (!_supportsLocalNotifications) return;
     final appointmentTime = _appointmentDateTime(appointment);
     final reminderTime = appointmentTime.subtract(const Duration(days: 1));
     if (appointmentTime.isBefore(DateTime.now()) ||
@@ -120,19 +213,43 @@ class NotificationService extends ChangeNotifier {
     );
   }
 
+  Future<void> showPartnerLinkRequest({
+    required String partnerName,
+    required String partnerMobile,
+    required String linkId,
+  }) async {
+    const title = 'Partner linking request';
+    final body =
+        '$partnerName ($partnerMobile) requested access to your patient profile. Review the request in Partner Access.';
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS)) {
+      await _plugin.show(
+        linkId.hashCode & 0x7fffffff,
+        title,
+        body,
+        _details(),
+        payload: 'partner-link:$linkId',
+      );
+    }
+    await _addToInbox(title, body, '');
+  }
+
   Future<void> _show({
     required int id,
     required String title,
     required String body,
     required Appointment appointment,
   }) async {
-    await _plugin.show(
-      id,
-      title,
-      body,
-      _details(),
-      payload: appointment.reference,
-    );
+    if (_supportsLocalNotifications) {
+      await _plugin.show(
+        id,
+        title,
+        body,
+        _details(),
+        payload: appointment.reference,
+      );
+    }
     await _addToInbox(title, body, appointment.reference);
   }
 
@@ -177,7 +294,7 @@ class NotificationService extends ChangeNotifier {
 
   Future<void> _loadInbox() async {
     final preferences = await SharedPreferences.getInstance();
-    final encoded = preferences.getString(_inboxKey);
+    final encoded = preferences.getString(_accountInboxKey);
     if (encoded == null) return;
     _inbox
       ..clear()
@@ -186,7 +303,10 @@ class NotificationService extends ChangeNotifier {
 
   Future<void> _saveInbox() async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_inboxKey, InAppNotification.encode(_inbox));
+    await preferences.setString(
+      _accountInboxKey,
+      InAppNotification.encode(_inbox),
+    );
   }
 
   NotificationDetails _details() {
@@ -200,6 +320,54 @@ class NotificationService extends ChangeNotifier {
       ),
       iOS: DarwinNotificationDetails(),
     );
+  }
+
+  NotificationDetails _medicationDetails() {
+    return const NotificationDetails(
+      android: AndroidNotificationDetails(
+        _medicationChannelId,
+        _medicationChannelName,
+        channelDescription: _medicationChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(),
+    );
+  }
+
+  Future<void> _cancelMedicationNotificationsForAccount(
+    String accountId,
+  ) async {
+    final preferences = await SharedPreferences.getInstance();
+    final key = _scheduledMedicationIdsPreferenceKey(accountId);
+    final ids = preferences.getStringList(key) ?? const <String>[];
+    if (_supportsLocalNotifications) {
+      for (final id in ids) {
+        await _plugin.cancel(int.parse(id));
+      }
+    }
+    await preferences.remove(key);
+  }
+
+  String _scheduledMedicationIdsPreferenceKey(String accountId) =>
+      '${_scheduledMedicationIdsKey}_$accountId';
+
+  int _medicationNotificationId(String accountId, String reminderId) {
+    var hash = 0x811c9dc5;
+    for (final codeUnit in '$accountId:$reminderId'.codeUnits) {
+      hash = ((hash ^ codeUnit) * 0x01000193) & 0x7fffffff;
+    }
+    return (hash & 0x3fffffff) | 0x40000000;
+  }
+
+  @visibleForTesting
+  int medicationNotificationIdForTesting(String accountId, String reminderId) =>
+      _medicationNotificationId(accountId, reminderId);
+
+  String _timeLabel(int hour, int minute) {
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
+    return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
 
   DateTime _appointmentDateTime(Appointment appointment) {

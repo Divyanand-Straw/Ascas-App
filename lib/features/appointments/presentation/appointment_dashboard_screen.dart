@@ -27,185 +27,191 @@ class AppointmentDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appointment = appointmentStore.nearestUpcoming;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const LocalizedText(
-            'Appointments',
-            style: TextStyle(
-              color: AppColors.primaryText,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const LocalizedText(
-            'YOUR NEXT VISIT',
-            style: TextStyle(
-              color: AppColors.burgundy,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 9),
-          if (appointment != null)
-            AppointmentCard(
-              appointment: appointment,
-              onTap: () => _open(
-                context,
-                AppointmentDetailsScreen(
+    return AnimatedBuilder(
+      animation: appointmentStore,
+      builder: (context, _) {
+        final appointment = appointmentStore.nearestUpcoming;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const LocalizedText(
+                'Appointments',
+                style: TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const LocalizedText(
+                'YOUR NEXT VISIT',
+                style: TextStyle(
+                  color: AppColors.burgundy,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 9),
+              if (appointment != null)
+                AppointmentCard(
                   appointment: appointment,
-                  patientName: patientName,
-                  mobileNumber: mobileNumber,
+                  onTap: () => _open(
+                    context,
+                    AppointmentDetailsScreen(
+                      appointment: appointment,
+                      patientName: patientName,
+                      mobileNumber: mobileNumber,
+                    ),
+                  ),
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: Center(
+                    child: LocalizedText(
+                      'No upcoming appointments.',
+                      style: TextStyle(color: AppColors.secondaryText),
+                    ),
+                  ),
                 ),
+              const SizedBox(height: 14),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final spacing = 12.0;
+                  final width = (constraints.maxWidth - spacing) / 2;
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    alignment: WrapAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: width,
+                        child: AppointmentActionTile(
+                          icon: Icons.add_circle_outline,
+                          title: 'REQUEST',
+                          subtitle: 'Choose a doctor and time',
+                          onTap: () => _open(
+                            context,
+                            DoctorInformationScreen(
+                              patientName: patientName,
+                              mobileNumber: mobileNumber,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: width,
+                        child: AppointmentActionTile(
+                          icon: Icons.event_available_outlined,
+                          title: 'UPCOMING',
+                          subtitle: 'View upcoming visits',
+                          onTap: () => _open(
+                            context,
+                            UpcomingAppointmentsScreen(
+                              patientName: patientName,
+                              mobileNumber: mobileNumber,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: width,
+                        child: AppointmentActionTile(
+                          icon: Icons.history_outlined,
+                          title: 'HISTORY',
+                          subtitle: 'Past consultations',
+                          onTap: () =>
+                              _open(context, const AppointmentHistoryScreen()),
+                        ),
+                      ),
+                      SizedBox(
+                        width: width,
+                        child: AppointmentActionTile(
+                          icon: Icons.location_on_outlined,
+                          title: 'CLINIC',
+                          subtitle: 'Directions and details',
+                          onTap: () =>
+                              _open(context, const ClinicLocationScreen()),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-            )
-          else
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Center(
-                child: LocalizedText(
-                  'No upcoming appointments.',
-                  style: TextStyle(color: AppColors.secondaryText),
-                ),
-              ),
-            ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final spacing = 12.0;
-              final width = (constraints.maxWidth - spacing) / 2;
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                alignment: WrapAlignment.spaceBetween,
+              const SizedBox(height: 24),
+              Row(
                 children: [
-                  SizedBox(
-                    width: width,
-                    child: AppointmentActionTile(
-                      icon: Icons.add_circle_outline,
-                      title: 'REQUEST',
-                      subtitle: 'Choose a doctor and time',
-                      onTap: () => _open(
-                        context,
-                        DoctorInformationScreen(
-                          patientName: patientName,
-                          mobileNumber: mobileNumber,
-                        ),
+                  const Expanded(
+                    child: LocalizedText(
+                      'APPOINTMENT REQUESTS',
+                      style: TextStyle(
+                        color: AppColors.burgundy,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: width,
-                    child: AppointmentActionTile(
-                      icon: Icons.event_available_outlined,
-                      title: 'UPCOMING',
-                      subtitle: 'View upcoming visits',
-                      onTap: () => _open(
-                        context,
-                        UpcomingAppointmentsScreen(
-                          patientName: patientName,
-                          mobileNumber: mobileNumber,
-                        ),
+                  TextButton(
+                    onPressed: () => _open(
+                      context,
+                      const AppointmentInfoScreen(
+                        title: 'Appointment requests',
+                        description:
+                            'Submitted appointment requests will appear here.',
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: AppointmentActionTile(
-                      icon: Icons.history_outlined,
-                      title: 'HISTORY',
-                      subtitle: 'Past consultations',
-                      onTap: () =>
-                          _open(context, const AppointmentHistoryScreen()),
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: AppointmentActionTile(
-                      icon: Icons.location_on_outlined,
-                      title: 'CLINIC',
-                      subtitle: 'Directions and details',
-                      onTap: () => _open(context, const ClinicLocationScreen()),
-                    ),
+                    child: LocalizedText('View all'),
                   ),
                 ],
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              const Expanded(
-                child: LocalizedText(
-                  'APPOINTMENT REQUESTS',
-                  style: TextStyle(
-                    color: AppColors.burgundy,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                  ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.divider),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryText.withValues(alpha: 0.04),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _AppointmentIcon(icon: Icons.pending_actions_outlined),
+                    SizedBox(width: 11),
+                    Expanded(
+                      child: LocalizedText(
+                        'Submitted appointment requests will appear here when available.',
+                        style: TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              TextButton(
-                onPressed: () => _open(
-                  context,
-                  const AppointmentInfoScreen(
-                    title: 'Appointment requests',
-                    description:
-                        'Submitted appointment requests will appear here.',
-                  ),
+              const SizedBox(height: 18),
+              LocalizedText(
+                'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 10,
+                  height: 1.4,
                 ),
-                child: LocalizedText('View all'),
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.divider),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryText.withValues(alpha: 0.04),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _AppointmentIcon(icon: Icons.pending_actions_outlined),
-                SizedBox(width: 11),
-                Expanded(
-                  child: LocalizedText(
-                    'Submitted appointment requests will appear here when available.',
-                    style: TextStyle(
-                      color: AppColors.secondaryText,
-                      fontSize: 12,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          LocalizedText(
-            'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.',
-            style: TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 10,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
