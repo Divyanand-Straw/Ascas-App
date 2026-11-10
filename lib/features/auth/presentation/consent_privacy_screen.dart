@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../core/localization/localized_text.dart';
 import 'app_security_screen.dart';
 import '../../../core/widgets/step_progress_bar.dart';
 import '../../../core/theme/app_colors.dart';
@@ -25,8 +26,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
   });
 
   @override
-  State<ConsentPrivacyScreen> createState() =>
-      _ConsentPrivacyScreenState();
+  State<ConsentPrivacyScreen> createState() => _ConsentPrivacyScreenState();
 }
 
 class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
@@ -44,9 +44,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: AppColors.divider,
-        ),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,11 +56,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
               color: AppColors.blushPink,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: AppColors.burgundy,
-              size: 21,
-            ),
+            child: Icon(icon, color: AppColors.burgundy, size: 21),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -116,7 +110,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 6 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -126,7 +120,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'Consent & privacy',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -138,11 +132,9 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -155,16 +147,13 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
 
               const SizedBox(height: 16),
 
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
+              const Divider(color: AppColors.divider, height: 1),
 
               const SizedBox(height: 16),
               const StepProgressBar(currentStep: 6),
               const SizedBox(height: 32),
 
-              const Text(
+              const LocalizedText(
                 'CONSENT & PRIVACY',
                 style: TextStyle(
                   color: AppColors.dustyPink,
@@ -176,7 +165,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
 
               const SizedBox(height: 14),
 
-              const Text(
+              const LocalizedText(
                 'You control your information',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -188,7 +177,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
 
               const SizedBox(height: 10),
 
-              const Text(
+              const LocalizedText(
                 'Required patient consent is separate from optional partner sharing.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -202,8 +191,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
               _informationCard(
                 icon: Icons.history,
                 title: 'Digital consent history',
-                description:
-                    'Consent changes are recorded with date and time.',
+                description: 'Consent changes are recorded with date and time.',
               ),
 
               const SizedBox(height: 28),
@@ -214,9 +202,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,15 +219,14 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       visualDensity: VisualDensity.compact,
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          LocalizedText(
                             'Required terms and privacy consent',
                             style: TextStyle(
                               color: AppColors.primaryText,
@@ -250,7 +235,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                             ),
                           ),
                           SizedBox(height: 6),
-                          Text(
+                          LocalizedText(
                             'Allow secure processing needed for Thaai Seyazhi patient services.',
                             style: TextStyle(
                               color: AppColors.secondaryText,
@@ -273,9 +258,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -285,7 +268,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const LocalizedText(
                             'Optional partner access',
                             style: TextStyle(
                               color: AppColors.primaryText,
@@ -294,7 +277,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          const LocalizedText(
                             'Enable a revocable partner invitation after setup.',
                             style: TextStyle(
                               color: AppColors.secondaryText,
@@ -336,13 +319,13 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
+                        content: LocalizedText(
                           'Terms and privacy information will be available here.',
                         ),
                       ),
                     );
                   },
-                  child: const Text(
+                  child: const LocalizedText(
                     'Read Terms, Privacy and Consent',
                     style: TextStyle(
                       color: AppColors.burgundy,
@@ -378,24 +361,20 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                           );
                         }
                       : null,
-                    
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     disabledBackgroundColor: AppColors.divider,
                     foregroundColor: AppColors.white,
-                    disabledForegroundColor:
-                        AppColors.secondaryText,
+                    disabledForegroundColor: AppColors.secondaryText,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Accept and continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

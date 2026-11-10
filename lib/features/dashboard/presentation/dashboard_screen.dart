@@ -199,7 +199,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _restricted(String category) => Center(
     child: Padding(
       padding: const EdgeInsets.all(28),
-      child: Text(
+      child: LocalizedText(
         'The patient has not shared $category with this account.',
         textAlign: TextAlign.center,
         style: const TextStyle(
@@ -220,18 +220,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Log out?'),
-        content: const Text(
+        title: const LocalizedText('Log out?'),
+        content: const LocalizedText(
           'Your saved records remain with their patient account.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const LocalizedText('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Log out'),
+            child: const LocalizedText('Log out'),
           ),
         ],
       ),
@@ -619,11 +619,11 @@ class _PartnerAccountProfile extends StatelessWidget {
             child: Icon(Icons.person_outline, color: AppColors.burgundy),
           ),
           title: Text(name),
-          subtitle: Text('Partner account · $mobile'),
+          subtitle: LocalizedText('Partner account · $mobile'),
         ),
       ),
       const SizedBox(height: 12),
-      const Text(
+      const LocalizedText(
         'This is your separate partner account. It does not own a patient medical record.',
         style: TextStyle(color: AppColors.secondaryText, height: 1.5),
       ),
@@ -636,12 +636,12 @@ class _PartnerAccountProfile extends StatelessWidget {
           ),
         ),
         icon: const Icon(Icons.link_rounded),
-        label: const Text('Link to Patient'),
+        label: const LocalizedText('Link to Patient'),
       ),
       if (linkId.isNotEmpty)
         const Padding(
           padding: EdgeInsets.only(top: 8),
-          child: Text(
+          child: LocalizedText(
             'To change shared access, ask the patient to update permissions or revoke the link.',
             style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
           ),
@@ -652,7 +652,7 @@ class _PartnerAccountProfile extends StatelessWidget {
         child: TextButton.icon(
           onPressed: onLogout,
           icon: const Icon(Icons.logout_rounded),
-          label: const Text('Log out'),
+          label: const LocalizedText('Log out'),
         ),
       ),
     ],

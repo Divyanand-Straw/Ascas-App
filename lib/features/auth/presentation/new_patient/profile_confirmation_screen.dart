@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
 import '../consent_privacy_screen.dart';
 import '../app_security_screen.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
@@ -112,7 +113,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 5 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -122,7 +123,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'Profile confirmation',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -134,11 +135,9 @@ class ProfileConfirmationScreen extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -151,16 +150,13 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
+              const Divider(color: AppColors.divider, height: 1),
 
               const SizedBox(height: 16),
               const StepProgressBar(currentStep: 5),
               const SizedBox(height: 32),
 
-              const Text(
+              const LocalizedText(
                 'IDENTITY VERIFIED',
                 style: TextStyle(
                   color: AppColors.success,
@@ -172,7 +168,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              const Text(
+              const LocalizedText(
                 'Confirm your profile',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -184,7 +180,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              const Text(
+              const LocalizedText(
                 'Confirm these details before access is linked.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -201,9 +197,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,8 +224,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 fullName,
@@ -242,7 +235,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              const Text(
+                              const LocalizedText(
                                 'New Thaai Seyazhi patient',
                                 style: TextStyle(
                                   color: AppColors.secondaryText,
@@ -257,31 +250,19 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
                     _detailRow('Date of birth', _formattedDate),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
                     _detailRow('Mobile', _maskedMobile),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
                     _detailRow('Language', preferredLanguage),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
                     _detailRow('Clinic', 'Thaai Seyazhi Clinic'),
                   ],
@@ -307,7 +288,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                     ),
                     SizedBox(width: 11),
                     Expanded(
-                      child: Text(
+                      child: LocalizedText(
                         'Clinical information remains protected until you confirm identity and consent.',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -328,26 +309,26 @@ class ProfileConfirmationScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => isExistingPatient
-                        ? AppSecurityScreen(
-                            fullName: fullName,
-                            dateOfBirth: dateOfBirth,
-                            mobileNumber: mobileNumber,
-                            preferredLanguage: preferredLanguage,
-                            isExistingPatient: true,
-                            patientId: patientId,
-                            accountId: accountId,
-                          )
-                        : ConsentPrivacyScreen(
-                            fullName: fullName,
-                            dateOfBirth: dateOfBirth,
-                            mobileNumber: mobileNumber,
-                            preferredLanguage: preferredLanguage,
-                          ),
-                  ),
-                );
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => isExistingPatient
+                            ? AppSecurityScreen(
+                                fullName: fullName,
+                                dateOfBirth: dateOfBirth,
+                                mobileNumber: mobileNumber,
+                                preferredLanguage: preferredLanguage,
+                                isExistingPatient: true,
+                                patientId: patientId,
+                                accountId: accountId,
+                              )
+                            : ConsentPrivacyScreen(
+                                fullName: fullName,
+                                dateOfBirth: dateOfBirth,
+                                mobileNumber: mobileNumber,
+                                preferredLanguage: preferredLanguage,
+                              ),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
@@ -357,12 +338,9 @@ class ProfileConfirmationScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Yes, this is me',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -376,19 +354,14 @@ class ProfileConfirmationScreen extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.burgundy,
-                    side: const BorderSide(
-                      color: AppColors.burgundy,
-                    ),
+                    side: const BorderSide(color: AppColors.burgundy),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Details are incorrect',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

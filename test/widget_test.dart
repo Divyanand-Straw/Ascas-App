@@ -933,7 +933,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('linked partner sees patient data only after approval', (
+  testWidgets('linked partner accesses the account after accepting invitation', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -974,11 +974,10 @@ void main() {
       find.text(
         'Patient link is no longer active. Shared information is unavailable.',
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(find.text('AS-20481'), findsNothing);
 
-    await links.approveRequest(request.linkId);
     await links.savePermissions(request.linkId, {
       'Patient profile information': true,
       'Treatment Journey': true,

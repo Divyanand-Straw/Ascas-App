@@ -278,7 +278,7 @@ class _WelcomeSection extends StatelessWidget {
                       color: AppColors.white.withValues(alpha: .13),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
+                    child: LocalizedText(
                       '${localizedText(context, 'Patient ID')}: $patientId',
                       style: const TextStyle(
                         color: AppColors.dustyPink,
@@ -360,7 +360,7 @@ class _AppointmentCard extends StatelessWidget {
     final item = appointment;
     if (item == null) {
       return const DashboardCard(
-        child: Text(
+        child: LocalizedText(
           'No upcoming appointments.',
           style: TextStyle(color: AppColors.secondaryText),
         ),
@@ -404,7 +404,7 @@ class _AppointmentCard extends StatelessWidget {
             spacing: 5,
             runSpacing: 4,
             children: [
-              Text(
+              LocalizedText(
                 '${item.date.day} ${_month(item.date.month)}  •  ${item.time}',
                 style: const TextStyle(
                   color: AppColors.white,
@@ -415,7 +415,7 @@ class _AppointmentCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
+          LocalizedText(
             '${item.appointmentType}  •  ${item.consultationMode}',
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -432,7 +432,7 @@ class _AppointmentCard extends StatelessWidget {
                   builder: (_) => AppointmentDetailsScreen(appointment: item),
                 ),
               ),
-              child: const Text('View Details'),
+              child: const LocalizedText('View Details'),
             ),
           ),
         ],

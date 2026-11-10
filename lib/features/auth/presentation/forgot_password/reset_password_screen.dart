@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+
 import '../../../../core/theme/app_colors.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -23,7 +25,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isUpdating = false;
 
   String? get _confirmPasswordError {
     final confirmation = _confirmPasswordController.text;
@@ -58,14 +59,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _showMessage('Passwords do not match.');
       return;
     }
-
-    setState(() {
-      _isUpdating = true;
-    });
-
-    setState(() {
-      _isUpdating = false;
-    });
 
     _showSuccessDialog();
   }
@@ -102,8 +95,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Password Updated',
+              const LocalizedText(
+                'Password updated',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -112,8 +105,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Your password has been updated successfully. You can now sign in with your new password.',
+              const LocalizedText(
+                'This password change is not saved until account services are connected. You can return to login.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -138,7 +131,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Back to Login',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   ),
@@ -173,6 +166,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ),
         const SizedBox(height: 9),
         TextField(
+          key: ValueKey(
+            label == 'New Password'
+                ? 'reset-new-password-field'
+                : 'reset-confirm-password-field',
+          ),
           controller: controller,
           obscureText: obscureText,
           onChanged: onChanged,
@@ -259,7 +257,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 30),
 
               const Center(
-                child: Text(
+                child: LocalizedText(
                   'STEP 3 OF 3',
                   style: TextStyle(
                     color: AppColors.dustyPink,
@@ -273,7 +271,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 13),
 
               const Center(
-                child: Text(
+                child: LocalizedText(
                   'Create new password',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -286,7 +284,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
               const SizedBox(height: 12),
 
-              const Text(
+              const LocalizedText(
                 'Create a strong password for your Thaai Seyazhi account. Make sure it is easy for you to remember.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -355,7 +353,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                   SizedBox(width: 8),
                   Expanded(
-                    child: Text(
+                    child: LocalizedText(
                       'Password must contain at least 8 characters.',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -372,7 +370,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 width: double.infinity,
                 height: 53,
                 child: ElevatedButton(
-                  onPressed: _isUpdating ? null : _updatePassword,
+                  key: const ValueKey('reset-password-submit'),
+                  onPressed: _updatePassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     foregroundColor: Colors.white,
@@ -382,29 +381,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: _isUpdating
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Update Password',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                  child: const LocalizedText(
+                    'Update Password',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 25),
 
               const Center(
-                child: Text(
+                child: LocalizedText(
                   'Your account security matters to us.',
                   style: TextStyle(
                     color: AppColors.secondaryText,

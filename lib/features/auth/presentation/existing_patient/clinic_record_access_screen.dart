@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
 
 import '../../data/account_identity_service.dart';
@@ -193,7 +196,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
                     const Expanded(
                       child: Column(
                         children: [
-                          Text(
+                          LocalizedText(
                             'STEP 4 OF 8',
                             style: TextStyle(
                               color: AppColors.dustyPink,
@@ -203,7 +206,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
                             ),
                           ),
                           SizedBox(height: 4),
-                          Text(
+                          LocalizedText(
                             'Patient ID / MRN',
                             style: TextStyle(
                               color: AppColors.burgundy,
@@ -217,7 +220,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
                     TextButton(
                       onPressed: () =>
                           Navigator.popUntil(context, (route) => route.isFirst),
-                      child: const Text(
+                      child: const LocalizedText(
                         'Exit',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -238,7 +241,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
 
                 const SizedBox(height: 30),
 
-                const Text(
+                const LocalizedText(
                   'PATIENT ID / MRN',
                   style: TextStyle(
                     color: AppColors.burgundy,
@@ -250,7 +253,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
 
                 const SizedBox(height: 14),
 
-                const Text(
+                const LocalizedText(
                   'Enter your Patient ID',
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -262,7 +265,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
 
                 const SizedBox(height: 10),
 
-                const Text(
+                const LocalizedText(
                   'Enter the Patient ID or MRN from your existing hospital record.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -338,7 +341,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
+                    child: const LocalizedText(
                       'Continue',
                       style: TextStyle(
                         fontSize: 14,

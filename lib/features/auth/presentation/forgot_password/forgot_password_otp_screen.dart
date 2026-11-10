@@ -1,6 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
 
 import 'reset_password_screen.dart';
@@ -32,23 +33,11 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
-  final bool _isVerifying = false;
-  int _remainingSeconds = 0;
-  Timer? _resendTimer;
-
   String get _enteredOtp =>
       _controllers.map((controller) => controller.text).join();
 
-  String get _formattedTime {
-    final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
-
   @override
   void dispose() {
-    _resendTimer?.cancel();
-
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -58,32 +47,6 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     }
 
     super.dispose();
-  }
-
-  void _startResendTimer() {
-    _resendTimer?.cancel();
-
-    setState(() {
-      _remainingSeconds = 30;
-    });
-
-    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-
-      if (_remainingSeconds <= 1) {
-        timer.cancel();
-        setState(() {
-          _remainingSeconds = 0;
-        });
-      } else {
-        setState(() {
-          _remainingSeconds--;
-        });
-      }
-    });
   }
 
   void _onOtpChanged(String value, int index) {
@@ -103,20 +66,9 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
   void _verifyOtp() {
     if (_enteredOtp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the complete 6-digit OTP.')),
-      );
-      return;
-    }
-
-    if (_enteredOtp != '123456') {
-      for (final controller in _controllers) {
-        controller.clear();
-      }
-
-      _focusNodes[0].requestFocus();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid OTP. Please try again.')),
+        const SnackBar(
+          content: LocalizedText('Please enter the complete 6-digit OTP.'),
+        ),
       );
       return;
     }
@@ -137,29 +89,12 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     );
   }
 
-  void _resendOtp() {
-    if (_remainingSeconds > 0) return;
-
-    for (final controller in _controllers) {
-      controller.clear();
-    }
-
-    _focusNodes[0].requestFocus();
-
-    _startResendTimer();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('A new verification code has been requested.'),
-      ),
-    );
-  }
-
   Widget _buildOtpField(int index) {
     return SizedBox(
       width: 46,
       height: 55,
       child: TextField(
+        key: ValueKey('forgot-password-otp-$index'),
         controller: _controllers[index],
         focusNode: _focusNodes[index],
         keyboardType: TextInputType.number,
@@ -212,7 +147,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
               const SizedBox(height: 30),
 
-              const Text(
+              const LocalizedText(
                 'STEP 2 OF 3',
                 style: TextStyle(
                   color: AppColors.dustyPink,
@@ -243,7 +178,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
               const SizedBox(height: 30),
 
               const Center(
-                child: Text(
+                child: LocalizedText(
                   'VERIFY OTP',
                   style: TextStyle(
                     color: AppColors.dustyPink,
@@ -257,7 +192,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
               const SizedBox(height: 13),
 
               const Center(
-                child: Text(
+                child: LocalizedText(
                   'Enter verification code',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -270,8 +205,8 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
               const SizedBox(height: 12),
 
-              Text(
-                'Enter the 6-digit verification code for your mobile number +91 ${widget.mobileNumber}.',
+              LocalizedText(
+                'Verify the account for +91 ${widget.mobileNumber} and ${widget.emailAddress}.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.secondaryText,
@@ -287,45 +222,13 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                 children: List.generate(6, (index) => _buildOtpField(index)),
               ),
 
-              const SizedBox(height: 25),
-
-              Center(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: [
-                    const Text(
-                      "Didn't receive the code? ",
-                      style: TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 13,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _remainingSeconds == 0 ? _resendOtp : null,
-                      child: Text(
-                        _remainingSeconds > 0
-                            ? 'Resend OTP in $_formattedTime'
-                            : 'Resend OTP',
-                        style: TextStyle(
-                          color: _remainingSeconds > 0
-                              ? AppColors.secondaryText
-                              : AppColors.burgundy,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               const SizedBox(height: 35),
 
               SizedBox(
                 width: double.infinity,
                 height: 53,
                 child: ElevatedButton(
-                  onPressed: _isVerifying ? null : _verifyOtp,
+                  onPressed: _verifyOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     foregroundColor: Colors.white,
@@ -335,33 +238,9 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: _isVerifying
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Verify & Continue',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              const Center(
-                child: Text(
-                  'Your account security matters to us.',
-                  style: TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 12,
+                  child: const LocalizedText(
+                    'Verify & Continue',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

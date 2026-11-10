@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+
 import '../../../../core/services/locale_service.dart';
 
 import 'package:flutter/services.dart';
@@ -168,7 +170,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     const Expanded(
                       child: Column(
                         children: [
-                          Text(
+                          LocalizedText(
                             'STEP 4 OF 8',
                             style: TextStyle(
                               color: AppColors.dustyPink,
@@ -178,7 +180,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                             ),
                           ),
                           SizedBox(height: 4),
-                          Text(
+                          LocalizedText(
                             'New patient registration',
                             style: TextStyle(
                               color: AppColors.burgundy,
@@ -192,7 +194,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     TextButton(
                       onPressed: () =>
                           Navigator.popUntil(context, (route) => route.isFirst),
-                      child: const Text(
+                      child: const LocalizedText(
                         'Exit',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -211,7 +213,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 const StepProgressBar(currentStep: 4),
                 const SizedBox(height: 30),
 
-                const Text(
+                const LocalizedText(
                   'PATIENT DETAILS',
                   style: TextStyle(
                     color: AppColors.burgundy,
@@ -223,7 +225,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 14),
 
-                const Text(
+                const LocalizedText(
                   'New patient registration',
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -235,7 +237,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 10),
 
-                const Text(
+                const LocalizedText(
                   'Complete the required identity and contact details.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -297,7 +299,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Text(
+                      const LocalizedText(
                         '+91',
                         style: TextStyle(
                           color: AppColors.primaryText,
@@ -392,7 +394,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
+                    child: const LocalizedText(
                       'Review profile',
                       style: TextStyle(
                         fontSize: 14,

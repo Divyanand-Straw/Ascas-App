@@ -345,10 +345,11 @@ class PartnerLinkService {
       );
     }
     final updated = invitation.copyWith(
-      status: PartnerLinkStatus.pending,
+      status: PartnerLinkStatus.active,
       partnerUserId: partnerUserId ?? 'user:$partnerMobile',
       partnerName: partnerName.trim(),
       partnerMobile: partnerMobile,
+      patientConsentTimestamp: invitation.createdAt,
       partnerAcceptanceTimestamp: current,
       updatedAt: current,
     );

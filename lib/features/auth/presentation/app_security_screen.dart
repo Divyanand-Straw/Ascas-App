@@ -1,6 +1,9 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
+
 import '../../../core/widgets/step_progress_bar.dart';
 import '../../../core/theme/app_colors.dart';
 import 'registration_complete_screen.dart';
@@ -31,8 +34,7 @@ class AppSecurityScreen extends StatefulWidget {
 
 class _AppSecurityScreenState extends State<AppSecurityScreen> {
   final TextEditingController _pinController = TextEditingController();
-  final TextEditingController _confirmPinController =
-      TextEditingController();
+  final TextEditingController _confirmPinController = TextEditingController();
 
   bool _biometricEnabled = false;
   bool _obscurePin = true;
@@ -109,9 +111,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(
-                color: AppColors.divider,
-              ),
+              borderSide: const BorderSide(color: AppColors.divider),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
@@ -148,7 +148,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 7 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -158,7 +158,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'App security',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -170,11 +170,9 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -185,14 +183,11 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
+              const Divider(color: AppColors.divider, height: 1),
               const SizedBox(height: 16),
               const StepProgressBar(currentStep: 7),
               const SizedBox(height: 28),
-              const Text(
+              const LocalizedText(
                 'APP SECURITY',
                 style: TextStyle(
                   color: AppColors.dustyPink,
@@ -202,7 +197,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
+              const LocalizedText(
                 'Create your app PIN',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -212,7 +207,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+              const LocalizedText(
                 'This PIN protects Thaai Seyazhi information on your device.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -247,12 +242,9 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                   _pinController.text != _confirmPinController.text)
                 const Padding(
                   padding: EdgeInsets.only(top: 8),
-                  child: Text(
+                  child: LocalizedText(
                     'PINs do not match. Please try again.',
-                    style: TextStyle(
-                      color: AppColors.error,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: AppColors.error, fontSize: 11),
                   ),
                 ),
               const SizedBox(height: 30),
@@ -262,9 +254,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Row(
                   children: [
@@ -286,7 +276,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          LocalizedText(
                             'Use biometric authentication',
                             style: TextStyle(
                               color: AppColors.primaryText,
@@ -295,7 +285,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                             ),
                           ),
                           SizedBox(height: 6),
-                          Text(
+                          LocalizedText(
                             'Optional fingerprint or face unlock.',
                             style: TextStyle(
                               color: AppColors.secondaryText,
@@ -325,22 +315,22 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                 child: ElevatedButton(
                   onPressed: _isPinValid
                       ? () {
-                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => RegistrationCompleteScreen(
-                                  fullName: widget.fullName,
-                                  dateOfBirth: widget.dateOfBirth,
-                                  mobileNumber: widget.mobileNumber,
-                                  preferredLanguage: widget.preferredLanguage,
-                                  isExistingPatient: widget.isExistingPatient,
-                                  patientId: widget.patientId,
-                                  accountId: widget.accountId,
-                                ),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RegistrationCompleteScreen(
+                                fullName: widget.fullName,
+                                dateOfBirth: widget.dateOfBirth,
+                                mobileNumber: widget.mobileNumber,
+                                preferredLanguage: widget.preferredLanguage,
+                                isExistingPatient: widget.isExistingPatient,
+                                patientId: widget.patientId,
+                                accountId: widget.accountId,
                               ),
-                            );
-                          }
-                        : null,
+                            ),
+                          );
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     disabledBackgroundColor: AppColors.divider,
@@ -351,12 +341,9 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Complete security setup',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

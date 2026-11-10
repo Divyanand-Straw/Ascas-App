@@ -1,6 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
+
 import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'patient_details_screen.dart';
@@ -21,11 +26,12 @@ class NewPatientOtpScreen extends StatefulWidget {
 }
 
 class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
-  final List<TextEditingController> _otpControllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
 
-  final List<FocusNode> _focusNodes =
-      List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
   int _remainingSeconds = 42;
@@ -113,7 +119,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('A new verification code has been requested.'),
+        content: LocalizedText('A new verification code has been requested.'),
       ),
     );
   }
@@ -123,9 +129,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
 
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the 6-digit OTP.'),
-        ),
+        const SnackBar(content: LocalizedText('Please enter the 6-digit OTP.')),
       );
       return;
     }
@@ -133,7 +137,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
     if (otp != '123456') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Incorrect OTP. Please try again.'),
+          content: LocalizedText('Incorrect OTP. Please try again.'),
         ),
       );
       return;
@@ -145,12 +149,8 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => widget.fromExistingPatient
-            ? ClinicRecordAccessScreen(
-                mobileNumber: widget.mobileNumber,
-              )
-            : PatientDetailsScreen(
-                mobileNumber: widget.mobileNumber,
-              ),
+            ? ClinicRecordAccessScreen(mobileNumber: widget.mobileNumber)
+            : PatientDetailsScreen(mobileNumber: widget.mobileNumber),
       ),
     );
   }
@@ -165,9 +165,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: const TextStyle(
           color: Colors.black,
           fontSize: 23,
@@ -188,10 +186,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(
-              color: AppColors.burgundy,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
           ),
         ),
         onChanged: (value) => _onOtpChanged(value, index),
@@ -221,7 +216,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 3 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -231,7 +226,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'OTP verification',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -243,11 +238,9 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -262,7 +255,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
               const SizedBox(height: 16),
               const StepProgressBar(currentStep: 3),
               const SizedBox(height: 35),
-              const Text(
+              const LocalizedText(
                 'OTP VERIFICATION',
                 style: TextStyle(
                   color: AppColors.burgundy,
@@ -272,7 +265,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
+              const LocalizedText(
                 'Enter the 6-digit code',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -320,12 +313,9 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Verify OTP',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -335,7 +325,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          const LocalizedText(
                             'Didn’t receive the code?',
                             style: TextStyle(
                               color: AppColors.secondaryText,
@@ -344,7 +334,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                           ),
                           TextButton(
                             onPressed: _resendOtp,
-                            child: const Text(
+                            child: const LocalizedText(
                               'Resend OTP',
                               style: TextStyle(
                                 color: AppColors.burgundy,
@@ -355,7 +345,7 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                           ),
                         ],
                       )
-                    : Text(
+                    : LocalizedText(
                         'Resend OTP in $_formattedTime',
                         style: const TextStyle(
                           color: AppColors.secondaryText,

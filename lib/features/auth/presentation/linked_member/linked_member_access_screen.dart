@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/services/notification_service.dart';
+import '../../../../core/localization/localized_text.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../data/account_identity_service.dart';
 import '../../../dashboard/presentation/dashboard_screen.dart';
@@ -82,26 +83,15 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
         mobileNumber: widget.mobileNumber,
         fullName: _nameController.text,
       );
-      final request = await _service.submitRequest(
+      final link = await _service.submitRequest(
         code: _codeController.text,
         partnerName: partner.fullName,
         partnerMobile: partner.mobileNumber,
         partnerUserId: partner.accountId,
       );
-      await NotificationService.instance.showPartnerLinkRequest(
-        partnerName: request.partnerName,
-        partnerMobile: request.partnerMobile,
-        linkId: request.linkId,
-      );
       await _refresh();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Request sent. The patient must approve before access is available.',
-          ),
-        ),
-      );
+      _openActiveLink(link);
     } catch (error) {
       _showError(error);
     } finally {
@@ -152,11 +142,13 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
           active ? Icons.verified_user_rounded : Icons.hourglass_top_rounded,
           color: AppColors.burgundy,
         ),
-        title: Text('${relationship.patientName} · $status'),
+        title: LocalizedText('${relationship.patientName} · $status'),
         subtitle: Text(
           active
               ? 'Patient ID: ${relationship.patientId.isEmpty ? 'Not provided' : relationship.patientId}'
-              : 'No patient information is available until approval.',
+              : relationship.status == PartnerLinkStatus.pending
+              ? 'Awaiting patient approval.'
+              : 'No active patient link.',
         ),
         trailing: active
             ? IconButton(
@@ -187,13 +179,13 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Link to Patient'),
+        title: const LocalizedText('Link to Patient'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
-          const Text(
-            'Use your own account and mobile number. Linking gives access only after the patient approves.',
+          const LocalizedText(
+            'Use your own account and mobile number. Confirm a patient-issued invitation to activate your link.',
             style: TextStyle(color: AppColors.secondaryText, height: 1.5),
           ),
           const SizedBox(height: 8),
@@ -205,7 +197,7 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Partner account · ${widget.mobileNumber}'),
+                  LocalizedText('Partner account · ${widget.mobileNumber}'),
                   const SizedBox(height: 16),
                   Form(
                     key: _formKey,
@@ -242,7 +234,7 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: _working ? null : _validateInvitation,
-                      child: const Text('Validate invitation'),
+                      child: const LocalizedText('Validate invitation'),
                     ),
                   ),
                   if (_invitation != null) ...[
@@ -257,7 +249,7 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const LocalizedText(
                             'Confirm the patient',
                             style: TextStyle(
                               color: AppColors.burgundy,
@@ -267,10 +259,12 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                           const SizedBox(height: 7),
                           Text(_invitation!.patientName),
                           if (_invitation!.patientId.isNotEmpty)
-                            Text('Patient ID: ${_invitation!.patientId}'),
+                            LocalizedText(
+                              'Patient ID: ${_invitation!.patientId}',
+                            ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Submitting sends a request only; no patient records are available before approval.',
+                          const LocalizedText(
+                            'Confirming this invitation activates your link to the patient.',
                             style: TextStyle(fontSize: 12),
                           ),
                           const SizedBox(height: 8),
@@ -278,7 +272,7 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: _working ? null : _submitRequest,
-                              child: const Text('Send linking request'),
+                              child: const LocalizedText('Accept invitation'),
                             ),
                           ),
                         ],
@@ -290,7 +284,7 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          const LocalizedText(
             'Your linking status',
             style: TextStyle(
               color: AppColors.burgundy,
@@ -302,7 +296,7 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
           OutlinedButton.icon(
             onPressed: _refresh,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Refresh status'),
+            label: const LocalizedText('Refresh status'),
           ),
           ...active.map(_linkCard),
           ...pending.map(_linkCard),
@@ -310,13 +304,13 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
           if (_relationships.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
-              child: Text(
-                'No linked patient. A request is required before patient information can be viewed.',
+              child: LocalizedText(
+                'No linked patient. Accept a patient invitation to link your account.',
                 style: TextStyle(color: AppColors.secondaryText),
               ),
             ),
           const SizedBox(height: 10),
-          const Text(
+          const LocalizedText(
             'Prototype only: account identity and link state are local and are not authenticated by a server.',
             style: TextStyle(
               color: AppColors.secondaryText,

@@ -1,7 +1,11 @@
-
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
 import 'linked_member_access_screen.dart';
@@ -9,22 +13,19 @@ import 'linked_member_access_screen.dart';
 class LinkedMemberOtpScreen extends StatefulWidget {
   final String mobileNumber;
 
-  const LinkedMemberOtpScreen({
-    super.key,
-    required this.mobileNumber,
-  });
+  const LinkedMemberOtpScreen({super.key, required this.mobileNumber});
 
   @override
-  State<LinkedMemberOtpScreen> createState() =>
-      _LinkedMemberOtpScreenState();
+  State<LinkedMemberOtpScreen> createState() => _LinkedMemberOtpScreenState();
 }
 
 class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
 
-  final List<FocusNode> _focusNodes =
-      List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
   int _remainingSeconds = 42;
@@ -92,9 +93,8 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => LinkedMemberAccessScreen(
-          mobileNumber: widget.mobileNumber,
-        ),
+        builder: (context) =>
+            LinkedMemberAccessScreen(mobileNumber: widget.mobileNumber),
       ),
     );
   }
@@ -111,7 +111,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('A new verification code has been requested.'),
+        content: LocalizedText('A new verification code has been requested.'),
       ),
     );
   }
@@ -151,7 +151,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 3 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -161,7 +161,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'Mobile verification',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -175,7 +175,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                   TextButton(
                     onPressed: () =>
                         Navigator.popUntil(context, (route) => route.isFirst),
-                    child: const Text(
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -190,7 +190,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
               const SizedBox(height: 16),
               const StepProgressBar(currentStep: 3),
               const SizedBox(height: 32),
-              const Text(
+              const LocalizedText(
                 'SECURE VERIFICATION',
                 style: TextStyle(
                   color: AppColors.burgundy,
@@ -200,7 +200,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              const LocalizedText(
                 'Verify your mobile number',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -209,7 +209,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              LocalizedText(
                 'Enter the 6-digit verification code sent to +91 $_maskedMobile.',
                 style: const TextStyle(
                   color: AppColors.secondaryText,
@@ -236,9 +236,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
                         counterText: '',
                         filled: true,
@@ -267,10 +265,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.red, fontSize: 11),
                 ),
               ],
               const SizedBox(height: 22),
@@ -288,7 +283,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
               Center(
                 child: TextButton(
                   onPressed: _remainingSeconds == 0 ? _resendOtp : null,
-                  child: Text(
+                  child: LocalizedText(
                     'Resend code',
                     style: TextStyle(
                       color: _remainingSeconds == 0
@@ -301,14 +296,14 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _verifyOtp,
-                child: const Text('Verify OTP'),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _verifyOtp,
+                  child: const LocalizedText('Verify OTP'),
+                ),
               ),
-            ),
             ],
           ),
         ),

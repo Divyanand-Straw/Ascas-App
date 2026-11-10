@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../dashboard/presentation/widgets/dashboard_home_content.dart';
 import '../data/partner_link_service.dart';
@@ -129,18 +131,18 @@ class _PatientPartnerAccessScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Revoke partner access?'),
-        content: Text(
+        title: const LocalizedText('Revoke partner access?'),
+        content: LocalizedText(
           '${relationship.partnerName} will immediately lose access to shared categories.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep access'),
+            child: const LocalizedText('Keep access'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Revoke access'),
+            child: const LocalizedText('Revoke access'),
           ),
         ],
       ),
@@ -219,7 +221,7 @@ class _PatientPartnerAccessScreenState
             ),
             if (isPending) ...[
               const SizedBox(height: 12),
-              const Text(
+              const LocalizedText(
                 'Approve only if you recognize this partner and want to share access.',
                 style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
               ),
@@ -230,7 +232,7 @@ class _PatientPartnerAccessScreenState
                     child: OutlinedButton(
                       onPressed: () =>
                           _reviewRequest(relationship, approve: false),
-                      child: const Text('Reject'),
+                      child: const LocalizedText('Reject'),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -238,7 +240,7 @@ class _PatientPartnerAccessScreenState
                     child: ElevatedButton(
                       onPressed: () =>
                           _reviewRequest(relationship, approve: true),
-                      child: const Text('Approve'),
+                      child: const LocalizedText('Approve'),
                     ),
                   ),
                 ],
@@ -246,7 +248,7 @@ class _PatientPartnerAccessScreenState
             ],
             if (isActive) ...[
               const SizedBox(height: 8),
-              Text(
+              LocalizedText(
                 'Sharing: ${relationship.permissions.entries.where((entry) => entry.value).map((entry) => entry.key).toList().ifEmpty('none')}',
                 style: const TextStyle(
                   color: AppColors.secondaryText,
@@ -259,11 +261,11 @@ class _PatientPartnerAccessScreenState
                 children: [
                   TextButton(
                     onPressed: () => _editPermissions(relationship),
-                    child: const Text('Manage permissions'),
+                    child: const LocalizedText('Manage permissions'),
                   ),
                   TextButton(
                     onPressed: () => _revoke(relationship),
-                    child: const Text('Revoke access'),
+                    child: const LocalizedText('Revoke access'),
                   ),
                 ],
               ),
@@ -291,14 +293,14 @@ class _PatientPartnerAccessScreenState
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Partner Access'),
+        title: const LocalizedText('Partner Access'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
               children: [
-                const Text(
+                const LocalizedText(
                   'You control who can view your patient information. Partner accounts remain separate and do not receive a patient record.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -316,7 +318,7 @@ class _PatientPartnerAccessScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const LocalizedText(
                             'Share this one-time code with your partner.',
                           ),
                           const SizedBox(height: 12),
@@ -330,7 +332,7 @@ class _PatientPartnerAccessScreenState
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(
+                          LocalizedText(
                             'Expires ${_invitation!.invitationExpiry.toLocal()}',
                             style: const TextStyle(
                               color: AppColors.secondaryText,
@@ -357,14 +359,14 @@ class _PatientPartnerAccessScreenState
                     ),
                   ),
                 ),
-                _sectionTitle('Requests and linked partners'),
+                _sectionTitle('Linked partners'),
                 if (visible.isEmpty)
                   const Card(
                     color: AppColors.white,
                     elevation: 0,
                     child: Padding(
                       padding: EdgeInsets.all(16),
-                      child: Text(
+                      child: LocalizedText(
                         'No linking requests or active partners.',
                         style: TextStyle(color: AppColors.secondaryText),
                       ),
@@ -372,7 +374,7 @@ class _PatientPartnerAccessScreenState
                   ),
                 ...visible.map(_relationshipCard),
                 const SizedBox(height: 12),
-                const Text(
+                const LocalizedText(
                   'Prototype only: these records are stored on this device. Production access requires authenticated server-side authorization.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -415,12 +417,12 @@ class _PartnerPermissionManagementScreenState
     appBar: AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      title: const Text('Manage sharing permissions'),
+      title: const LocalizedText('Manage sharing permissions'),
     ),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
+        const LocalizedText(
           'Only enabled categories will be available to the linked partner.',
           style: TextStyle(color: AppColors.secondaryText),
         ),
@@ -437,7 +439,7 @@ class _PartnerPermissionManagementScreenState
         const SizedBox(height: 12),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _permissions),
-          child: const Text('Save permissions'),
+          child: const LocalizedText('Save permissions'),
         ),
       ],
     ),

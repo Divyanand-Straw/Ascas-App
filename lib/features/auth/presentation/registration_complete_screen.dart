@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/locale_service.dart';
 import '../data/account_identity_service.dart';
@@ -208,7 +210,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Continue to patient dashboard',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),

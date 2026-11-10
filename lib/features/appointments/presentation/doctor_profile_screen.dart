@@ -80,9 +80,11 @@ class DoctorProfileScreen extends StatelessWidget {
             ),
           ),
           if (doctor.qualifications?.isNotEmpty == true)
-            Center(child: Text('Qualifications: ${doctor.qualifications}')),
+            Center(
+              child: LocalizedText('Qualifications: ${doctor.qualifications}'),
+            ),
           if (doctor.experience?.isNotEmpty == true)
-            Center(child: Text('Experience: ${doctor.experience}')),
+            Center(child: LocalizedText('Experience: ${doctor.experience}')),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),

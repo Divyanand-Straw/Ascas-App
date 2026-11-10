@@ -34,6 +34,7 @@ const Map<String, String> _tamilText = {
   'No period start recorded': 'மாதவிடாய் தொடக்கம் பதிவு செய்யப்படவில்லை',
   '5 days · estimate only': '5 நாட்கள் · மதிப்பீடு மட்டுமே',
   'Enabled': 'இயக்கப்பட்டுள்ளது',
+  'Disabled': 'முடக்கப்பட்டுள்ளது',
   'Off': 'முடக்கப்பட்டுள்ளது',
   'Period': 'மாதவிடாய்',
   'Fertile window': 'கருவுறும் காலம்',
@@ -53,10 +54,11 @@ const Map<String, String> _tamilText = {
   'October': 'அக்டோபர்',
   'November': 'நவம்பர்',
   'December': 'டிசம்பர்',
-  'Sign in with the mobile number registered to your patient account.': 'உங்கள் நோயாளர் கணக்கில் பதிவு செய்யப்பட்ட கைபேசி எண்ணைப் பயன்படுத்தி உள்நுழையவும்.',
-  '6-digit demo code': '6 இலக்க மாதிரி குறியீடு',
-  'Local demo sign-in only · OTP: 123456 · Not secure for production use.': 'உள்ளூர் மாதிரி உள்நுழைவு மட்டும் · OTP: 123456 · உண்மைப் பயன்பாட்டிற்கு பாதுகாப்பானது அல்ல.',
-  'Enter demo code 123456.': 'மாதிரி குறியீடு 123456-ஐ உள்ளிடவும்.',
+  'Log in to continue your journey.': 'உங்கள் பயணத்தைத் தொடர உள்நுழையவும்.',
+  '6-digit verification code': '6 இலக்க சரிபார்ப்புக் குறியீடு',
+  'No backend is integrated yet. Sign-in will be available once authentication is connected.': 'இன்னும் backend இணைக்கப்படவில்லை. அங்கீகார வசதி இணைக்கப்பட்டதும் உள்நுழையலாம்.',
+  'No backend is integrated yet.': 'இன்னும் backend இணைக்கப்படவில்லை.',
+  'No backend is integrated yet. Password reset will be available once authentication is connected.': 'இன்னும் backend இணைக்கப்படவில்லை. அங்கீகார வசதி இணைக்கப்பட்டதும் கடவுச்சொல்லை மீட்டமைக்கலாம்.',
   'No account is registered with this mobile number. Register or verify your existing clinic record first.': 'இந்த கைபேசி எண்ணில் கணக்கு இல்லை. முதலில் பதிவு செய்யவும் அல்லது மருத்துவமனை பதிவைச் சரிபார்க்கவும்.',
   'This partner account has no active patient link yet. Ask the patient to approve your request.': 'இந்த துணைவர் கணக்கில் செயலில் உள்ள நோயாளர் இணைப்பு இல்லை. உங்கள் கோரிக்கையை நோயாளர் அங்கீகரிக்கச் சொல்லவும்.',
   'Folic acid · sample only': 'ஃபோலிக் அமிலம் · மாதிரி மட்டும்',
@@ -66,6 +68,12 @@ const Map<String, String> _tamilText = {
   'IUI Timeline': 'IUI காலவரிசை',
   'IVF Timeline': 'IVF காலவரிசை',
   'Medication Schedule': 'மருந்து அட்டவணை',
+  'Frozen Embryo Stage': 'உறையவைக்கப்பட்ட கருவின் நிலை',
+  'Personal Details': 'தனிப்பட்ட விவரங்கள்',
+  'Medical Details': 'மருத்துவ விவரங்கள்',
+  'Export Data': 'தரவை ஏற்றுமதி செய்',
+  'Notification Settings': 'அறிவிப்பு அமைப்புகள்',
+  'App Information': 'செயலி விவரங்கள்',
   'Cycle details and clearly labelled calendar estimates.':
       'சுழற்சி விவரங்களும் மதிப்பீடுகள் எனக் குறிக்கப்பட்ட நாட்காட்டியும்.',
   'Milestones and updates provided by your clinic.':
@@ -412,15 +420,15 @@ const Map<String, String> _tamilText = {
   'Care updates': 'பராமரிப்பு புதுப்பிப்புகள்',
   'Partner sharing': 'துணைவர் பகிர்வு',
   'Embryology Updates': 'கருவியல் புதுப்பிப்புகள்',
-  'Procedure Preparation': 'செயல்முறை தயாரிப்பு',
-  'Fertility History': 'கருவுறுதல் வரலாறு',
+  'Procedure Preparation': 'சிகிச்சை முறைக்கான தயாரிப்பு',
+  'Fertility History': 'கருத்தரிப்பு வரலாறு',
   'Billing & Packages': 'கட்டணம் மற்றும் தொகுப்புகள்',
-  'Frozen Embryo Storage': 'உறைந்த கரு சேமிப்பு',
+  'Frozen Embryo Storage': 'உறையவைக்கப்பட்ட கருவின் நிலை',
   'Partner Access': 'துணைவர் அணுகல்',
-  'Question Notebook': 'கேள்வி குறிப்பேடு',
+  'Question Notebook': 'கேள்விக் குறிப்பேடு',
   'Wellness Journal': 'நலவாழ்வு குறிப்பேடு',
-  'Male Fertility': 'ஆண் கருவுறுதல்',
-  'ASCAS Circle': 'ASCAS குழு',
+  'Male Fertility': 'ஆண் கருத்தரிப்பு',
+  'Thaai Seyazhi Circle': 'தாய் செயழி வட்டம்',
   'Privacy & Consent': 'தனியுரிமை மற்றும் ஒப்புதல்',
   'Medical information and instructions are provided from authorized Thaai Seyazhi clinic records.': 'மருத்துவத் தகவல்கள் மற்றும் வழிமுறைகள் அங்கீகரிக்கப்பட்ட தாய் செயழி மருத்துவமையப் பதிவுகளிலிருந்து வழங்கப்படுகின்றன.',
   'Your question': 'உங்கள் கேள்வி',
@@ -689,39 +697,326 @@ const Map<String, String> _tamilText = {
   'Follow-up details': 'தொடர் பராமரிப்பு விவரங்கள்',
   'Doctor information': 'மருத்துவர் தகவல்',
   'Treating doctor': 'சிகிச்சையளிக்கும் மருத்துவர்',
+  'A new verification code has been requested.':
+      'புதிய சரிபார்ப்புக் குறியீடு கோரப்பட்டுள்ளது.',
+  'A rescheduling request remains pending until the clinic approves it.': 'மருத்துவமையம் ஒப்புதல் அளிக்கும் வரை மறுஅட்டவணை கோரிக்கை நிலுவையில் இருக்கும்.',
+  'APP SECURITY': 'செயலி பாதுகாப்பு',
+  'Accept and continue': 'ஏற்று தொடரவும்',
+  'Accept invitation': 'அழைப்பை ஏற்கவும்',
+  'Allow secure processing needed for Thaai Seyazhi patient services.': 'தாய் செயழி நோயாளர் சேவைகளுக்குத் தேவையான பாதுகாப்பான செயலாக்கத்தை அனுமதிக்கவும்.',
+  ', and required patient consent.': ', மற்றும் நோயாளியின் கட்டாய ஒப்புதல்.',
+  'Allow sharing based on partner permissions.':
+      'இணைக்கப்பட்டவருக்கான அனுமதிகளின் அடிப்படையில் பகிர்வை அனுமதிக்கவும்.',
+  'Already have an account? ': 'ஏற்கனவே கணக்கு உள்ளதா? ',
+  'App security': 'செயலி பாதுகாப்பு',
+  'Appointment details': 'சந்திப்பு விவரங்கள்',
+  'Approve': 'ஒப்புதல் அளிக்கவும்',
+  'Approve only if you recognize this partner and want to share access.': 'இந்த இணைக்கப்பட்டவரை அறிந்திருந்து அணுகலைப் பகிர விரும்பினால் மட்டுமே ஒப்புதல் அளிக்கவும்.',
+  'Available date': 'கிடைக்கும் தேதி',
+  'Back to Login': 'உள்நுழைவுக்குத் திரும்பு',
+  'Back to login': 'உள்நுழைவுக்குத் திரும்பு',
+  'Booking request': 'சந்திப்பு கோரிக்கை',
+  'CONSENT & PRIVACY': 'ஒப்புதல் மற்றும் தனியுரிமை',
+  'Choose a time': 'நேரத்தைத் தேர்ந்தெடுக்கவும்',
+  'Clinic responses will appear here only after a secure messaging service is connected.': 'பாதுகாப்பான செய்தியிடல் சேவை இணைக்கப்பட்ட பிறகே மருத்துவமையத்தின் பதில்கள் இங்கே தோன்றும்.',
+  'Clinical information remains protected until you confirm identity and consent.': 'அடையாளத்தையும் ஒப்புதலையும் உறுதிப்படுத்தும் வரை மருத்துவத் தகவல்கள் பாதுகாக்கப்படும்.',
+  'Complete security setup': 'பாதுகாப்பு அமைப்பை முடிக்கவும்',
+  'Complete the required identity and contact details.':
+      'தேவையான அடையாளம் மற்றும் தொடர்பு விவரங்களைப் பூர்த்தி செய்யவும்.',
+  'Confirm the patient': 'நோயாளியை உறுதிப்படுத்தவும்',
+  'Confirm these details before access is linked.':
+      'அணுகலை இணைக்கும் முன் இந்த விவரங்களை உறுதிப்படுத்தவும்.',
+  'Confirm your profile': 'உங்கள் சுயவிவரத்தை உறுதிப்படுத்தவும்',
+  'Confirming this invitation activates your link to the patient.': 'இந்த அழைப்பை உறுதிப்படுத்தினால் நோயாளியுடனான இணைப்பு செயல்படுத்தப்படும்.',
+  'Consent & privacy': 'ஒப்புதல் மற்றும் தனியுரிமை',
+  'Consultation information is sample data for this prototype. Live availability will be supplied by Thaai Seyazhi.': 'ஆலோசனைத் தகவல்கள் மாதிரி தரவுகள். உண்மையான நேரக் கிடைப்பை தாய் செயழி வழங்கும்.',
+  'Contact care team': 'பராமரிப்புக் குழுவைத் தொடர்புகொள்ளவும்',
+  'Continue to patient dashboard': 'நோயாளர் முகப்புக்குச் செல்லவும்',
+  'Continue': 'தொடரவும்',
+  'Create Account': 'கணக்கை உருவாக்கவும்',
+  'Create a strong password for your Thaai Seyazhi account. Make sure it is easy for you to remember.': 'உங்கள் தாய் செயழி கணக்கிற்கான வலுவான கடவுச்சொல்லை உருவாக்கவும். அதை நினைவில் வைத்துக்கொள்ள எளிதாக இருக்கட்டும்.',
+  'Create new password': 'புதிய கடவுச்சொல்லை உருவாக்கவும்',
+  'Create your app PIN': 'செயலி PIN-ஐ உருவாக்கவும்',
+  'Current prescriptions and schedules will appear here when published by your clinic.': 'மருத்துவமையம் வெளியிடும் மருந்துச் சீட்டுகளும் அட்டவணைகளும் இங்கே தோன்றும்.',
+  'Deletion requests require hospital/backend processing.':
+      'நீக்கக் கோரிக்கைகளைச் செயல்படுத்த மருத்துவமனை அல்லது backend தேவை.',
+  'Demo discharge summary': 'மாதிரி வெளியேற்றச் சுருக்கம்',
+  'Details are incorrect': 'விவரங்கள் தவறாக உள்ளன',
+  'Didn’t receive the code?': 'குறியீடு கிடைக்கவில்லையா?',
+  'Do not use app messaging for urgent medical problems. Seek immediate medical attention or contact appropriate emergency services.': 'அவசர மருத்துவப் பிரச்சினைகளுக்கு செயலி செய்தியிடலைப் பயன்படுத்த வேண்டாம். உடனடியாக மருத்துவ உதவியை நாடவும் அல்லது அவசர சேவைகளைத் தொடர்புகொள்ளவும்.',
+  'Done': 'முடிந்தது',
+  'EMERGENCY GUIDANCE': 'அவசர வழிகாட்டுதல்',
+  'Exit': 'வெளியேறு',
+  'Edit': 'திருத்து',
+  'Education is general information, not personalised medical advice.':
+      'கல்வித் தகவல்கள் பொதுவானவை; தனிப்பட்ட மருத்துவ ஆலோசனை அல்ல.',
+  'Enable a revocable partner invitation after setup.':
+      'அமைப்பை முடித்த பிறகு ரத்து செய்யக்கூடிய இணைப்பு அழைப்பை இயக்கவும்.',
+  'Enter a valid 10-digit mobile number.':
+      'சரியான 10 இலக்க கைபேசி எண்ணை உள்ளிடவும்.',
+  'Enter the 6-digit code': '6 இலக்கக் குறியீட்டை உள்ளிடவும்',
+  'Enter the Patient ID or MRN from your existing hospital record.':
+      'உங்கள் மருத்துவமனைப் பதிவிலுள்ள நோயாளர் ID அல்லது MRN-ஐ உள்ளிடவும்.',
+  'Enter verification code': 'சரிபார்ப்புக் குறியீட்டை உள்ளிடவும்',
+  'Enter your Patient ID': 'உங்கள் நோயாளர் ID-ஐ உள்ளிடவும்',
+  'FORGOT PASSWORD': 'கடவுச்சொல் மறந்துவிட்டதா',
+  'Hospital-managed clinical records and treatment information cannot be edited here.': 'மருத்துவமனை நிர்வகிக்கும் மருத்துவப் பதிவுகளையும் சிகிச்சைத் தகவல்களையும் இங்கே திருத்த முடியாது.',
+  'I agree to the ': 'நான் இதற்கு ஒப்புக்கொள்கிறேன்: ',
+  'IDENTITY VERIFIED': 'அடையாளம் சரிபார்க்கப்பட்டது',
+  'Image (prototype)': 'படம் (முன்மாதிரி)',
+  'Incorrect OTP. Please try again.': 'தவறான OTP. மீண்டும் முயற்சிக்கவும்.',
+  'Keep access': 'அணுகலைத் தொடரவும்',
+  'Link to Patient': 'நோயாளியுடன் இணைக்கவும்',
+  'Login': 'உள்நுழைய',
+  'Manage permissions': 'அனுமதிகளை நிர்வகிக்கவும்',
+  'Manage sharing permissions': 'பகிர்வு அனுமதிகளை நிர்வகிக்கவும்',
+  'Medication history': 'மருந்து வரலாறு',
+  'Mobile verification': 'கைபேசி சரிபார்ப்பு',
+  'New Thaai Seyazhi patient': 'புதிய தாய் செயழி நோயாளர்',
+  'New patient registration': 'புதிய நோயாளர் பதிவு',
+  'No clinic submission or response has occurred.':
+      'மருத்துவமையத்துக்கு எதுவும் அனுப்பப்படவில்லை; பதிலும் வரவில்லை.',
+  'No linked patient. Accept a patient invitation to link your account.': 'இணைக்கப்பட்ட நோயாளர் இல்லை. உங்கள் கணக்கை இணைக்க நோயாளியின் அழைப்பை ஏற்கவும்.',
+  'No linking requests or active partners.':
+      'இணைப்புக் கோரிக்கைகளோ செயலில் உள்ள இணைப்புகளோ இல்லை.',
+  'No map integration or verified clinic address is configured in this prototype.': 'இந்த செயலியின் முன்மாதிரியில் வரைபட இணைப்போ சரிபார்க்கப்பட்ட மருத்துவமனை முகவரியோ அமைக்கப்படவில்லை.',
+  'No medical information is shown until identity and record access are verified.': 'அடையாளமும் பதிவுகளுக்கான அணுகலும் சரிபார்க்கப்படும் வரை மருத்துவத் தகவல்கள் காட்டப்படாது.',
+  'No medication confirmations recorded yet.\n\nHistory is saved when a permitted dose is marked taken or skipped.': 'மருந்து எடுத்தது குறித்த உறுதிப்படுத்தல்கள் இன்னும் பதிவு செய்யப்படவில்லை.\n\nஅனுமதிக்கப்பட்ட மருந்தளவை எடுத்ததாகவோ தவிர்த்ததாகவோ குறிக்கும்போது வரலாறு சேமிக்கப்படும்.',
+  'No messages yet.\nStart a local prototype conversation.':
+      'செய்திகள் எதுவும் இல்லை.\nமுன்மாதிரி உரையாடலைத் தொடங்கவும்.',
+  'OR SIGN UP WITH': 'அல்லது இதன் மூலம் பதிவு செய்யவும்',
+  'OTP VERIFICATION': 'OTP சரிபார்ப்பு',
+  'OTP resend is a prototype action.':
+      'OTP மீண்டும் அனுப்புவது முன்மாதிரி நடவடிக்கை.',
+  'OTP verification': 'OTP சரிபார்ப்பு',
+  'Only enabled categories will be available to the linked partner.':
+      'இயக்கப்பட்ட வகைகளை மட்டுமே இணைக்கப்பட்டவர் பார்க்க முடியும்.',
+  'Open local prototype chat': 'முன்மாதிரி உரையாடலைத் திறக்கவும்',
+  'Optional fingerprint or face unlock.':
+      'விருப்பப்படி கைரேகை அல்லது முகம் மூலம் திறக்கலாம்.',
+  'Optional partner access': 'விருப்பமான இணைக்கப்பட்டவர் அணுகல்',
+  'PATIENT DETAILS': 'நோயாளர் விவரங்கள்',
+  'PATIENT ID / MRN': 'நோயாளர் ID / MRN',
+  'Password must contain at least 8 characters.':
+      'கடவுச்சொல்லில் குறைந்தது 8 எழுத்துகள் இருக்க வேண்டும்.',
+  'PDF (prototype)': 'PDF (முன்மாதிரி)',
+  'PINs do not match. Please try again.':
+      'PIN-கள் பொருந்தவில்லை. மீண்டும் முயற்சிக்கவும்.',
+  'Password updated': 'கடவுச்சொல் புதுப்பிக்கப்பட்டது',
+  'Patient ID / MRN': 'நோயாளர் ID / MRN',
+  'Patient Inbox': 'நோயாளர் இன்பாக்ஸ்',
+  'Patient • Pending': 'நோயாளர் • நிலுவையில்',
+  'Please agree to the terms and privacy policy.':
+      'விதிமுறைகள் மற்றும் தனியுரிமைக் கொள்கையை ஏற்கவும்.',
+  'Please enter the 6-digit OTP.': '6 இலக்க OTP-ஐ உள்ளிடவும்.',
+  'Please enter the complete 6-digit OTP.':
+      'முழுமையான 6 இலக்க OTP-ஐ உள்ளிடவும்.',
+  'Please enter valid profile details.': 'சரியான சுயவிவர விவரங்களை உள்ளிடவும்.',
+  'Privacy Policy': 'தனியுரிமைக் கொள்கை',
+  'Profile confirmation': 'சுயவிவர உறுதிப்படுத்தல்',
+  'Prototype only: account identity and link state are local and are not authenticated by a server.': 'முன்மாதிரி மட்டும்: கணக்கு அடையாளமும் இணைப்பு நிலையும் இந்தச் சாதனத்தில் மட்டுமே உள்ளன; சேவையகம் மூலம் சரிபார்க்கப்படவில்லை.',
+  'Prototype only: these records are stored on this device. Production access requires authenticated server-side authorization.': 'முன்மாதிரி மட்டும்: இந்தப் பதிவுகள் இந்தச் சாதனத்தில் சேமிக்கப்படுகின்றன. உண்மையான பயன்பாட்டிற்கு சேவையக அங்கீகாரம் தேவை.',
+  'Prototype sample appointments only. They are not real bookings.':
+      'முன்மாதிரி சந்திப்பு விவரங்கள் மட்டுமே; இவை உண்மையான முன்பதிவுகள் அல்ல.',
+  'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.': 'முன்மாதிரி தரவுகள் மட்டுமே. உண்மையான மருத்துவர் நேரக் கிடைப்பை தாய் செயழி வழங்கும்.',
+  'Prototype sample data only. Status changes apply during this app session.': 'முன்மாதிரி தரவுகள் மட்டுமே. நிலை மாற்றங்கள் இந்த செயலி அமர்வுக்கு மட்டும் பொருந்தும்.',
+  'Read Terms, Privacy and Consent':
+      'விதிமுறைகள், தனியுரிமை மற்றும் ஒப்புதலைப் படிக்கவும்',
+  'Ready to attach locally': 'சாதனத்திலிருந்து இணைக்கத் தயார்',
+  'Receive care-related app updates.':
+      'பராமரிப்பு தொடர்பான செயலி புதுப்பிப்புகளைப் பெறவும்.',
+  'Refresh status': 'நிலையைப் புதுப்பிக்கவும்',
+  'Registration UI completed. Backend integration pending.':
+      'பதிவு திரை முடிக்கப்பட்டது. Backend இணைப்பு நிலுவையில் உள்ளது.',
+  'Reject': 'நிராகரிக்கவும்',
+  'Request': 'கோரிக்கை',
+  'Request deletion': 'நீக்கக் கோரிக்கை',
+  'Required patient consent is separate from optional partner sharing.': 'நோயாளியின் கட்டாய ஒப்புதல், விருப்பமான இணைப்பு பகிர்விலிருந்து தனியானது.',
+  'Required terms and privacy consent':
+      'விதிமுறைகள் மற்றும் தனியுரிமைக்கான கட்டாய ஒப்புதல்',
+  'Reschedule appointment': 'சந்திப்பை மறுஅட்டவணை செய்யவும்',
+  'Resend OTP': 'OTP-ஐ மீண்டும் அனுப்பவும்',
+  'Resend code': 'குறியீட்டை மீண்டும் அனுப்பவும்',
+  'Review profile': 'சுயவிவரத்தை மதிப்பாய்வு செய்யவும்',
+  'Review this permission change before saving.':
+      'சேமிப்பதற்கு முன் இந்த அனுமதி மாற்றத்தை மதிப்பாய்வு செய்யவும்.',
+  'Revoke access': 'அணுகலை ரத்து செய்யவும்',
+  'Revoke partner access?': 'இணைக்கப்பட்டவரின் அணுகலை ரத்து செய்யவா?',
+  'SECURE VERIFICATION': 'பாதுகாப்பான சரிபார்ப்பு',
+  'STEP 1 OF 8': 'படி 1 / 8',
+  'STEP 2 OF 3': 'படி 2 / 3',
+  'STEP 2 OF 8': 'படி 2 / 8',
+  'STEP 3 OF 3': 'படி 3 / 3',
+  'STEP 3 OF 8': 'படி 3 / 8',
+  'STEP 4 OF 8': 'படி 4 / 8',
+  'STEP 5 OF 8': 'படி 5 / 8',
+  'STEP 6 OF 8': 'படி 6 / 8',
+  'STEP 7 OF 8': 'படி 7 / 8',
+  'Saved resources': 'சேமித்த வளங்கள்',
+  'Share this one-time code with your partner.':
+      'இந்த ஒருமுறை குறியீட்டை உங்கள் இணைக்கப்பட்டவருடன் பகிரவும்.',
+  'Show all notifications': 'அனைத்து அறிவிப்புகளையும் காண்பிக்கவும்',
+  'Skip': 'தவிர்க்கவும்',
+  'Support request saved': 'ஆதரவுக் கோரிக்கை சேமிக்கப்பட்டது',
+  'Terms': 'விதிமுறைகள்',
+  'Terms and privacy information will be available here.':
+      'விதிமுறைகள் மற்றும் தனியுரிமைத் தகவல்கள் இங்கே கிடைக்கும்.',
+  'Text size': 'எழுத்து அளவு',
+  'The patient has not shared any information with this account yet.':
+      'நோயாளர் இந்தக் கணக்குடன் எந்தத் தகவலையும் இன்னும் பகிரவில்லை.',
+  'This PIN protects Thaai Seyazhi information on your device.':
+      'இந்த PIN உங்கள் சாதனத்தில் உள்ள தாய் செயழி தகவல்களைப் பாதுகாக்கிறது.',
+  'This is a local prototype. Messages are not sent to or received from the clinic.': 'இது சாதனத்தில் இயங்கும் முன்மாதிரி. மருத்துவமனைக்கு செய்திகள் அனுப்பப்படவோ அங்கிருந்து பெறப்படவோ மாட்டா.',
+  'This is your separate partner account. It does not own a patient medical record.': 'இது உங்களுக்கான தனி இணைக்கப்பட்டவர் கணக்கு. இதில் நோயாளரின் மருத்துவப் பதிவு இருக்காது.',
+  'This password change is not saved until account services are connected. You can return to login.': 'கணக்கு சேவைகள் இணைக்கப்படும் வரை இந்தக் கடவுச்சொல் மாற்றம் சேமிக்கப்படாது. உள்நுழைவுக்குத் திரும்பலாம்.',
+  'This prototype cannot permanently delete a clinic account. ':
+      'இந்த முன்மாதிரியில் மருத்துவமனை கணக்கை நிரந்தரமாக நீக்க முடியாது. ',
+  'This request is awaiting clinic confirmation. It is not a confirmed appointment yet.': 'இந்தக் கோரிக்கை மருத்துவமனை உறுதிப்படுத்தலுக்காக காத்திருக்கிறது. இது இன்னும் உறுதிப்படுத்தப்பட்ட சந்திப்பு அல்ல.',
+  'To change shared access, ask the patient to update permissions or revoke the link.': 'பகிரப்பட்ட அணுகலை மாற்ற, அனுமதிகளைப் புதுப்பிக்கவோ இணைப்பை ரத்து செய்யவோ நோயாளியிடம் கேட்கவும்.',
+  'Unsupported file types are blocked':
+      'ஆதரிக்கப்படாத கோப்பு வகைகள் தடுக்கப்பட்டுள்ளன',
+  'Update Password': 'கடவுச்சொல்லைப் புதுப்பிக்கவும்',
+  'Use biometric authentication': 'பயோமெட்ரிக் அங்கீகாரத்தைப் பயன்படுத்தவும்',
+  'Use your own account and mobile number. Confirm a patient-issued invitation to activate your link.': 'உங்கள் சொந்த கணக்கு மற்றும் கைபேசி எண்ணைப் பயன்படுத்தவும். இணைப்பைச் செயல்படுத்த நோயாளர் வழங்கிய அழைப்பை உறுதிப்படுத்தவும்.',
+  'VERIFY OTP': 'OTP-ஐ சரிபார்க்கவும்',
+  'Validate invitation': 'அழைப்பைச் சரிபார்க்கவும்',
+  'Verified phone numbers, email addresses and opening hours will appear here when provided by the clinic.': 'மருத்துவமனை வழங்கிய சரிபார்க்கப்பட்ட தொலைபேசி எண்கள், மின்னஞ்சல் முகவரிகள் மற்றும் திறந்திருக்கும் நேரங்கள் இங்கே தோன்றும்.',
+  'Verify & Continue': 'சரிபார்த்து தொடரவும்',
+  'Verify OTP': 'OTP-ஐ சரிபார்க்கவும்',
+  'Verify your mobile number': 'உங்கள் கைபேசி எண்ணைச் சரிபார்க்கவும்',
+  'Video resources are not available because no verified clinic video links are configured.': 'சரிபார்க்கப்பட்ட மருத்துவமனை காணொளி இணைப்புகள் அமைக்கப்படாததால் காணொளி வளங்கள் கிடைக்கவில்லை.',
+  'View Details': 'விவரங்களைக் காண்க',
+  'View Journey': 'பயணத்தைக் காண்க',
+  'View Profile': 'சுயவிவரத்தைக் காண்க',
+  'View appointment details': 'சந்திப்பு விவரங்களைக் காண்க',
+  'Write a local prototype message': 'முன்மாதிரி செய்தியை எழுதவும்',
+  'Yes, this is me': 'ஆம், இது நான்தான்',
+  'You control who can view your patient information. Partner accounts remain separate and do not receive a patient record.': 'உங்கள் நோயாளர் தகவலை யார் பார்க்கலாம் என்பதை நீங்கள் கட்டுப்படுத்தலாம். இணைக்கப்பட்டவர் கணக்குகள் தனியாக இருக்கும்; அவற்றில் நோயாளர் பதிவு இருக்காது.',
+  'You control your information': 'உங்கள் தகவல்களை நீங்கள் கட்டுப்படுத்தலாம்',
+  'Your account security matters to us.':
+      'உங்கள் கணக்கின் பாதுகாப்பு எங்களுக்கு முக்கியம்.',
+  'Your linking status': 'உங்கள் இணைப்பு நிலை',
+  'Your saved records remain with their patient account.':
+      'நீங்கள் சேமித்த பதிவுகள் நோயாளர் கணக்கிலேயே இருக்கும்.',
+  'Care preferences': 'பராமரிப்பு விருப்பங்கள்',
+  'Privacy & security': 'தனியுரிமை மற்றும் பாதுகாப்பு',
+  'App settings': 'செயலி அமைப்புகள்',
+  'Account actions': 'கணக்கு செயல்கள்',
+  'Clinic prescription schedule.': 'மருத்துவமைய மருந்துச் சீட்டு அட்டவணை.',
+  'Update your care profile.':
+      'உங்கள் பராமரிப்பு சுயவிவரத்தைப் புதுப்பிக்கவும்.',
+  'Invite a partner, review requests, and manage sharing.':
+      'துணைவரை அழைத்து, கோரிக்கைகளைப் பார்த்து, பகிர்வை நிர்வகிக்கவும்.',
+  'Review permissions and consent preferences.':
+      'அனுமதிகள் மற்றும் ஒப்புதல் விருப்பங்களைப் பார்க்கவும்.',
+  'Download your records.': 'உங்கள் பதிவுகளைப் பதிவிறக்கவும்.',
+  'Review your clinic reminders and updates.':
+      'மருத்துவமைய நினைவூட்டல்கள் மற்றும் புதுப்பிப்புகளைப் பார்க்கவும்.',
+  'FAQs and contact details.':
+      'அடிக்கடி கேட்கப்படும் கேள்விகள் மற்றும் தொடர்பு விவரங்கள்.',
+  'Standard text.': 'நிலையான உரை.',
 };
+
+String _localizedDynamicText(String text) {
+  const dynamicPrefixes = <String, String>{
+    'Partner account · ': 'இணைப்பு கணக்கு · ',
+    'Qualifications: ': 'தகுதிகள்: ',
+    'Experience: ': 'அனுபவம்: ',
+    'Export created at ': 'ஏற்றுமதி உருவாக்கப்பட்டது: ',
+    'Mark dose ': 'மருந்தளவை ',
+    'Dose marked ': 'மருந்தளவு ',
+  };
+
+  for (final entry in dynamicPrefixes.entries) {
+    if (text.startsWith(entry.key)) {
+      return '${entry.value}${text.substring(entry.key.length)}';
+    }
+  }
+
+  if (text.startsWith('Change ') && text.endsWith('?')) {
+    return '${text.substring(7, text.length - 1)} ஐ மாற்றவா?';
+  }
+  if (text.endsWith(' sign-in integration is coming soon.')) {
+    final provider = text.substring(
+      0,
+      text.length - ' sign-in integration is coming soon.'.length,
+    );
+    return '$provider உள்நுழைவு இணைப்பு விரைவில் கிடைக்கும்.';
+  }
+  return text;
+}
 
 String localizedText(BuildContext context, String text) {
   final l10n = AppLocalizations.of(context);
   if (l10n == null || l10n.localeName.split('_').first != 'ta') return text;
-  return _tamilText[text] ?? text;
+  return _tamilText[text] ?? _localizedDynamicText(text);
 }
 
 class LocalizedText extends StatelessWidget {
   final String text;
   final TextStyle? style;
+  final StrutStyle? strutStyle;
   final TextAlign? textAlign;
+  final TextDirection? textDirection;
+  final Locale? locale;
+  final TextScaler? textScaler;
+  @Deprecated(
+    'Use textScaler instead. Text scaling supports nonlinear scaling.',
+  )
+  final double? textScaleFactor;
   final TextOverflow? overflow;
   final int? maxLines;
   final bool? softWrap;
+  final String? semanticsLabel;
+  final String? semanticsIdentifier;
+  final TextWidthBasis? textWidthBasis;
+  final TextHeightBehavior? textHeightBehavior;
+  final Color? selectionColor;
 
   const LocalizedText(
     this.text, {
     super.key,
     this.style,
+    this.strutStyle,
     this.textAlign,
+    this.textDirection,
+    this.locale,
+    this.textScaler,
+    @Deprecated(
+      'Use textScaler instead. Text scaling supports nonlinear scaling.',
+    )
+    this.textScaleFactor,
     this.overflow,
     this.maxLines,
     this.softWrap,
-  });
+    this.semanticsLabel,
+    this.semanticsIdentifier,
+    this.textWidthBasis,
+    this.textHeightBehavior,
+    this.selectionColor,
+  }) : assert(
+         textScaler == null || textScaleFactor == null,
+         'textScaleFactor cannot be specified with textScaler.',
+       );
 
   @override
   Widget build(BuildContext context) => Text(
     localizedText(context, text),
     style: style,
+    strutStyle: strutStyle,
     textAlign: textAlign,
+    textDirection: textDirection,
+    locale: locale,
+    textScaler:
+        textScaler ??
+        (textScaleFactor == null ? null : TextScaler.linear(textScaleFactor!)),
     overflow: overflow,
     maxLines: maxLines,
     softWrap: softWrap,
+    semanticsLabel: semanticsLabel,
+    semanticsIdentifier: semanticsIdentifier,
+    textWidthBasis: textWidthBasis,
+    textHeightBehavior: textHeightBehavior,
+    selectionColor: selectionColor,
   );
 }

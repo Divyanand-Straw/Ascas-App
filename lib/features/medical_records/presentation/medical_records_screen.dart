@@ -1683,7 +1683,7 @@ class BillDetailsScreen extends StatelessWidget {
                                 'Unit price',
                                 style: AppTextStyles.bodySmall,
                               ),
-                              const Text(': '),
+                              const LocalizedText(': '),
                               Text(
                                 formatIndianRupees(item.unitPrice),
                                 style: AppTextStyles.bodySmall,

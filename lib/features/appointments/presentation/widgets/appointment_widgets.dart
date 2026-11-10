@@ -230,7 +230,7 @@ class AppointmentSectionTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  LocalizedText(
                     title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -241,7 +241,7 @@ class AppointmentSectionTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  LocalizedText(
                     subtitle,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
@@ -315,7 +315,7 @@ class AppointmentActionTile extends StatelessWidget {
               child: Icon(icon, color: AppColors.burgundy, size: 20),
             ),
             const SizedBox(height: 10),
-            Text(
+            LocalizedText(
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -326,7 +326,7 @@ class AppointmentActionTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
+            LocalizedText(
               subtitle,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,

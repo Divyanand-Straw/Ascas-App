@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'forgot_password_otp_screen.dart';
@@ -33,7 +35,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ForgotPasswordOtpScreen(
+        builder: (_) => ForgotPasswordOtpScreen(
           mobileNumber: _mobileController.text.trim(),
           emailAddress: _emailController.text.trim(),
         ),
@@ -78,7 +80,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 30),
               Center(
-                child: Text(
+                child: LocalizedText(
                   'FORGOT PASSWORD',
                   style: TextStyle(
                     color: AppColors.dustyPink,
@@ -121,6 +123,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 10),
               TextField(
+                key: const ValueKey('forgot-password-mobile-field'),
                 controller: _mobileController,
                 keyboardType: TextInputType.phone,
                 maxLength: 10,
@@ -162,6 +165,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: 10),
               TextField(
+                key: const ValueKey('forgot-password-email-field'),
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 onChanged: (_) => setState(() {}),
@@ -195,6 +199,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 width: double.infinity,
                 height: 53,
                 child: ElevatedButton(
+                  key: const ValueKey('forgot-password-continue'),
                   onPressed: _isValidMobile && _isValidEmail ? _continue : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
@@ -215,7 +220,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Back to login',
                     style: TextStyle(
                       color: AppColors.burgundy,

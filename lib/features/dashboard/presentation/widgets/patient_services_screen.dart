@@ -78,12 +78,12 @@ class PatientServicesScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionTitle(String title) => Padding(
+  Widget _sectionTitle(BuildContext context, String title) => Padding(
     padding: const EdgeInsets.only(top: 23, bottom: 9),
     child: Align(
       alignment: Alignment.centerLeft,
-      child: Text(
-        title.toUpperCase(),
+      child: LocalizedText(
+        localizedText(context, title).toUpperCase(),
         style: const TextStyle(
           color: AppColors.burgundy,
           fontSize: 11,
@@ -119,7 +119,7 @@ class PatientServicesScreen extends StatelessWidget {
           ),
           child: Icon(icon, color: AppColors.burgundy, size: 21),
         ),
-        title: Text(
+        title: LocalizedText(
           title,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -131,7 +131,7 @@ class PatientServicesScreen extends StatelessWidget {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 3),
-          child: Text(
+          child: LocalizedText(
             subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -254,7 +254,7 @@ class PatientServicesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            _sectionTitle(l10n.treatmentCare),
+            _sectionTitle(context, l10n.treatmentCare),
             _card([
               _tile(
                 context: context,
@@ -305,7 +305,7 @@ class PatientServicesScreen extends StatelessWidget {
                 ),
               ),
             ]),
-            _sectionTitle(l10n.planningSupport),
+            _sectionTitle(context, l10n.planningSupport),
             _card([
               _tile(
                 context: context,
@@ -367,7 +367,7 @@ class PatientServicesScreen extends StatelessWidget {
                 ),
               ),
             ]),
-            _sectionTitle(l10n.learnSupported),
+            _sectionTitle(context, l10n.learnSupported),
             _card([
               _tile(
                 context: context,
@@ -408,16 +408,16 @@ class PatientServicesScreen extends StatelessWidget {
               _tile(
                 context: context,
                 icon: Icons.groups_outlined,
-                title: 'ASCAS Circle',
+                title: 'Thaai Seyazhi Circle',
                 subtitle: 'General community support.',
                 onTap: () => _open(
                   context,
-                  'ASCAS Circle',
+                  'Thaai Seyazhi Circle',
                   'Community services are coming soon and require secure moderation.',
                 ),
               ),
             ]),
-            _sectionTitle(l10n.accountClinic),
+            _sectionTitle(context, l10n.accountClinic),
             _card([
               _tile(
                 context: context,
@@ -478,7 +478,7 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
     appBar: AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      title: Text(title),
+      title: LocalizedText(title),
     ),
     body: Center(
       child: Padding(
@@ -492,7 +492,7 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
               size: 48,
             ),
             const SizedBox(height: 14),
-            Text(
+            LocalizedText(
               subtitle,
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -552,7 +552,7 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
     final text = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(index == null ? 'Add question' : 'Edit question'),
+        title: LocalizedText(index == null ? 'Add question' : 'Edit question'),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -620,7 +620,7 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
                 color: AppColors.white,
                 child: ListTile(
                   title: Text(question['text'] as String),
-                  subtitle: Text(
+                  subtitle: LocalizedText(
                     question['discussed'] as bool
                         ? 'Marked as discussed'
                         : 'Not discussed',
@@ -700,7 +700,9 @@ class _WellnessJournalScreenState extends State<WellnessJournalScreen> {
     final result = await showDialog<List<String>>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(index == null ? 'New journal entry' : 'Edit journal entry'),
+        title: LocalizedText(
+          index == null ? 'New journal entry' : 'Edit journal entry',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

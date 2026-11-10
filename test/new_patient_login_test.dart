@@ -1,44 +1,86 @@
-import 'package:app/features/auth/data/account_identity_service.dart';
+import 'package:app/features/auth/presentation/forgot_password/forgot_password_screen.dart';
+import 'package:app/features/auth/presentation/forgot_password/forgot_password_otp_screen.dart';
+import 'package:app/features/auth/presentation/forgot_password/reset_password_screen.dart';
 import 'package:app/features/auth/presentation/login_screen.dart';
-import 'package:app/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('new patient can sign in to their saved identity', (
+  testWidgets('forgot password flows through OTP and returns to login', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
-    final identity = await AccountIdentityService().createOrGetNewPatient(
-      mobileNumber: '9876543210',
-      fullName: 'New Patient',
-      dateOfBirth: '02/04/1994',
-      preferredLanguage: 'English',
-    );
-
     await tester.pumpWidget(_loginApp());
-    await tester.enterText(
-      find.byKey(const ValueKey('login-mobile-field')),
-      identity.mobileNumber,
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('login-otp-field')),
-      '123456',
-    );
-    await tester.ensureVisible(find.byType(ElevatedButton).first);
-    await tester.tap(find.byType(ElevatedButton).first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
 
-    final dashboard = tester.widget<DashboardScreen>(
-      find.byType(DashboardScreen),
+    expect(find.text('Google'), findsOneWidget);
+    expect(find.text('Apple'), findsOneWidget);
+    expect(find.text('Forgot Password?'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Forgot Password?'));
+    await tester.tap(find.text('Forgot Password?'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
+    expect(find.textContaining('No backend'), findsNothing);
+    expect(find.textContaining('123456'), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('forgot-password-mobile-field')),
+      '9123456780',
     );
-    expect(dashboard.patientName, 'New Patient');
-    expect(dashboard.patientId, identity.patientId);
-    expect(dashboard.accountId, identity.accountId);
-    expect(tester.takeException(), isNull);
+    await tester.enterText(
+      find.byKey(const ValueKey('forgot-password-email-field')),
+      'patient@example.com',
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('forgot-password-continue')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('forgot-password-continue')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ForgotPasswordOtpScreen), findsOneWidget);
+    expect(find.textContaining('Preview only'), findsNothing);
+
+    for (var index = 0; index < 6; index++) {
+      await tester.enterText(
+        find.byKey(ValueKey('forgot-password-otp-$index')),
+        '$index',
+      );
+    }
+
+    await tester.ensureVisible(find.text('Verify & Continue'));
+    await tester.tap(find.text('Verify & Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ResetPasswordScreen), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('reset-new-password-field')),
+      'NewPassword123',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('reset-confirm-password-field')),
+      'NewPassword123',
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('reset-password-submit')),
+    );
+    await tester.tap(find.byKey(const ValueKey('reset-password-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Password updated'), findsOneWidget);
+    expect(
+      find.text(
+        'This password change is not saved until account services are connected. You can return to login.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Back to Login'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-email-field')), findsOneWidget);
   });
 }
 

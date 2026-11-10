@@ -1,8 +1,11 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
+
 import 'clinic_record_access_screen.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,16 +21,16 @@ class OtpVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<OtpVerificationScreen> createState() =>
-      _OtpVerificationScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<TextEditingController> _otpControllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
 
-  final List<FocusNode> _focusNodes =
-      List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
 
@@ -63,22 +66,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       _canResend = false;
     });
 
-    _timer = Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) {
-        if (_remainingSeconds > 0) {
-          setState(() {
-            _remainingSeconds--;
-          });
-        } else {
-          timer.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds--;
+        });
+      } else {
+        timer.cancel();
 
-          setState(() {
-            _canResend = true;
-          });
-        }
-      },
-    );
+        setState(() {
+          _canResend = true;
+        });
+      }
+    });
   }
 
   String get _maskedMobileNumber {
@@ -90,11 +90,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   String get _formattedTime {
-    final minutes =
-        (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
+    final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
 
-    final seconds =
-        (_remainingSeconds % 60).toString().padLeft(2, '0');
+    final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
 
     return '$minutes:$seconds';
   }
@@ -127,7 +125,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('OTP resend is a prototype action.'),
+        content: LocalizedText('OTP resend is a prototype action.'),
       ),
     );
   }
@@ -137,9 +135,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the 6-digit OTP.'),
-        ),
+        const SnackBar(content: LocalizedText('Please enter the 6-digit OTP.')),
       );
       return;
     }
@@ -147,7 +143,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     if (otp != '123456') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Incorrect OTP. Please try again.'),
+          content: LocalizedText('Incorrect OTP. Please try again.'),
         ),
       );
       return;
@@ -159,18 +155,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => ClinicRecordAccessScreen(
-            mobileNumber: widget.mobileNumber,
-          ),
+          builder: (_) =>
+              ClinicRecordAccessScreen(mobileNumber: widget.mobileNumber),
         ),
       );
     } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ClinicRecordAccessScreen(
-            mobileNumber: widget.mobileNumber,
-          ),
+          builder: (context) =>
+              ClinicRecordAccessScreen(mobileNumber: widget.mobileNumber),
         ),
       );
     }
@@ -186,9 +180,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         maxLength: 1,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: const TextStyle(
           color: Colors.black,
           fontSize: 23,
@@ -201,22 +193,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(
-              color: AppColors.divider,
-            ),
+            borderSide: const BorderSide(color: AppColors.divider),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(
-              color: AppColors.divider,
-            ),
+            borderSide: const BorderSide(color: AppColors.divider),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(
-              color: AppColors.burgundy,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
           ),
         ),
         onChanged: (value) => _onOtpChanged(value, index),
@@ -246,7 +231,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 3 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -256,7 +241,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'OTP verification',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -268,11 +253,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -285,10 +268,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               const SizedBox(height: 16),
 
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
+              const Divider(color: AppColors.divider, height: 1),
 
               const SizedBox(height: 16),
 
@@ -296,7 +276,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               const SizedBox(height: 35),
 
-              const Text(
+              const LocalizedText(
                 'OTP VERIFICATION',
                 style: TextStyle(
                   color: AppColors.burgundy,
@@ -308,7 +288,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               const SizedBox(height: 14),
 
-              const Text(
+              const LocalizedText(
                 'Enter the 6-digit code',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -344,10 +324,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  6,
-                  (index) => _buildOtpBox(index),
-                ),
+                children: List.generate(6, (index) => _buildOtpBox(index)),
               ),
 
               const SizedBox(height: 35),
@@ -365,12 +342,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Verify OTP',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -382,7 +356,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          const LocalizedText(
                             'Didn’t receive the code?',
                             style: TextStyle(
                               color: AppColors.secondaryText,
@@ -391,7 +365,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           ),
                           TextButton(
                             onPressed: _resendOtp,
-                            child: const Text(
+                            child: const LocalizedText(
                               'Resend OTP',
                               style: TextStyle(
                                 color: AppColors.burgundy,
@@ -402,7 +376,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           ),
                         ],
                       )
-                    : Text(
+                    : LocalizedText(
                         'Resend OTP in $_formattedTime',
                         style: const TextStyle(
                           color: AppColors.secondaryText,

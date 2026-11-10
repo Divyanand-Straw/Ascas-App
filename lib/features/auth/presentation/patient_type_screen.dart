@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/step_progress_bar.dart';
 import '../../../l10n/app_localizations.dart';
@@ -86,7 +88,7 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 1 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,

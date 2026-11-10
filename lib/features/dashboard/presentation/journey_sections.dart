@@ -449,7 +449,7 @@ class _CycleDetailsScreenState extends State<CycleDetailsScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          Text(
+                          LocalizedText(
                             ' ${_visibleMonth.year}',
                             style: const TextStyle(
                               color: AppColors.burgundy,
@@ -728,7 +728,7 @@ class _DetailedCycleCalendar extends StatelessWidget {
                         )
                       : null,
                 ),
-                child: Text(
+                child: LocalizedText(
                   '${date.day}',
                   style: TextStyle(
                     color: isPeriod || isOvulation || isRecordedPeriod
@@ -912,7 +912,7 @@ class _CycleCalendar extends StatelessWidget {
                     ? Border.all(color: AppColors.dustyPink, width: 2)
                     : null,
               ),
-              child: Text(
+              child: LocalizedText(
                 '$day',
                 style: TextStyle(
                   color: isOvulation || isPeriod

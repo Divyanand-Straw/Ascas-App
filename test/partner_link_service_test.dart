@@ -23,7 +23,7 @@ void main() {
       );
 
   test(
-    'invitation validation, request, approval, sharing, and revocation',
+    'accepting an invitation activates a link, sharing, and revocation',
     () async {
       final invitation = await createInvitation();
       final validated = await service.validateInvitation(
@@ -36,7 +36,16 @@ void main() {
         partnerName: 'Partner One',
         partnerMobile: '9123456780',
       );
-      expect(request.status, PartnerLinkStatus.pending);
+      expect(request.status, PartnerLinkStatus.active);
+      expect(request.patientConsentTimestamp, invitation.createdAt);
+      expect(request.partnerAcceptanceTimestamp, isNotNull);
+      expect(
+        await service.activeLinkForPartner(
+          '9123456780',
+          partnerUserId: request.partnerUserId,
+        ),
+        isNotNull,
+      );
       expect(
         await service.isCategoryAuthorized(
           partnerMobile: '9123456780',
@@ -47,8 +56,6 @@ void main() {
 
       final patientRequests = await service.forPatient('patient-account-1');
       expect(patientRequests.single.partnerName, 'Partner One');
-      final active = await service.approveRequest(request.linkId);
-      expect(active.patientConsentTimestamp, isNotNull);
       expect(
         await service.isCategoryAuthorized(
           partnerMobile: '9123456780',
@@ -149,21 +156,12 @@ void main() {
       ),
       throwsA(isA<StateError>()),
     );
-    expect(request.status, PartnerLinkStatus.pending);
+    expect(request.status, PartnerLinkStatus.active);
   });
 
   test(
-    'patient rejection denies access and duplicate active links are blocked',
+    'active invitation links prevent duplicate active partner links',
     () async {
-      final firstInvitation = await createInvitation();
-      final rejectedRequest = await service.submitRequest(
-        code: firstInvitation.invitationCode,
-        partnerName: 'Partner One',
-        partnerMobile: '9123456780',
-      );
-      await service.rejectRequest(rejectedRequest.linkId);
-      expect(await service.activeLinkForPartner('9123456780'), isNull);
-
       final secondInvitation = await service.generateInvitation(
         patientUserId: 'patient-account-2',
         patientId: 'TS-1002',
@@ -171,12 +169,12 @@ void main() {
         patientMobile: '9876543211',
         patientState: 'iui',
       );
-      final secondRequest = await service.submitRequest(
+      final activeLink = await service.submitRequest(
         code: secondInvitation.invitationCode,
         partnerName: 'Partner One',
         partnerMobile: '9123456780',
       );
-      await service.approveRequest(secondRequest.linkId);
+      expect(activeLink.status, PartnerLinkStatus.active);
 
       final thirdInvitation = await service.generateInvitation(
         patientUserId: 'patient-account-3',

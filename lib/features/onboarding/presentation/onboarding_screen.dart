@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import 'welcome_screen.dart';
@@ -257,7 +259,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           height: 42,
                           child: TextButton(
                             onPressed: _previousPage,
-                            child: const Text(
+                            child: const LocalizedText(
                               'Back',
                               style: TextStyle(
                                 color: AppColors.burgundy,

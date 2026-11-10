@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
 
 import '../../../../core/widgets/step_progress_bar.dart';
@@ -32,7 +35,9 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
 
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid 10-digit mobile number.')),
+        const SnackBar(
+          content: LocalizedText('Enter a valid 10-digit mobile number.'),
+        ),
       );
       return;
     }
@@ -89,7 +94,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 2 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -185,7 +190,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
+                      child: LocalizedText(
                         '+91',
                         style: TextStyle(
                           color: AppColors.primaryText,
@@ -240,7 +245,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                     ),
                     SizedBox(width: 11),
                     Expanded(
-                      child: Text(
+                      child: LocalizedText(
                         'No medical information is shown until identity and record access are verified.',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -258,7 +263,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _continue,
-                  child: const Text('Continue'),
+                  child: const LocalizedText('Continue'),
                 ),
               ),
               const SizedBox(height: 12),

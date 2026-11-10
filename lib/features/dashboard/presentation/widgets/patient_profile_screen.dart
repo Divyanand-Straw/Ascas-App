@@ -319,12 +319,12 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     }
   }
 
-  Widget _sectionTitle(String title) => Padding(
+  Widget _sectionTitle(BuildContext context, String title) => Padding(
     padding: const EdgeInsets.only(top: 22, bottom: 10),
     child: Align(
       alignment: Alignment.centerLeft,
-      child: Text(
-        title.toUpperCase(),
+      child: LocalizedText(
+        localizedText(context, title).toUpperCase(),
         style: const TextStyle(
           color: AppColors.burgundy,
           fontSize: 11,
@@ -359,7 +359,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           ),
           child: Icon(icon, color: AppColors.burgundy, size: 21),
         ),
-        title: Text(
+        title: LocalizedText(
           title,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -371,7 +371,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 3),
-          child: Text(
+          child: LocalizedText(
             subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -480,7 +480,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                               color: AppColors.white.withValues(alpha: .13),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(
+                            child: LocalizedText(
                               '${localizedText(context, 'Patient ID')}: ${widget.patientId}',
                               style: const TextStyle(
                                 color: AppColors.dustyPink,
@@ -503,7 +503,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 ],
               ),
             ),
-            _sectionTitle('Care preferences'),
+            _sectionTitle(context, 'Care preferences'),
             _card([
               _option(
                 icon: Icons.person_outline_rounded,
@@ -527,7 +527,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 onTap: _openPermissions,
               ),
             ]),
-            _sectionTitle('Privacy & security'),
+            _sectionTitle(context, 'Privacy & security'),
             _card([
               SwitchListTile(
                 value: BiometricService.instance.enabled,
@@ -558,7 +558,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                subtitle: Text(
+                subtitle: LocalizedText(
                   BiometricService.instance.enabled ? 'Enabled' : 'Disabled',
                   style: const TextStyle(
                     color: AppColors.secondaryText,
@@ -605,7 +605,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 onTap: _exportData,
               ),
             ]),
-            _sectionTitle('App settings'),
+            _sectionTitle(context, 'App settings'),
             _card([
               _option(
                 icon: Icons.notifications_none_rounded,
@@ -645,7 +645,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 ),
               ),
             ]),
-            _sectionTitle('Account actions'),
+            _sectionTitle(context, 'Account actions'),
             DashboardCard(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Column(
@@ -913,7 +913,7 @@ class _LanguageAccessibilityScreenState
               DropdownMenuItem(value: 'Tamil', child: Text(l10n.tamil)),
             ],
             onChanged: (value) {
-              if (value != null) setState(() => _language = value);
+              if (value != null) _changeLanguage(value);
             },
           ),
           const SizedBox(height: 20),
@@ -935,6 +935,19 @@ class _LanguageAccessibilityScreenState
         ],
       ),
     );
+  }
+
+  Future<void> _changeLanguage(String language) async {
+    setState(() => _language = language);
+    final languageCode = language == 'Tamil' ? 'ta' : 'en';
+    if (widget.accountId.isEmpty) {
+      await LocaleService.setLanguage(languageCode);
+    } else {
+      await LocaleService.setAccountLanguage(
+        accountId: widget.accountId,
+        languageCode: languageCode,
+      );
+    }
   }
 }
 

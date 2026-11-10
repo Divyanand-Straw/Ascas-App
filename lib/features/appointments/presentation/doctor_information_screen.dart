@@ -167,11 +167,11 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
                 ),
                 if (doctor.qualifications?.isNotEmpty == true) ...[
                   const SizedBox(height: 4),
-                  Text('Qualifications: ${doctor.qualifications}'),
+                  LocalizedText('Qualifications: ${doctor.qualifications}'),
                 ],
                 if (doctor.experience?.isNotEmpty == true) ...[
                   const SizedBox(height: 4),
-                  Text('Experience: ${doctor.experience}'),
+                  LocalizedText('Experience: ${doctor.experience}'),
                 ],
                 const SizedBox(height: 4),
                 Text(
