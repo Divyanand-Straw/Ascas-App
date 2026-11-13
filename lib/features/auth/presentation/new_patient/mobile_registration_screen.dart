@@ -260,7 +260,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _continue,
                   child: const LocalizedText('Continue'),

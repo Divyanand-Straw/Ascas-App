@@ -301,7 +301,10 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: _verifyOtp,
-                  child: const LocalizedText('Verify OTP'),
+                  child: const LocalizedText(
+                    'Verify OTP',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],

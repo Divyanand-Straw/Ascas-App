@@ -25,6 +25,7 @@ void main() {
         fullName: 'New Patient',
         dateOfBirth: '02/04/1994',
         preferredLanguage: 'Tamil',
+        gender: 'Female',
       );
       final retry = await service.createOrGetNewPatient(
         mobileNumber: '9876543210',
@@ -40,6 +41,7 @@ void main() {
       expect(retry.patientId, first.patientId);
       expect(retry.fullName, 'New Patient');
       expect(retry.dateOfBirth, '02/04/1994');
+      expect(retry.gender, 'Female');
     },
   );
 
@@ -73,6 +75,7 @@ void main() {
         fullName: 'Existing Test Patient',
         dateOfBirth: '14/08/1992',
         preferredLanguage: 'Tamil',
+        gender: 'Male',
       );
       final verified = await service.resolveExistingPatient(
         mobileNumber: registered.mobileNumber,
@@ -83,6 +86,7 @@ void main() {
       expect(verified.accountId, registered.accountId);
       expect(verified.patientId, registered.patientId);
       expect(verified.fullName, 'Existing Test Patient');
+      expect(verified.gender, 'Male');
       expect(
         (await service.createOrGetNewPatient(
           mobileNumber: registered.mobileNumber,

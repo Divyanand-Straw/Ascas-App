@@ -159,6 +159,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
             dateOfBirth: identity.dateOfBirth,
             mobileNumber: identity.mobileNumber,
             preferredLanguage: identity.preferredLanguage,
+            gender: identity.gender,
             isExistingPatient: true,
             patientId: identity.patientId,
             accountId: identity.accountId,
@@ -330,7 +331,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _verifyClinicAccess,
                     style: ElevatedButton.styleFrom(
@@ -344,7 +345,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
                     child: const LocalizedText(
                       'Continue',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

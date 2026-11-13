@@ -331,7 +331,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _verifyOtp,
                   style: ElevatedButton.styleFrom(
@@ -344,7 +344,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                   child: const LocalizedText(
                     'Verify OTP',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

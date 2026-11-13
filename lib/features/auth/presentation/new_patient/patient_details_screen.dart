@@ -28,6 +28,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _emergencyController = TextEditingController();
 
+  String? _selectedGender;
   String _selectedLanguage = 'English';
 
   @override
@@ -132,6 +133,12 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    if (_selectedGender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your gender.')),
+      );
+      return;
+    }
 
     Navigator.push(
       context,
@@ -141,6 +148,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           dateOfBirth: _dobController.text.trim(),
           mobileNumber: widget.mobileNumber,
           preferredLanguage: _selectedLanguage,
+          gender: _selectedGender!,
         ),
       ),
     );
@@ -266,6 +274,26 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 20),
 
+                _buildLabel('Gender'),
+
+                Container(
+                  height: 54,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(child: _genderOption('Male')),
+                      Expanded(child: _genderOption('Female')),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
                 _buildTextField(
                   label: 'Email',
                   hint: 'Enter your email address',
@@ -383,7 +411,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _reviewProfile,
                     style: ElevatedButton.styleFrom(
@@ -397,7 +425,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     child: const LocalizedText(
                       'Review profile',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -432,6 +460,30 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         ),
         child: Text(
           language,
+          style: TextStyle(
+            color: isSelected ? AppColors.white : AppColors.secondaryText,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _genderOption(String gender) {
+    final isSelected = _selectedGender == gender;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedGender = gender),
+      child: Container(
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.burgundy : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Text(
+          gender,
           style: TextStyle(
             color: isSelected ? AppColors.white : AppColors.secondaryText,
             fontSize: 13,

@@ -10,6 +10,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String preferredLanguage;
+  final String gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -20,6 +21,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     required this.preferredLanguage,
+    this.gender = '',
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -341,7 +343,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
 
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _requiredConsent
                       ? () {
@@ -353,6 +355,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                                 dateOfBirth: widget.dateOfBirth,
                                 mobileNumber: widget.mobileNumber,
                                 preferredLanguage: widget.preferredLanguage,
+                                gender: widget.gender,
                                 isExistingPatient: widget.isExistingPatient,
                                 patientId: widget.patientId,
                                 accountId: widget.accountId,
@@ -374,7 +377,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                   ),
                   child: const LocalizedText(
                     'Accept and continue',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

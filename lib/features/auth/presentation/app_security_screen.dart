@@ -13,6 +13,7 @@ class AppSecurityScreen extends StatefulWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String preferredLanguage;
+  final String gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -23,6 +24,7 @@ class AppSecurityScreen extends StatefulWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     required this.preferredLanguage,
+    this.gender = '',
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -311,7 +313,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
               const SizedBox(height: 35),
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: _isPinValid
                       ? () {
@@ -323,6 +325,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                                 dateOfBirth: widget.dateOfBirth,
                                 mobileNumber: widget.mobileNumber,
                                 preferredLanguage: widget.preferredLanguage,
+                                gender: widget.gender,
                                 isExistingPatient: widget.isExistingPatient,
                                 patientId: widget.patientId,
                                 accountId: widget.accountId,
@@ -343,7 +346,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                   ),
                   child: const LocalizedText(
                     'Complete security setup',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

@@ -232,9 +232,16 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
+                    height: 48,
                     child: OutlinedButton(
                       onPressed: _working ? null : _validateInvitation,
-                      child: const LocalizedText('Validate invitation'),
+                      child: const LocalizedText(
+                        'Validate invitation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                   if (_invitation != null) ...[
@@ -270,9 +277,16 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                           const SizedBox(height: 8),
                           SizedBox(
                             width: double.infinity,
+                            height: 48,
                             child: ElevatedButton(
                               onPressed: _working ? null : _submitRequest,
-                              child: const LocalizedText('Accept invitation'),
+                              child: const LocalizedText(
+                                'Accept invitation',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -293,10 +307,16 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _refresh,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const LocalizedText('Refresh status'),
+          SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _refresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const LocalizedText(
+                'Refresh status',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
           ),
           ...active.map(_linkCard),
           ...pending.map(_linkCard),

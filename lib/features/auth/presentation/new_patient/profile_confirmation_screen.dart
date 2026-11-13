@@ -12,6 +12,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String preferredLanguage;
+  final String gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -22,6 +23,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     required this.preferredLanguage,
+    this.gender = '',
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -260,6 +262,13 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
                     const Divider(color: AppColors.divider, height: 1),
 
+                    _detailRow(
+                      'Gender',
+                      gender.isEmpty ? 'Not provided' : gender,
+                    ),
+
+                    const Divider(color: AppColors.divider, height: 1),
+
                     _detailRow('Language', preferredLanguage),
 
                     const Divider(color: AppColors.divider, height: 1),
@@ -305,7 +314,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -317,6 +326,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 dateOfBirth: dateOfBirth,
                                 mobileNumber: mobileNumber,
                                 preferredLanguage: preferredLanguage,
+                                gender: gender,
                                 isExistingPatient: true,
                                 patientId: patientId,
                                 accountId: accountId,
@@ -326,6 +336,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 dateOfBirth: dateOfBirth,
                                 mobileNumber: mobileNumber,
                                 preferredLanguage: preferredLanguage,
+                                gender: gender,
                               ),
                       ),
                     );
@@ -340,7 +351,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                   ),
                   child: const LocalizedText(
                     'Yes, this is me',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

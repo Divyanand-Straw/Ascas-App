@@ -13,6 +13,7 @@ class AccountIdentity {
   final String dateOfBirth;
   final String patientId;
   final String preferredLanguage;
+  final String gender;
   final AccountRole role;
 
   const AccountIdentity({
@@ -22,6 +23,7 @@ class AccountIdentity {
     required this.dateOfBirth,
     required this.patientId,
     required this.preferredLanguage,
+    this.gender = '',
     required this.role,
   });
 
@@ -32,6 +34,7 @@ class AccountIdentity {
     'date_of_birth': dateOfBirth,
     'patient_id': patientId,
     'preferred_language': preferredLanguage,
+    'gender': gender,
     'role': role.name,
   };
 
@@ -43,6 +46,7 @@ class AccountIdentity {
         dateOfBirth: json['date_of_birth'] as String? ?? '',
         patientId: json['patient_id'] as String? ?? '',
         preferredLanguage: json['preferred_language'] as String? ?? 'English',
+        gender: json['gender'] as String? ?? '',
         role: AccountRole.values.firstWhere(
           (role) => role.name == json['role'],
         ),
@@ -129,6 +133,7 @@ class AccountIdentityService {
     required String fullName,
     required String dateOfBirth,
     required String preferredLanguage,
+    String gender = '',
   }) => _serialize(() async {
     final mobile = _normalizeMobile(mobileNumber);
     if (fullName.trim().isEmpty) {
@@ -152,6 +157,7 @@ class AccountIdentityService {
       dateOfBirth: dateOfBirth,
       patientId: _generatePatientId(accounts),
       preferredLanguage: preferredLanguage,
+      gender: gender,
       role: AccountRole.patient,
     );
     accounts.add(identity);

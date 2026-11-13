@@ -12,6 +12,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String preferredLanguage;
+  final String gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -22,6 +23,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     required this.preferredLanguage,
+    this.gender = '',
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -41,6 +43,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
               fullName: fullName,
               dateOfBirth: dateOfBirth,
               preferredLanguage: preferredLanguage,
+              gender: gender,
             );
       if (accountId.isNotEmpty && identity.accountId != accountId) {
         throw StateError(
@@ -199,7 +202,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
               const SizedBox(height: 35),
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: () => _continue(context),
                   style: ElevatedButton.styleFrom(
@@ -212,7 +215,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                   ),
                   child: const LocalizedText(
                     'Continue to patient dashboard',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
