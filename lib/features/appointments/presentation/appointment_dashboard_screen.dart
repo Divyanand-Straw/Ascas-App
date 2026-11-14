@@ -201,7 +201,7 @@ class AppointmentDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               LocalizedText(
-                'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.',
+                'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyali.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 10,

@@ -104,7 +104,7 @@ class _DoctorInformationScreenState extends State<DoctorInformationScreen> {
           ..._doctors.map(_doctorCard),
           const SizedBox(height: 10),
           LocalizedText(
-            'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyazhi.',
+            'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyali.',
             style: TextStyle(
               color: AppColors.secondaryText,
               fontSize: 10,

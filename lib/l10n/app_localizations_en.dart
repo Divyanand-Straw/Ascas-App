@@ -10,7 +10,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Thaai Seyazhi';
+  String get appTitle => 'Thaai Seyali';
 
   @override
   String get welcome => 'Welcome back';
@@ -75,7 +75,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privateConnectedCare =>
-      'Private, connected care from Thaai Seyazhi Fertility and Women’s Centre.';
+      'Private, connected care from Thaai Seyali Fertility and Women’s Centre.';
 
   @override
   String get createAccount => 'Create Account';
@@ -144,7 +144,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get secureRegistration => 'SECURE REGISTRATION';
 
   @override
-  String get howJoining => 'How are you joining\nThaai Seyazhi?';
+  String get howJoining => 'How are you joining\nThaai Seyali?';
 
   @override
   String get relationshipClinic =>
@@ -155,10 +155,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newPatientDescription =>
-      'Create a new Thaai Seyazhi patient account.';
+      'Create a new Thaai Seyali patient account.';
 
   @override
-  String get existingPatient => 'Existing Thaai Seyazhi Patient';
+  String get existingPatient => 'Existing Thaai Seyali Patient';
 
   @override
   String get existingPatientDescription =>

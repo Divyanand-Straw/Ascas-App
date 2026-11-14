@@ -153,7 +153,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
                 child: Text(
                   isExistingPatient
                       ? 'Your clinic record is linked'
-                      : 'Welcome to Thaai Seyazhi',
+                      : 'Welcome to Thaai Seyali',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.primaryText,

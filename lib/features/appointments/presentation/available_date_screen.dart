@@ -53,7 +53,7 @@ class AvailableDateScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             LocalizedText(
-              'Selected sample date. Actual availability must be confirmed by Thaai Seyazhi.',
+              'Selected sample date. Actual availability must be confirmed by Thaai Seyali.',
               style: TextStyle(
                 color: AppColors.secondaryText,
                 fontSize: 11,

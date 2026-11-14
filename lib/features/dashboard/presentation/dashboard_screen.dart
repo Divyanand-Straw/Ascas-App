@@ -356,7 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 9),
             const Expanded(
               child: LocalizedText(
-                'Thaai Seyazhi',
+                'Thaai Seyali',
                 style: TextStyle(
                   color: AppColors.burgundy,
                   fontSize: 15,

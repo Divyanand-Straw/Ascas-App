@@ -36,7 +36,7 @@ class ClinicLocationScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 13),
                 LocalizedText(
-                  'Thaai Seyazhi Clinic',
+                  'Thaai Seyali Clinic',
                   style: TextStyle(
                     color: AppColors.primaryText,
                     fontSize: 18,

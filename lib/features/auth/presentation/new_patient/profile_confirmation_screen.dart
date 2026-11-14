@@ -238,7 +238,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 5),
                               const LocalizedText(
-                                'New Thaai Seyazhi patient',
+                                'New Thaai Seyali patient',
                                 style: TextStyle(
                                   color: AppColors.secondaryText,
                                   fontSize: 11,
@@ -273,7 +273,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
                     const Divider(color: AppColors.divider, height: 1),
 
-                    _detailRow('Clinic', 'Thaai Seyazhi Clinic'),
+                    _detailRow('Clinic', 'Thaai Seyali Clinic'),
                   ],
                 ),
               ),

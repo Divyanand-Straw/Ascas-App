@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Thaai Seyazhi'**
+  /// **'Thaai Seyali'**
   String get appTitle;
 
   /// No description provided for @welcome.
@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @privateConnectedCare.
   ///
   /// In en, this message translates to:
-  /// **'Private, connected care from Thaai Seyazhi Fertility and Women’s Centre.'**
+  /// **'Private, connected care from Thaai Seyali Fertility and Women’s Centre.'**
   String get privateConnectedCare;
 
   /// No description provided for @createAccount.
@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @howJoining.
   ///
   /// In en, this message translates to:
-  /// **'How are you joining\nThaai Seyazhi?'**
+  /// **'How are you joining\nThaai Seyali?'**
   String get howJoining;
 
   /// No description provided for @relationshipClinic.
@@ -383,13 +383,13 @@ abstract class AppLocalizations {
   /// No description provided for @newPatientDescription.
   ///
   /// In en, this message translates to:
-  /// **'Create a new Thaai Seyazhi patient account.'**
+  /// **'Create a new Thaai Seyali patient account.'**
   String get newPatientDescription;
 
   /// No description provided for @existingPatient.
   ///
   /// In en, this message translates to:
-  /// **'Existing Thaai Seyazhi Patient'**
+  /// **'Existing Thaai Seyali Patient'**
   String get existingPatient;
 
   /// No description provided for @existingPatientDescription.

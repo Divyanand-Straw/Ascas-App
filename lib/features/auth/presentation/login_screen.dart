@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 15),
                         const LocalizedText(
-                          'THAAI SEYAZHI',
+                          'THAAI SEYALI',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 25,
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 2),
                         const LocalizedText(
-                          'தாய் செயழி',
+                          'தாய் செயலி',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,

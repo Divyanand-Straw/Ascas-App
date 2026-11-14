@@ -38,7 +38,7 @@ class Appointment {
     required this.time,
     required this.clinic,
     required this.status,
-    this.doctorName = 'Thaai Seyazhi Clinic',
+    this.doctorName = 'Thaai Seyali Clinic',
     this.specialty = 'Fertility care',
     this.appointmentType = 'Monitoring consultation',
     this.consultationMode = 'In clinic',

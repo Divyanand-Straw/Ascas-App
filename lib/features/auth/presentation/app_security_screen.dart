@@ -210,7 +210,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
               ),
               const SizedBox(height: 10),
               const LocalizedText(
-                'This PIN protects Thaai Seyazhi information on your device.',
+                'This PIN protects Thaai Seyali information on your device.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 13,

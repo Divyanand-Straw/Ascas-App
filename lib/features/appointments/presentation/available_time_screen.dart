@@ -63,7 +63,7 @@ class _AvailableTimeScreenState extends State<AvailableTimeScreen> {
           ),
           const SizedBox(height: 5),
           LocalizedText(
-            'Sample time slots only. Actual availability must be confirmed by Thaai Seyazhi.',
+            'Sample time slots only. Actual availability must be confirmed by Thaai Seyali.',
             style: TextStyle(
               color: AppColors.secondaryText,
               fontSize: 11,

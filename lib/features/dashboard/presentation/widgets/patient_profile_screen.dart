@@ -632,10 +632,10 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               _option(
                 icon: Icons.info_outline_rounded,
                 title: 'App Information',
-                subtitle: 'Thaai Seyazhi app details.',
+                subtitle: 'Thaai Seyali app details.',
                 onTap: () => showAboutDialog(
                   context: context,
-                  applicationName: 'Thaai Seyazhi',
+                  applicationName: 'Thaai Seyali',
                   applicationVersion: '1.0.0',
                   applicationIcon: Image.asset(
                     'assets/images/logo.png',

@@ -94,7 +94,7 @@ class DoctorProfileScreen extends StatelessWidget {
               border: Border.all(color: AppColors.divider),
             ),
             child: LocalizedText(
-              'Consultation information is sample data for this prototype. Live availability will be supplied by Thaai Seyazhi.',
+              'Consultation information is sample data for this prototype. Live availability will be supplied by Thaai Seyali.',
               style: TextStyle(
                 color: AppColors.secondaryText,
                 fontSize: 12,

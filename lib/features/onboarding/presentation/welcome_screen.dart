@@ -52,7 +52,7 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     const LocalizedText(
-                      'THAAI SEYAZHI',
+                      'THAAI SEYALI',
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 24,
@@ -62,7 +62,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 7),
                     const LocalizedText(
-                      'தாய் செயழி',
+                      'தாய் செயலி',
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 14,

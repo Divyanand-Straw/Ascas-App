@@ -285,7 +285,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 12),
 
               const LocalizedText(
-                'Create a strong password for your Thaai Seyazhi account. Make sure it is easy for you to remember.',
+                'Create a strong password for your Thaai Seyali account. Make sure it is easy for you to remember.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.secondaryText,

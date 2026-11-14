@@ -408,11 +408,11 @@ class PatientServicesScreen extends StatelessWidget {
               _tile(
                 context: context,
                 icon: Icons.groups_outlined,
-                title: 'Thaai Seyazhi Circle',
+                title: 'Thaai Seyali Circle',
                 subtitle: 'General community support.',
                 onTap: () => _open(
                   context,
-                  'Thaai Seyazhi Circle',
+                  'Thaai Seyali Circle',
                   'Community services are coming soon and require secure moderation.',
                 ),
               ),
@@ -447,7 +447,7 @@ class PatientServicesScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 22),
             LocalizedText(
-              'Medical information and instructions are provided from authorized Thaai Seyazhi clinic records.',
+              'Medical information and instructions are provided from authorized Thaai Seyali clinic records.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.secondaryText,

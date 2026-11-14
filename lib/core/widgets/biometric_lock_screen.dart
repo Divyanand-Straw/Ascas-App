@@ -45,7 +45,7 @@ class BiometricLockScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 LocalizedText(
-                  'Unlock Thaai Seyazhi to continue.',
+                  'Unlock Thaai Seyali to continue.',
                   style: const TextStyle(
                     color: AppColors.secondaryText,
                     fontSize: 14,
@@ -67,7 +67,7 @@ class BiometricLockScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                if (!service.isAuthenticating)
+                if (service.state == AppLockState.authenticationFailed)
                   const LocalizedText(
                     'Authentication failed or was cancelled. Try again.',
                     style: TextStyle(

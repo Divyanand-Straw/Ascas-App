@@ -238,7 +238,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                           ),
                           SizedBox(height: 6),
                           LocalizedText(
-                            'Allow secure processing needed for Thaai Seyazhi patient services.',
+                            'Allow secure processing needed for Thaai Seyali patient services.',
                             style: TextStyle(
                               color: AppColors.secondaryText,
                               fontSize: 11,

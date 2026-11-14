@@ -48,7 +48,7 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
                 LocalizedText(
-                  'THAAI SEYAZHI',
+                  'THAAI SEYALI',
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.w700,
@@ -58,7 +58,7 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 1),
                 const LocalizedText(
-                  'தாய் செயழி',
+                  'தாய் செயலி',
                   style: TextStyle(fontSize: 18, color: AppColors.white),
                 ),
                 const SizedBox(height: 8),

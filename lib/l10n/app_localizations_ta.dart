@@ -10,7 +10,7 @@ class AppLocalizationsTa extends AppLocalizations {
   AppLocalizationsTa([String locale = 'ta']) : super(locale);
 
   @override
-  String get appTitle => 'தாய் செயாழி';
+  String get appTitle => 'தாய் செயலி';
 
   @override
   String get welcome => 'மீண்டும் வரவேற்கிறோம்';
@@ -76,7 +76,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get privateConnectedCare =>
-      'தாய் செயழி கருத்தரிப்பு மற்றும் மகளிர் மையத்தின் தனிப்பட்ட, இணைந்த பராமரிப்பு.';
+      'தாய் செயலி கருத்தரிப்பு மற்றும் மகளிர் மையத்தின் தனிப்பட்ட, இணைந்த பராமரிப்பு.';
 
   @override
   String get createAccount => 'கணக்கை உருவாக்கவும்';
@@ -146,7 +146,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get secureRegistration => 'பாதுகாப்பான பதிவு';
 
   @override
-  String get howJoining => 'நீங்கள் தாய் செயழியில்\nஎவ்வாறு இணைகிறீர்கள்?';
+  String get howJoining => 'நீங்கள் தாய் செயலியில்\nஎவ்வாறு இணைகிறீர்கள்?';
 
   @override
   String get relationshipClinic =>
@@ -157,10 +157,10 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get newPatientDescription =>
-      'புதிய தாய் செயழி நோயாளர் கணக்கை உருவாக்கவும்.';
+      'புதிய தாய் செயலி நோயாளர் கணக்கை உருவாக்கவும்.';
 
   @override
-  String get existingPatient => 'ஏற்கனவே உள்ள தாய் செயழி நோயாளர்';
+  String get existingPatient => 'ஏற்கனவே உள்ள தாய் செயலி நோயாளர்';
 
   @override
   String get existingPatientDescription =>

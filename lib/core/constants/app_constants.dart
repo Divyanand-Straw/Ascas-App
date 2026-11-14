@@ -2,8 +2,8 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Thaai Seyazhi';
-  static const String clinicName = 'Thaai Seyazhi Fertility and Women\'s Centre';
+  static const String appName = 'Thaai Seyali';
+  static const String clinicName = 'Thaai Seyali Fertility and Women\'s Centre';
   static const String appTagline = 'Your journey, supported with care';
 
   static const String defaultCountryCode = '+91';

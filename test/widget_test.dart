@@ -114,10 +114,10 @@ void main() {
     );
   });
 
-  testWidgets('Thaai Seyazhi app loads', (WidgetTester tester) async {
+  testWidgets('Thaai Seyali app loads', (WidgetTester tester) async {
     await tester.pumpWidget(const ThaaiSeyazhiApp());
 
-    expect(find.text('THAAI SEYAZHI'), findsOneWidget);
+    expect(find.text('THAAI SEYALI'), findsOneWidget);
   });
 
   testWidgets('medication screen does not invent a prescription or dose', (

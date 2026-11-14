@@ -20,11 +20,11 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
   static const _options = [
     (
       title: 'New Patient',
-      description: 'Create a new Thaai Seyazhi patient account.',
+      description: 'Create a new Thaai Seyali patient account.',
       icon: Icons.person_outline,
     ),
     (
-      title: 'Existing Thaai Seyazhi Patient',
+      title: 'Existing Thaai Seyali Patient',
       description: 'Securely link an existing clinic record.',
       icon: Icons.verified_user_outlined,
     ),
