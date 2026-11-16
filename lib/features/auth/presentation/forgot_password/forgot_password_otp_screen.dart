@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 
-import 'package:flutter/services.dart';
-
 import 'reset_password_screen.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/otp_input.dart';
 
 class ForgotPasswordOtpScreen extends StatefulWidget {
   final String mobileNumber;
@@ -26,42 +25,9 @@ class ForgotPasswordOtpScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
+  final _otpInputKey = GlobalKey<OtpInputState>();
 
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
-
-  String get _enteredOtp =>
-      _controllers.map((controller) => controller.text).join();
-
-  @override
-  void dispose() {
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-
-    for (final node in _focusNodes) {
-      node.dispose();
-    }
-
-    super.dispose();
-  }
-
-  void _onOtpChanged(String value, int index) {
-    if (value.isNotEmpty) {
-      if (index < 5) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-      }
-    } else if (index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-
-    setState(() {});
-  }
+  String get _enteredOtp => _otpInputKey.currentState?.value ?? '';
 
   void _verifyOtp() {
     if (_enteredOtp.length != 6) {
@@ -89,39 +55,22 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     );
   }
 
-  Widget _buildOtpField(int index) {
-    return SizedBox(
-      width: 46,
-      height: 55,
-      child: TextField(
-        key: ValueKey('forgot-password-otp-$index'),
-        controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(
-          fontSize: 21,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-        onChanged: (value) => _onOtpChanged(value, index),
-        decoration: InputDecoration(
-          counterText: '',
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.divider),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
-          ),
-        ),
+  Widget _buildOtpInput() {
+    return OtpInput(
+      key: _otpInputKey,
+      fieldKeyPrefix: 'forgot-password-otp',
+      boxWidth: 46,
+      boxHeight: 55,
+      textStyle: const TextStyle(
+        fontSize: 21,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
       ),
+      fillColor: Colors.white,
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
+      borderColor: AppColors.divider,
+      focusedBorderColor: AppColors.burgundy,
+      contentPadding: const EdgeInsets.symmetric(vertical: 14),
     );
   }
 
@@ -219,7 +168,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _buildOtpField(index)),
+                children: [_buildOtpInput()],
               ),
 
               const SizedBox(height: 35),

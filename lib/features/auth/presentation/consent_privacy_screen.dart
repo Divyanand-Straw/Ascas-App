@@ -198,57 +198,69 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
 
               const SizedBox(height: 28),
 
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(17),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: AppColors.divider),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _requiredConsent,
-                      onChanged: (value) {
-                        setState(() {
-                          _requiredConsent = value ?? false;
-                        });
-                      },
-                      activeColor: AppColors.burgundy,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onTap: () {
+                    setState(() {
+                      _requiredConsent = !_requiredConsent;
+                    });
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(17),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: AppColors.divider),
                     ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          LocalizedText(
-                            'Required terms and privacy consent',
-                            style: TextStyle(
-                              color: AppColors.primaryText,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _requiredConsent,
+                          onChanged: (value) {
+                            setState(() {
+                              _requiredConsent = value ?? false;
+                            });
+                          },
+                          activeColor: AppColors.burgundy,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          SizedBox(height: 6),
-                          LocalizedText(
-                            'Allow secure processing needed for Thaai Seyali patient services.',
-                            style: TextStyle(
-                              color: AppColors.secondaryText,
-                              fontSize: 11,
-                              height: 1.5,
-                            ),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              LocalizedText(
+                                'Required terms and privacy consent',
+                                style: TextStyle(
+                                  color: AppColors.primaryText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              LocalizedText(
+                                'Allow secure processing needed for Thaai Seyali patient services.',
+                                style: TextStyle(
+                                  color: AppColors.secondaryText,
+                                  fontSize: 11,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
 

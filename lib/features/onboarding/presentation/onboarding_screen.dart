@@ -146,8 +146,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   child: Center(
                                     child: Transform.translate(
                                       offset: Offset(
-                                        index == 2 ? -12.0 : 0.0,
-                                        index == 2 ? 12.0 : 0.0,
+                                        index == 2 ? -6.0 : 0.0,
+                                        0,
                                       ),
                                       child: Image.asset(
                                         _illustrations[index],

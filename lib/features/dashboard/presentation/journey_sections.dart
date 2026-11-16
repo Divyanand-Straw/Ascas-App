@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../appointments/presentation/appointment_detail_screen.dart';
+import '../../appointments/presentation/data/appointment_data.dart';
 import '../../../features/medication/presentation/demo_reminder_card.dart';
 import '../data/treatment_journey_data.dart';
 import 'widgets/dashboard_card.dart';
@@ -953,7 +955,7 @@ class _DayLabel extends StatelessWidget {
   );
 }
 
-class TreatmentTimelineScreen extends StatelessWidget {
+class TreatmentTimelineScreen extends StatefulWidget {
   final String title;
   final List<String> stages;
   final TreatmentPathway pathway;
@@ -966,79 +968,94 @@ class TreatmentTimelineScreen extends StatelessWidget {
   });
 
   @override
+  State<TreatmentTimelineScreen> createState() =>
+      _TreatmentTimelineScreenState();
+}
+
+class _TreatmentTimelineScreenState extends State<TreatmentTimelineScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final milestones = pathway.milestones;
+    final milestones = widget.pathway.applicableMilestones;
+    final isIvf = widget.title == 'IVF Timeline';
+    final isIui = widget.title == 'IUI Timeline';
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: LocalizedText(title),
+        title: LocalizedText(widget.title),
       ),
       body: ListView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(18),
         children: [
-          DashboardCard(
-            color: AppColors.burgundy,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LocalizedText(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const LocalizedText(
-                  'A general milestone guide. Your care team determines your applicable stages, dates and instructions.',
-                  style: TextStyle(
-                    color: AppColors.dustyPink,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
+          _TimelineSummary(
+            pathway: widget.pathway,
+            treatmentLabel: isIvf ? 'IVF' : 'IUI',
           ),
           const SizedBox(height: 14),
-          DashboardCard(
-            child: Column(
-              children: [
-                if (milestones.isNotEmpty)
-                  ...milestones.map(
-                    (milestone) => _MilestoneRow(
-                      name: milestone.name,
-                      status: switch (milestone.status) {
-                        TreatmentMilestoneStatus.completed => 'Completed',
-                        TreatmentMilestoneStatus.current => 'Current',
-                        TreatmentMilestoneStatus.upcoming => 'Upcoming',
-                        TreatmentMilestoneStatus.awaitingUpdate =>
-                          'Awaiting clinic update',
-                      },
-                      date:
-                          milestone.completionDate ??
-                          milestone.scheduledDate ??
-                          milestone.startDate,
-                      details: [
-                        milestone.description,
-                        if (milestone.instructions?.isNotEmpty == true)
-                          milestone.instructions!,
-                      ].where((value) => value.isNotEmpty).join('\n'),
-                    ),
-                  )
-                else
-                  ...stages.map(
-                    (stage) => _MilestoneRow(
-                      name: stage,
-                      status: 'Awaiting clinic update',
-                      details: 'Guide only. This stage is not confirmed as part of your personal treatment plan.',
-                    ),
+          if (isIvf || isIui)
+            _TreatmentTimeline(
+              milestones: milestones,
+              treatmentLabel: isIvf ? 'IVF' : 'IUI',
+              onTap: (index) => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TreatmentMilestoneDetailsScreen(
+                    pathway: widget.pathway,
+                    milestoneIndex: index,
+                    treatmentLabel: isIvf ? 'IVF' : 'IUI',
                   ),
-              ],
+                ),
+              ),
+            )
+          else
+            DashboardCard(
+              child: Column(
+                children: [
+                  if (milestones.isNotEmpty)
+                    ...milestones.map(
+                      (milestone) => _MilestoneRow(
+                        name: milestone.name,
+                        status: _statusLabel(milestone.status),
+                        date: milestone.displayDate,
+                        details: [
+                          milestone.description,
+                          if (milestone.instructions?.isNotEmpty == true)
+                            milestone.instructions!,
+                        ].where((value) => value.isNotEmpty).join('\n'),
+                      ),
+                    )
+                  else
+                    ...widget.stages.map(
+                      (stage) => _MilestoneRow(
+                        name: stage,
+                        status: 'Awaiting clinic update',
+                        details: 'Guide only. This stage is not confirmed as part of your personal treatment plan.',
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
+          if (widget.pathway.isDevelopmentSample)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: LocalizedText(
+                'Guide only. This stage is not confirmed as part of your personal treatment plan.',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           const LocalizedText(
             'No milestone is marked complete unless your clinic provides that status.',
@@ -1052,6 +1069,523 @@ class TreatmentTimelineScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+String _statusLabel(TreatmentMilestoneStatus status) => switch (status) {
+  TreatmentMilestoneStatus.completed => 'Completed',
+  TreatmentMilestoneStatus.current => 'In progress',
+  TreatmentMilestoneStatus.upcoming => 'Upcoming',
+  TreatmentMilestoneStatus.rescheduled => 'Rescheduled',
+  TreatmentMilestoneStatus.cancelled => 'Cancelled',
+  TreatmentMilestoneStatus.awaitingUpdate => 'Awaiting clinic update',
+};
+
+class _TimelineSummary extends StatelessWidget {
+  final TreatmentPathway pathway;
+  final String treatmentLabel;
+
+  const _TimelineSummary({required this.pathway, required this.treatmentLabel});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = pathway.applicableMilestones.length;
+    final progress = total == 0 ? 0.0 : pathway.completedCount / total;
+    return DashboardCard(
+      color: AppColors.burgundy,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LocalizedText(
+            '$treatmentLabel Timeline',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          LocalizedText(
+            treatmentLabel == 'IVF'
+                ? 'Your IVF Treatment Journey'
+                : 'Your IUI Treatment Journey',
+            style: TextStyle(color: AppColors.dustyPink, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: AppColors.white.withValues(alpha: .18),
+              valueColor: const AlwaysStoppedAnimation(AppColors.dustyPink),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${pathway.completedCount} of $total applicable milestones completed',
+            style: const TextStyle(color: AppColors.white, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          _summaryRow(
+            'Current stage',
+            pathway.currentMilestone?.name ?? pathway.currentStage,
+          ),
+          _summaryRow(
+            'Next stage',
+            pathway.nextMilestone?.name ?? 'Not available',
+          ),
+          if (pathway.isDevelopmentSample) ...[
+            const SizedBox(height: 12),
+            const LocalizedText(
+              'Development-only sample: clinic timeline data has not been connected.',
+              style: TextStyle(
+                color: AppColors.dustyPink,
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value) => Padding(
+    padding: const EdgeInsets.only(top: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 92,
+          child: LocalizedText(
+            label,
+            style: const TextStyle(color: AppColors.dustyPink, fontSize: 12),
+          ),
+        ),
+        Expanded(
+          child: LocalizedText(
+            value,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _TreatmentTimeline extends StatelessWidget {
+  final List<TreatmentMilestone> milestones;
+  final String treatmentLabel;
+  final ValueChanged<int> onTap;
+
+  const _TreatmentTimeline({
+    required this.milestones,
+    required this.treatmentLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => DashboardCard(
+    child: Column(
+      children: [
+        for (var index = 0; index < milestones.length; index++)
+          _TreatmentMilestoneTile(
+            milestone: milestones[index],
+            treatmentLabel: treatmentLabel,
+            isLast: index == milestones.length - 1,
+            onTap: () => onTap(index),
+          ),
+        if (treatmentLabel == 'IUI')
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: LocalizedText(
+              'Guide only. This stage is not confirmed as part of your personal treatment plan.',
+              style: TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+class _TreatmentMilestoneTile extends StatelessWidget {
+  final TreatmentMilestone milestone;
+  final String treatmentLabel;
+  final bool isLast;
+  final VoidCallback onTap;
+
+  const _TreatmentMilestoneTile({
+    required this.milestone,
+    required this.treatmentLabel,
+    required this.isLast,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCurrent = milestone.status == TreatmentMilestoneStatus.current;
+    final color = switch (milestone.status) {
+      TreatmentMilestoneStatus.completed => AppColors.success,
+      TreatmentMilestoneStatus.current => AppColors.burgundy,
+      TreatmentMilestoneStatus.cancelled => AppColors.error,
+      TreatmentMilestoneStatus.rescheduled => AppColors.warning,
+      _ => AppColors.dustyPink,
+    };
+    return ListTile(
+      onTap: onTap,
+      contentPadding: EdgeInsets.zero,
+      title: Semantics(
+        label: '$treatmentLabel treatment stage',
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 34,
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: color,
+                      child: Icon(
+                        milestone.status == TreatmentMilestoneStatus.completed
+                            ? Icons.check
+                            : Icons.circle,
+                        size:
+                            milestone.status ==
+                                TreatmentMilestoneStatus.completed
+                            ? 16
+                            : 9,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    if (!isLast)
+                      SizedBox(
+                        height: 28,
+                        child: Container(width: 2, color: AppColors.divider),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: LocalizedText(
+                              milestone.name,
+                              style: TextStyle(
+                                color: isCurrent
+                                    ? AppColors.burgundy
+                                    : AppColors.primaryText,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.burgundy,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      LocalizedText(
+                        _statusLabel(milestone.status),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (milestone.displayDate != null)
+                        Text(
+                          milestone.displayDate!,
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 12,
+                          ),
+                        ),
+                      const SizedBox(height: 3),
+                      LocalizedText(
+                        milestone.description,
+                        style: const TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 13,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TreatmentMilestoneDetailsScreen extends StatelessWidget {
+  final TreatmentPathway pathway;
+  final int milestoneIndex;
+  final String treatmentLabel;
+
+  const TreatmentMilestoneDetailsScreen({
+    super.key,
+    required this.pathway,
+    required this.milestoneIndex,
+    this.treatmentLabel = 'IVF',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final milestones = pathway.applicableMilestones;
+    final milestone = milestones[milestoneIndex];
+    final appointment = milestone.relatedAppointmentId == null
+        ? null
+        : findAppointmentById(milestone.relatedAppointmentId!);
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        title: LocalizedText('$treatmentLabel Timeline'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+        children: [
+          _DetailHeader(milestone: milestone, treatmentLabel: treatmentLabel),
+          const SizedBox(height: 14),
+          _DetailSection(
+            title: 'About This Stage',
+            child: LocalizedText(milestone.description),
+          ),
+          if (pathway.isDevelopmentSample)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 14),
+              child: LocalizedText(
+                'Guide only. This stage is not confirmed as part of your personal treatment plan.',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          _DetailSection(
+            title: 'What Happens',
+            child: LocalizedText(
+              milestone.whatHappens ??
+                  'Your clinic will provide this information when available.',
+            ),
+          ),
+          _DetailSection(
+            title: 'Treatment Information',
+            child: LocalizedText(
+              milestone.treatmentInformation ?? 'No medication, procedure, date or result has been provided by the clinic.',
+            ),
+          ),
+          _DetailSection(
+            title: 'Appointments & Reports',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const LocalizedText(
+                  'Linked appointments, prescriptions, laboratory updates and medical documents will appear here when available.',
+                ),
+                if (appointment != null)
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            AppointmentDetailsScreen(appointment: appointment),
+                      ),
+                    ),
+                    icon: const Icon(Icons.event_outlined),
+                    label: const LocalizedText('Open appointment'),
+                  ),
+                if (milestone.relatedHealthRecords.isNotEmpty)
+                  ...milestone.relatedHealthRecords.map(
+                    (record) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.description_outlined,
+                        color: AppColors.burgundy,
+                      ),
+                      title: LocalizedText(record.documentName),
+                      subtitle: Text(
+                        '${record.documentType} · ${record.uploadDate}',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          _DetailSection(
+            title: 'Clinic Instructions',
+            child: LocalizedText(
+              milestone.instructions ??
+                  'No clinic instructions have been provided for this stage.',
+            ),
+          ),
+          if (milestone.lastUpdated != null)
+            Text(
+              'Last updated ${milestone.lastUpdated}',
+              style: const TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+              ),
+            ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              if (milestoneIndex > 0)
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _replaceWith(context, milestoneIndex - 1),
+                    child: const LocalizedText('Previous Stage'),
+                  ),
+                ),
+              if (milestoneIndex > 0 && milestoneIndex < milestones.length - 1)
+                const SizedBox(width: 10),
+              if (milestoneIndex < milestones.length - 1)
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _replaceWith(context, milestoneIndex + 1),
+                    child: const LocalizedText('Next Stage'),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const LocalizedText('Back to Timeline'),
+          ),
+          if (pathway.isDevelopmentSample)
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const LocalizedText('Close'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _replaceWith(BuildContext context, int index) =>
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TreatmentMilestoneDetailsScreen(
+            pathway: pathway,
+            milestoneIndex: index,
+            treatmentLabel: treatmentLabel,
+          ),
+        ),
+      );
+}
+
+class _DetailHeader extends StatelessWidget {
+  final TreatmentMilestone milestone;
+  final String treatmentLabel;
+
+  const _DetailHeader({required this.milestone, required this.treatmentLabel});
+
+  @override
+  Widget build(BuildContext context) => DashboardCard(
+    color: AppColors.burgundy,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LocalizedText(
+          '$treatmentLabel TREATMENT',
+          style: TextStyle(
+            color: AppColors.dustyPink,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        LocalizedText(
+          milestone.name,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _statusLabel(milestone.status),
+          style: const TextStyle(
+            color: AppColors.dustyPink,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (milestone.displayDate != null)
+          Text(
+            milestone.displayDate!,
+            style: const TextStyle(color: AppColors.white, fontSize: 13),
+          ),
+      ],
+    ),
+  );
+}
+
+class _DetailSection extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _DetailSection({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: DashboardCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LocalizedText(
+            title,
+            style: const TextStyle(
+              color: AppColors.burgundy,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          DefaultTextStyle(
+            style: const TextStyle(
+              color: AppColors.primaryText,
+              fontSize: 14,
+              height: 1.45,
+            ),
+            child: child,
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _MilestoneRow extends StatelessWidget {

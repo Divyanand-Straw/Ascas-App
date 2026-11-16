@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 
-import 'package:flutter/services.dart';
-
 import 'clinic_record_access_screen.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/widgets/otp_input.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -25,12 +24,7 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<TextEditingController> _otpControllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
-
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final _otpInputKey = GlobalKey<OtpInputState>();
 
   Timer? _timer;
 
@@ -46,14 +40,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-
-    for (final controller in _otpControllers) {
-      controller.dispose();
-    }
-
-    for (final node in _focusNodes) {
-      node.dispose();
-    }
 
     super.dispose();
   }
@@ -97,30 +83,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     return '$minutes:$seconds';
   }
 
-  String get _enteredOtp {
-    return _otpControllers.map((controller) => controller.text).join();
-  }
-
-  void _onOtpChanged(String value, int index) {
-    if (value.isNotEmpty && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    }
-
-    if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-
-    setState(() {});
-  }
+  String get _enteredOtp => _otpInputKey.currentState?.value ?? '';
 
   void _resendOtp() {
     if (!_canResend) return;
 
-    for (final controller in _otpControllers) {
-      controller.clear();
-    }
-
-    _focusNodes[0].requestFocus();
+    _otpInputKey.currentState?.clear();
     _startCountdown();
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -170,42 +138,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  Widget _buildOtpBox(int index) {
-    return SizedBox(
-      width: 48,
-      height: 60,
-      child: TextField(
-        controller: _otpControllers[index],
-        focusNode: _focusNodes[index],
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 23,
-          fontWeight: FontWeight.normal,
-        ),
-        decoration: InputDecoration(
-          counterText: '',
-          filled: true,
-          fillColor: AppColors.white,
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: AppColors.divider),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: AppColors.divider),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
-          ),
-        ),
-        onChanged: (value) => _onOtpChanged(value, index),
+  Widget _buildOtpInput() {
+    return OtpInput(
+      key: _otpInputKey,
+      boxWidth: 50,
+      boxHeight: 64,
+      textStyle: const TextStyle(
+        color: Colors.black,
+        fontSize: 23,
+        fontWeight: FontWeight.normal,
       ),
+      fillColor: AppColors.white,
+      borderRadius: const BorderRadius.all(Radius.circular(11)),
+      borderColor: AppColors.divider,
+      focusedBorderColor: AppColors.burgundy,
     );
   }
 
@@ -324,7 +270,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(6, (index) => _buildOtpBox(index)),
+                children: [_buildOtpInput()],
               ),
 
               const SizedBox(height: 35),

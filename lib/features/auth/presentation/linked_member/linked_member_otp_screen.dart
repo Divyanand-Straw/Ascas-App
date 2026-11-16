@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 
-import 'package:flutter/services.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/widgets/otp_input.dart';
 import 'linked_member_access_screen.dart';
 
 class LinkedMemberOtpScreen extends StatefulWidget {
@@ -20,12 +19,7 @@ class LinkedMemberOtpScreen extends StatefulWidget {
 }
 
 class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
-
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final _otpInputKey = GlobalKey<OtpInputState>();
 
   Timer? _timer;
   int _remainingSeconds = 42;
@@ -54,25 +48,12 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
     });
   }
 
-  String get _enteredOtp =>
-      _controllers.map((controller) => controller.text).join();
+  String get _enteredOtp => _otpInputKey.currentState?.value ?? '';
 
   String get _maskedMobile {
     final mobile = widget.mobileNumber;
     if (mobile.length < 4) return mobile;
     return '${mobile.substring(0, 2)}XXXXXX${mobile.substring(mobile.length - 2)}';
-  }
-
-  void _onOtpChanged(String value, int index) {
-    setState(() {
-      _errorMessage = null;
-    });
-
-    if (value.isNotEmpty && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
   }
 
   void _verifyOtp() {
@@ -102,12 +83,8 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
   void _resendOtp() {
     if (_remainingSeconds > 0) return;
 
-    for (final controller in _controllers) {
-      controller.clear();
-    }
-
+    _otpInputKey.currentState?.clear();
     _startTimer();
-    _focusNodes[0].requestFocus();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -119,14 +96,6 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-
-    for (final node in _focusNodes) {
-      node.dispose();
-    }
 
     super.dispose();
   }
@@ -218,48 +187,25 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              Row(
+              OtpInput(
+                key: _otpInputKey,
+                boxWidth: 50,
+                boxHeight: 64,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  6,
-                  (index) => SizedBox(
-                    width: 43,
-                    height: 52,
-                    child: TextField(
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      maxLength: 1,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: AppColors.white,
-                        contentPadding: EdgeInsets.zero,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppColors.divider,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppColors.burgundy,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      onChanged: (value) => _onOtpChanged(value, index),
-                    ),
-                  ),
+                textStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
+                fillColor: AppColors.white,
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                borderColor: AppColors.divider,
+                focusedBorderColor: AppColors.burgundy,
+                onChanged: (_) {
+                  if (_errorMessage != null) {
+                    setState(() => _errorMessage = null);
+                  }
+                },
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 12),

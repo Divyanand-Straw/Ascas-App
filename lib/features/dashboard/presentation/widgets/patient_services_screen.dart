@@ -7,6 +7,7 @@ import '../../../../core/localization/localized_text.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/copyable_patient_id.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
 import '../../../medication/presentation/medication_screen.dart';
@@ -241,9 +242,13 @@ class PatientServicesScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         if (patientId.isNotEmpty)
-                          LocalizedText(
-                            '${localizedText(context, 'Patient ID')}: $patientId',
-                            style: const TextStyle(
+                          CopyablePatientId(
+                            patientId: patientId,
+                            labelStyle: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 10,
+                            ),
+                            textStyle: const TextStyle(
                               color: AppColors.secondaryText,
                               fontSize: 10,
                             ),

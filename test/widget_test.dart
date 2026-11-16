@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:app/app/app.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/services/notification_service.dart';
 import 'package:app/core/widgets/date_of_birth_picker.dart';
+import 'package:app/core/widgets/copyable_patient_id.dart';
 import 'package:app/features/auth/presentation/new_patient/patient_details_screen.dart'
     as new_patient;
 import 'package:app/features/appointments/presentation/appointment_dashboard_screen.dart';
@@ -29,6 +31,26 @@ Future<void> _pumpRouteTransition(WidgetTester tester) =>
     tester.pump(const Duration(seconds: 1));
 
 void main() {
+  testWidgets('patient ID copies only the ID and confirms the action', (
+    WidgetTester tester,
+  ) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => null,
+    );
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: CopyablePatientId(patientId: 'TS-12345')),
+      ),
+    );
+
+    await tester.tap(find.text('TS-12345'));
+    await tester.pump();
+
+    expect(find.text('TS-12345'), findsOneWidget);
+    expect(find.text('Patient ID copied successfully!'), findsOneWidget);
+  });
+
   test(
     'date of birth parsing accepts supported formats and rejects bad dates',
     () {

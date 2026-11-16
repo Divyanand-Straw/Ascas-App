@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 import '../../../../core/widgets/date_of_birth_picker.dart';
+import '../../../../core/widgets/copyable_patient_id.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -471,7 +472,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         ),
                         const SizedBox(height: 7),
                         if (widget.patientId.isNotEmpty)
-                          Container(
+                          CopyablePatientId(
+                            patientId: widget.patientId,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 3,
@@ -480,13 +482,16 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                               color: AppColors.white.withValues(alpha: .13),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: LocalizedText(
-                              '${localizedText(context, 'Patient ID')}: ${widget.patientId}',
-                              style: const TextStyle(
-                                color: AppColors.dustyPink,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            borderRadius: BorderRadius.circular(20),
+                            labelStyle: const TextStyle(
+                              color: AppColors.dustyPink,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textStyle: const TextStyle(
+                              color: AppColors.dustyPink,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         if (_mobile.isNotEmpty) ...[

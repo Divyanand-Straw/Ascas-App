@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/localization/localized_text.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/copyable_patient_id.dart';
 import '../../data/account_identity_service.dart';
 import '../../../dashboard/presentation/dashboard_screen.dart';
 import '../../../partner_access/data/partner_link_service.dart';
@@ -143,13 +144,13 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
           color: AppColors.burgundy,
         ),
         title: LocalizedText('${relationship.patientName} · $status'),
-        subtitle: Text(
-          active
-              ? 'Patient ID: ${relationship.patientId.isEmpty ? 'Not provided' : relationship.patientId}'
-              : relationship.status == PartnerLinkStatus.pending
-              ? 'Awaiting patient approval.'
-              : 'No active patient link.',
-        ),
+        subtitle: active
+            ? relationship.patientId.isEmpty
+                  ? const Text('Patient ID: Not provided')
+                  : CopyablePatientId(patientId: relationship.patientId)
+            : relationship.status == PartnerLinkStatus.pending
+            ? const Text('Awaiting patient approval.')
+            : const Text('No active patient link.'),
         trailing: active
             ? IconButton(
                 tooltip: 'View linked patient',
@@ -266,8 +267,10 @@ class _LinkedMemberAccessScreenState extends State<LinkedMemberAccessScreen> {
                           const SizedBox(height: 7),
                           Text(_invitation!.patientName),
                           if (_invitation!.patientId.isNotEmpty)
-                            LocalizedText(
-                              'Patient ID: ${_invitation!.patientId}',
+                            CopyablePatientId(
+                              patientId: _invitation!.patientId,
+                              textStyle: const TextStyle(fontSize: 14),
+                              labelStyle: const TextStyle(fontSize: 14),
                             ),
                           const SizedBox(height: 8),
                           const LocalizedText(

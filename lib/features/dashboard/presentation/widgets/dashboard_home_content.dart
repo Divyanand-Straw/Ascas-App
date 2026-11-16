@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/copyable_patient_id.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../appointments/presentation/appointment_detail_screen.dart';
 import '../../../appointments/presentation/doctor_information_screen.dart';
@@ -67,6 +68,18 @@ class DashboardHomeContent extends StatelessWidget {
     DashboardPatientState.newPatient => 'Care pathway pending',
   };
 
+  String get _currentStage => switch (patientState) {
+    DashboardPatientState.ivf => 'Ovarian stimulation',
+    DashboardPatientState.icsi => 'Ovarian stimulation',
+    DashboardPatientState.iui => 'Follicular monitoring',
+    DashboardPatientState.fet => 'Cycle preparation',
+    DashboardPatientState.embryoTransfer => 'Embryo transfer',
+    DashboardPatientState.twoWeekWait => 'Two-week wait',
+    DashboardPatientState.postProcedureRecovery => 'Post-procedure recovery',
+    DashboardPatientState.followUpCare => 'Clinic follow-up',
+    DashboardPatientState.newPatient => 'Clinic update pending',
+  };
+
   bool _can(String category) =>
       !isLinkedPartner || partnerPermissions[category] == true;
 
@@ -119,7 +132,11 @@ class DashboardHomeContent extends StatelessWidget {
             onAction: () => onNavigate(1),
           ),
           const SizedBox(height: 12),
-          _TreatmentSnapshot(treatment: _treatment, onTap: () => onNavigate(1)),
+          _TreatmentSnapshot(
+            treatment: _treatment,
+            currentStage: _currentStage,
+            onTap: () => onNavigate(1),
+          ),
         ],
         if (_can('Medication schedules')) ...[
           const SizedBox(height: 22),
@@ -278,9 +295,14 @@ class _WelcomeSection extends StatelessWidget {
                       color: AppColors.white.withValues(alpha: .13),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: LocalizedText(
-                      '${localizedText(context, 'Patient ID')}: $patientId',
-                      style: const TextStyle(
+                    child: CopyablePatientId(
+                      patientId: patientId,
+                      labelStyle: const TextStyle(
+                        color: AppColors.dustyPink,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textStyle: const TextStyle(
                         color: AppColors.dustyPink,
                         fontSize: 8,
                         fontWeight: FontWeight.w600,
@@ -459,9 +481,14 @@ class _AppointmentCard extends StatelessWidget {
 
 class _TreatmentSnapshot extends StatelessWidget {
   final String treatment;
+  final String currentStage;
   final VoidCallback onTap;
 
-  const _TreatmentSnapshot({required this.treatment, required this.onTap});
+  const _TreatmentSnapshot({
+    required this.treatment,
+    required this.currentStage,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) => DashboardCard(
@@ -489,12 +516,20 @@ class _TreatmentSnapshot extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        const LocalizedText(
-          'Your treatment stage will appear when shared by your care team.',
-          style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+        LocalizedText(
+          currentStage,
+          style: const TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 12),
-        const _StatusBadge(label: 'Awaiting clinic update'),
+        _StatusBadge(
+          label: currentStage == 'Clinic update pending'
+              ? 'Awaiting clinic update'
+              : 'Current stage',
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
