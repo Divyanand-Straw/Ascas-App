@@ -124,7 +124,7 @@ class DoctorProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(13),
                 ),
               ),
-              child: LocalizedText('Request appointment'),
+              child: LocalizedText('Book Visit'),
             ),
           ),
         ],

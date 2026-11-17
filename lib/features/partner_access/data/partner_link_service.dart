@@ -13,6 +13,12 @@ enum PartnerLinkStatus {
   expired,
 }
 
+const partnerSharingCategories = [
+  'Medication schedules',
+  'Appointments',
+  'Medical Reports',
+];
+
 class PartnerRelationship {
   final String linkId;
   final String patientUserId;
@@ -345,11 +351,10 @@ class PartnerLinkService {
       );
     }
     final updated = invitation.copyWith(
-      status: PartnerLinkStatus.active,
+      status: PartnerLinkStatus.pending,
       partnerUserId: partnerUserId ?? 'user:$partnerMobile',
       partnerName: partnerName.trim(),
       partnerMobile: partnerMobile,
-      patientConsentTimestamp: invitation.createdAt,
       partnerAcceptanceTimestamp: current,
       updatedAt: current,
     );

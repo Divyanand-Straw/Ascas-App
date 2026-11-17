@@ -105,7 +105,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(26, 12, 26, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,8 +189,8 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
               const SizedBox(height: 30),
               OtpInput(
                 key: _otpInputKey,
-                boxWidth: 50,
-                boxHeight: 64,
+                boxWidth: 54,
+                boxHeight: 68,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 textStyle: const TextStyle(
                   color: Colors.black,
@@ -244,7 +244,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _verifyOtp,
                   child: const LocalizedText(

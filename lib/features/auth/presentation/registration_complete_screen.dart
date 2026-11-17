@@ -4,6 +4,7 @@ import '../../../core/localization/localized_text.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/locale_service.dart';
+import '../../../core/services/biometric_service.dart';
 import '../data/account_identity_service.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
 
@@ -16,6 +17,8 @@ class RegistrationCompleteScreen extends StatelessWidget {
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
+  final String securityPin;
+  final bool biometricEnabled;
 
   const RegistrationCompleteScreen({
     super.key,
@@ -27,6 +30,8 @@ class RegistrationCompleteScreen extends StatelessWidget {
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
+    this.securityPin = '',
+    this.biometricEnabled = false,
   });
 
   Future<void> _continue(BuildContext context) async {
@@ -48,6 +53,16 @@ class RegistrationCompleteScreen extends StatelessWidget {
       if (accountId.isNotEmpty && identity.accountId != accountId) {
         throw StateError(
           'The verified account changed during registration. Please sign in again.',
+        );
+      }
+      if (securityPin.isNotEmpty) {
+        await BiometricService.instance.setPin(
+          accountId: identity.accountId,
+          pin: securityPin,
+        );
+        await BiometricService.instance.setBiometricPreference(
+          accountId: identity.accountId,
+          enabled: biometricEnabled,
         );
       }
       final language =

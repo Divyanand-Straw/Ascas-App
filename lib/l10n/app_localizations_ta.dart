@@ -272,4 +272,153 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get enterRegisteredEmail =>
       'பதிவு செய்த மின்னஞ்சல் முகவரியை உள்ளிடவும்';
+
+  @override
+  String get partnerAccess => 'இணைக்கப்பட்டவர் அணுகல்';
+
+  @override
+  String get connectedPartner => 'இணைக்கப்பட்டவர்';
+
+  @override
+  String get partnerDetails => 'இணைக்கப்பட்டவர் விவரங்கள்';
+
+  @override
+  String get sharingSettings => 'பகிர்வு அமைப்புகள்';
+
+  @override
+  String get shareMedicationSchedule => 'மருந்து அட்டவணையைப் பகிரவும்';
+
+  @override
+  String get shareAppointments => 'சந்திப்பு விவரங்களைப் பகிரவும்';
+
+  @override
+  String get shareMedicalReports => 'மருத்துவ அறிக்கைகளைப் பகிரவும்';
+
+  @override
+  String get generateInvitation => 'அழைப்பை உருவாக்கவும்';
+
+  @override
+  String get invitationCodeCopied => 'அழைப்புக் குறியீடு நகலெடுக்கப்பட்டது.';
+
+  @override
+  String get securityPin => 'பாதுகாப்பு PIN';
+
+  @override
+  String get enableAppLock => 'செயலி பூட்டை இயக்கவும்';
+
+  @override
+  String get changeSecurityPin => 'பாதுகாப்பு PIN-ஐ மாற்றவும்';
+
+  @override
+  String get resetSecurityPin => 'பாதுகாப்பு PIN-ஐ மீட்டமைக்கவும்';
+
+  @override
+  String get timelineInitialConsultationAssessment =>
+      'முதற்கட்ட ஆலோசனை மற்றும் மதிப்பீடு';
+
+  @override
+  String get timelineBaselineScanBloodTests =>
+      'அடிப்படை ஸ்கேன் மற்றும் இரத்தப் பரிசோதனைகள்';
+
+  @override
+  String get timelineCyclePreparationSuppression =>
+      'சுழற்சி தயாரிப்பு / ஒடுக்குதல்';
+
+  @override
+  String get timelineSpermCollectionPreparation =>
+      'விந்தணு சேகரிப்பு மற்றும் தயாரிப்பு';
+
+  @override
+  String get timelineEmbryoAssessmentSelection =>
+      'கரு மதிப்பீடு மற்றும் தேர்வு';
+
+  @override
+  String get timelineLutealSupport =>
+      'பரிந்துரைக்கப்பட்டால் லூட்டியல் கட்ட ஆதரவு';
+
+  @override
+  String get timelinePregnancyConfirmationScan =>
+      'கர்ப்பம் உறுதியானால் உறுதிப்படுத்தும் ஸ்கேன்';
+
+  @override
+  String get timelineIuiInitialConsultation => 'IUI முதற்கட்ட ஆலோசனை';
+
+  @override
+  String get timelinePreTreatmentFertilityTests =>
+      'சிகிச்சைக்கு முந்தைய கருவுறுதல் பரிசோதனைகள்';
+
+  @override
+  String get timelineMenstrualCycleDayOne => 'மாதவிடாய் சுழற்சி – நாள் 1';
+
+  @override
+  String get timelineOvulationInduction =>
+      'தேவைப்பட்டால் அண்டவிடுப்பு தூண்டுதல்';
+
+  @override
+  String get timelineOvulationDetectionTrigger =>
+      'அண்டவிடுப்பு கண்டறிதல் / தூண்டல் ஊசி';
+
+  @override
+  String get timelineIuiInsemination => 'விந்தணு செலுத்துதல் (IUI செயல்முறை)';
+
+  @override
+  String get timelineTwoWeekWait => 'இரண்டு வாரக் காத்திருப்பு';
+
+  @override
+  String get timelinePregnancyFollowUp =>
+      'கர்ப்பம் உறுதியானால் தொடர் பராமரிப்பு';
+
+  @override
+  String get timelineCompleted => 'முடிக்கப்பட்டது';
+
+  @override
+  String get timelineInProgress => 'நடைபெற்று வருகிறது';
+
+  @override
+  String get timelineUpcoming => 'வரவிருப்பது';
+
+  @override
+  String get timelineRescheduled => 'மறுஅட்டவணை செய்யப்பட்டது';
+
+  @override
+  String get timelineCancelled => 'ரத்து செய்யப்பட்டது';
+
+  @override
+  String get timelineAwaitingClinicUpdate =>
+      'மருத்துவமைய புதுப்பிப்புக்காக காத்திருக்கிறது';
+
+  @override
+  String get timelineAboutThisStage => 'இந்த நிலையைப் பற்றி';
+
+  @override
+  String get timelineWhatHappens => 'என்ன நடைபெறும்';
+
+  @override
+  String get timelineTreatmentInformation => 'சிகிச்சைத் தகவல்';
+
+  @override
+  String get timelineAppointmentsReports => 'சந்திப்புகள் மற்றும் அறிக்கைகள்';
+
+  @override
+  String get timelineClinicInstructions => 'மருத்துவமைய வழிமுறைகள்';
+
+  @override
+  String get timelineOpenAppointment => 'சந்திப்பைத் திறக்கவும்';
+
+  @override
+  String get timelinePreviousStage => 'முந்தைய நிலை';
+
+  @override
+  String get timelineNextStage => 'அடுத்த நிலை';
+
+  @override
+  String get timelineBackToTimeline => 'காலவரிசைக்குத் திரும்பவும்';
+
+  @override
+  String get timelineGuideOnly =>
+      'வழிகாட்டி மட்டுமே. இந்த நிலை உங்கள் தனிப்பட்ட சிகிச்சைத் திட்டத்தின் பகுதியாக உறுதிப்படுத்தப்படவில்லை.';
+
+  @override
+  String get timelineDevelopmentSample =>
+      'வளர்ச்சி முன்மாதிரி மட்டுமே: மருத்துவமைய காலவரிசைத் தரவு இன்னும் இணைக்கப்படவில்லை.';
 }

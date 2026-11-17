@@ -106,10 +106,17 @@ class _MedicationScreenState extends State<MedicationScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.secondaryText,
+            ),
             child: LocalizedText('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.blushPink,
+              foregroundColor: AppColors.primaryText,
+            ),
             child: LocalizedText('Confirm'),
           ),
         ],
@@ -129,6 +136,9 @@ class _MedicationScreenState extends State<MedicationScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.primaryText,
+        elevation: 0,
         title: LocalizedText(
           widget.isLinkedPartner && !widget.canViewMedicationSchedule
               ? 'Prescriptions'
@@ -173,14 +183,14 @@ class _MedicationScreenState extends State<MedicationScreen> {
               padding: const EdgeInsets.all(18),
               children: [
                 DashboardCard(
-                  color: AppColors.burgundy,
+                  color: AppColors.blushPink,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       LocalizedText(
                         'TODAY\'S MEDICATION SCHEDULE',
                         style: TextStyle(
-                          color: AppColors.dustyPink,
+                          color: AppColors.secondaryText,
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
@@ -194,7 +204,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                                   : 'No active prescriptions'
                             : '${_doses.where((dose) => dose.status == DoseStatus.taken).length} doses completed',
                         style: const TextStyle(
-                          color: AppColors.white,
+                          color: AppColors.primaryText,
                           fontSize: 21,
                           fontWeight: FontWeight.w700,
                         ),
@@ -202,7 +212,10 @@ class _MedicationScreenState extends State<MedicationScreen> {
                       const SizedBox(height: 5),
                       LocalizedText(
                         'Only prescriptions published by your clinic appear here.',
-                        style: TextStyle(color: AppColors.white, fontSize: 11),
+                        style: TextStyle(
+                          color: AppColors.secondaryText,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
@@ -225,7 +238,10 @@ class _MedicationScreenState extends State<MedicationScreen> {
                       onChanged: _doses.isEmpty || widget.isLinkedPartner
                           ? null
                           : _setReminders,
-                      activeThumbColor: AppColors.burgundy,
+                      activeThumbColor: AppColors.dustyPink,
+                      activeTrackColor: AppColors.dustyPink.withValues(
+                        alpha: .45,
+                      ),
                     ),
                   ],
                 ),
@@ -277,6 +293,9 @@ class _MedicationScreenState extends State<MedicationScreen> {
                               builder: (_) => const CommunicationScreen(),
                             ),
                           ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.dustyPink,
+                          ),
                           icon: const Icon(Icons.support_agent_outlined),
                           label: const LocalizedText('Contact care team'),
                         ),
@@ -287,7 +306,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                   const LocalizedText(
                     'TODAY',
                     style: TextStyle(
-                      color: AppColors.burgundy,
+                      color: AppColors.secondaryText,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1,
@@ -368,12 +387,21 @@ class _MedicationScreenState extends State<MedicationScreen> {
                     onPressed: dose.confirmationAllowed
                         ? () => _confirmDose(dose, DoseStatus.skipped)
                         : null,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.secondaryText,
+                    ),
                     child: LocalizedText('Skip'),
                   ),
                   FilledButton(
                     onPressed: dose.confirmationAllowed
                         ? () => _confirmDose(dose, DoseStatus.taken)
                         : null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.blushPink,
+                      foregroundColor: AppColors.primaryText,
+                      disabledBackgroundColor: AppColors.blushPink,
+                      disabledForegroundColor: AppColors.secondaryText,
+                    ),
                     child: LocalizedText('Mark taken'),
                   ),
                 ],

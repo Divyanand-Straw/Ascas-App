@@ -59,8 +59,8 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     return OtpInput(
       key: _otpInputKey,
       fieldKeyPrefix: 'forgot-password-otp',
-      boxWidth: 46,
-      boxHeight: 55,
+      boxWidth: 54,
+      boxHeight: 68,
       textStyle: const TextStyle(
         fontSize: 21,
         fontWeight: FontWeight.bold,
@@ -166,16 +166,13 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
 
               const SizedBox(height: 38),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [_buildOtpInput()],
-              ),
+              _buildOtpInput(),
 
               const SizedBox(height: 35),
 
               SizedBox(
                 width: double.infinity,
-                height: 53,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _verifyOtp,
                   style: ElevatedButton.styleFrom(

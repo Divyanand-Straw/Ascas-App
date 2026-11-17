@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'locale_service.dart';
 import '../../features/appointments/presentation/models/appointment_models.dart';
 import '../../features/medication/data/medication_reminder.dart';
 
@@ -160,11 +161,13 @@ class NotificationService extends ChangeNotifier {
   }
 
   Future<void> showBookingSubmitted(Appointment appointment) async {
+    final isTamil = LocaleService.locale.value.languageCode == 'ta';
     await _show(
       id: _bookingId(appointment),
-      title: 'Appointment Request Submitted',
-      body:
-          'Your appointment request with ${appointment.doctorName} for ${_date(appointment.date)} at ${appointment.time} has been submitted successfully. Awaiting clinic confirmation.',
+      title: 'Demo appointment saved on this device',
+      body: isTamil
+          ? '${appointment.doctorName} உடனான ${_date(appointment.date)} ${appointment.time} நேரத்திற்கான செயல்விளக்க முன்பதிவு இந்தச் சாதனத்தில் சேமிக்கப்பட்டது. இது மருத்துவமையத்திற்கு அனுப்பப்படவில்லை அல்லது உறுதிப்படுத்தப்படவில்லை.'
+          : 'Your demo booking with ${appointment.doctorName} for ${_date(appointment.date)} at ${appointment.time} was saved on this device. It was not sent to or confirmed by the clinic.',
       appointment: appointment,
     );
   }

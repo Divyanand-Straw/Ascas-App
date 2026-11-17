@@ -41,7 +41,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   }
 
   Future<void> _selectDate() async {
-    final selectedDate = await showDateOfBirthPicker(context);
+    final selectedDate = await showDateOfBirthPicker(
+      context,
+      initialDate: parseDateOfBirth(_dobController.text),
+    );
 
     if (selectedDate != null) {
       setState(() {

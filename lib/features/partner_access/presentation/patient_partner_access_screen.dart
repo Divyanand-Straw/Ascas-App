@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/localization/localized_text.dart';
 
@@ -71,7 +73,11 @@ class _PatientPartnerAccessScreenState
   void _showError(Object error) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error.toString().replaceFirst('Bad state: ', ''))),
+      SnackBar(
+        content: LocalizedText(
+          error.toString().replaceFirst('Bad state: ', ''),
+        ),
+      ),
     );
   }
 
@@ -110,21 +116,19 @@ class _PatientPartnerAccessScreenState
   }
 
   Future<void> _editPermissions(PartnerRelationship relationship) async {
-    final result = await Navigator.push<Map<String, bool>>(
+    await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) => PartnerPermissionManagementScreen(
+        builder: (_) => PartnerDetailsSharingScreen(
+          patientName: widget.patientName,
+          partnerName: relationship.partnerName,
           permissions: relationship.permissions,
+          linkId: relationship.linkId,
+          service: _service,
         ),
       ),
     );
-    if (result == null) return;
-    try {
-      await _service.savePermissions(relationship.linkId, result);
-      await _refresh();
-    } catch (error) {
-      _showError(error);
-    }
+    await _refresh();
   }
 
   Future<void> _revoke(PartnerRelationship relationship) async {
@@ -158,7 +162,7 @@ class _PatientPartnerAccessScreenState
 
   Widget _sectionTitle(String title) => Padding(
     padding: const EdgeInsets.only(top: 22, bottom: 10),
-    child: Text(
+    child: LocalizedText(
       title,
       style: const TextStyle(
         color: AppColors.burgundy,
@@ -171,15 +175,20 @@ class _PatientPartnerAccessScreenState
   Widget _relationshipCard(PartnerRelationship relationship) {
     final isPending = relationship.status == PartnerLinkStatus.pending;
     final isActive = relationship.status == PartnerLinkStatus.active;
+    final sharedCategories = relationship.permissions.entries
+        .where((entry) => entry.value)
+        .map((entry) => localizedText(context, entry.key))
+        .toList()
+        .ifEmpty('none');
     final statusLabel = switch (relationship.status) {
-      PartnerLinkStatus.invitation => 'Invitation available',
-      PartnerLinkStatus.pending => 'Request pending',
+      PartnerLinkStatus.invitation => 'Pending',
+      PartnerLinkStatus.pending => 'Pending approval',
       PartnerLinkStatus.rejected => 'Request rejected',
-      PartnerLinkStatus.active => 'Access active',
-      PartnerLinkStatus.revoked => 'Access revoked',
+      PartnerLinkStatus.active => 'Connected',
+      PartnerLinkStatus.revoked => 'Revoked',
       PartnerLinkStatus.expired => 'Invitation expired',
     };
-    return Card(
+    final card = Card(
       color: AppColors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -205,10 +214,10 @@ class _PatientPartnerAccessScreenState
                             : relationship.partnerName,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
-                      Text(
+                      LocalizedText(
                         relationship.partnerMobile.isEmpty
-                            ? statusLabel
-                            : '${relationship.partnerMobile} · $statusLabel',
+                            ? localizedText(context, statusLabel)
+                            : '${relationship.partnerMobile} · ${localizedText(context, statusLabel)}',
                         style: const TextStyle(
                           color: AppColors.secondaryText,
                           fontSize: 12,
@@ -249,7 +258,7 @@ class _PatientPartnerAccessScreenState
             if (isActive) ...[
               const SizedBox(height: 8),
               LocalizedText(
-                'Sharing: ${relationship.permissions.entries.where((entry) => entry.value).map((entry) => entry.key).toList().ifEmpty('none')}',
+                'Sharing: $sharedCategories',
                 style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 11,
@@ -274,6 +283,22 @@ class _PatientPartnerAccessScreenState
         ),
       ),
     );
+    return isActive
+        ? InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ConnectedPartnerScreen(
+                  patientName: widget.patientName,
+                  relationship: relationship,
+                  service: _service,
+                ),
+              ),
+            ),
+            child: card,
+          )
+        : card;
   }
 
   @override
@@ -331,6 +356,44 @@ class _PatientPartnerAccessScreenState
                               letterSpacing: 3,
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () async {
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
+                                  await Clipboard.setData(
+                                    ClipboardData(
+                                      text: _invitation!.invitationCode,
+                                    ),
+                                  );
+                                  if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: LocalizedText(
+                                        'Invitation code copied.',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.copy_rounded),
+                                label: const LocalizedText('Copy'),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: () => SharePlus.instance.share(
+                                  ShareParams(
+                                    text:
+                                        'Use invitation code ${_invitation!.invitationCode} to connect with me in Thaai Seyali.',
+                                  ),
+                                ),
+                                icon: const Icon(Icons.share_rounded),
+                                label: const LocalizedText('Share'),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 6),
                           LocalizedText(
                             'Expires ${_invitation!.invitationExpiry.toLocal()}',
@@ -352,7 +415,7 @@ class _PatientPartnerAccessScreenState
                         ? null
                         : _generateInvitation,
                     icon: const Icon(Icons.key_rounded),
-                    label: Text(
+                    label: LocalizedText(
                       hasActive
                           ? 'An active partner is already linked'
                           : 'Generate invitation',
@@ -388,22 +451,141 @@ class _PatientPartnerAccessScreenState
   }
 }
 
-class PartnerPermissionManagementScreen extends StatefulWidget {
-  final Map<String, bool> permissions;
+class ConnectedPartnerScreen extends StatelessWidget {
+  final String patientName;
+  final PartnerRelationship relationship;
+  final PartnerLinkService service;
 
-  const PartnerPermissionManagementScreen({
+  const ConnectedPartnerScreen({
     super.key,
-    required this.permissions,
+    required this.patientName,
+    required this.relationship,
+    required this.service,
   });
 
   @override
-  State<PartnerPermissionManagementScreen> createState() =>
-      _PartnerPermissionManagementScreenState();
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: AppColors.background,
+      title: const LocalizedText('Connected partner'),
+    ),
+    body: ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        const LocalizedText(
+          'Your partner is connected to your account.',
+          style: TextStyle(color: AppColors.secondaryText, height: 1.4),
+        ),
+        const SizedBox(height: 18),
+        Card(
+          color: AppColors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.divider),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => Navigator.push<void>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PartnerDetailsSharingScreen(
+                  patientName: patientName,
+                  partnerName: relationship.partnerName,
+                  permissions: relationship.permissions,
+                  linkId: relationship.linkId,
+                  service: service,
+                ),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.blushPink,
+                    child: Icon(
+                      Icons.person_outline_rounded,
+                      color: AppColors.burgundy,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          relationship.partnerName,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          relationship.partnerMobile,
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const LocalizedText(
+                          'Connected',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Center(
+          child: LocalizedText(
+            'Tap the profile card to manage sharing.',
+            style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
-class _PartnerPermissionManagementScreenState
-    extends State<PartnerPermissionManagementScreen> {
+class PartnerDetailsSharingScreen extends StatefulWidget {
+  final String patientName;
+  final String partnerName;
+  final Map<String, bool> permissions;
+  final String? linkId;
+  final PartnerLinkService? service;
+
+  const PartnerDetailsSharingScreen({
+    super.key,
+    this.patientName = 'Patient',
+    this.partnerName = 'Partner',
+    required this.permissions,
+    this.linkId,
+    this.service,
+  });
+
+  @override
+  State<PartnerDetailsSharingScreen> createState() =>
+      _PartnerDetailsSharingScreenState();
+}
+
+class _PartnerDetailsSharingScreenState
+    extends State<PartnerDetailsSharingScreen> {
   late final Map<String, bool> _permissions;
+  final _service = PartnerLinkService();
+  final Set<String> _saving = {};
 
   @override
   void initState() {
@@ -411,36 +593,156 @@ class _PartnerPermissionManagementScreenState
     _permissions = defaultPartnerPermissions()..addAll(widget.permissions);
   }
 
+  Future<void> _changePermission(String category, bool value) async {
+    final previous = _permissions[category] ?? false;
+    setState(() {
+      _permissions[category] = value;
+      _saving.add(category);
+    });
+    try {
+      if (widget.linkId != null) {
+        await (widget.service ?? _service).savePermissions(
+          widget.linkId!,
+          _permissions,
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _permissions[category] = previous);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.toString().replaceFirst('Bad state: ', '')),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving.remove(category));
+    }
+  }
+
+  String _title(String category) => switch (category) {
+    'Medication schedules' => 'Share Medication Schedule',
+    'Appointments' => 'Share Appointments',
+    'Medical Reports' => 'Share Medical Reports',
+    _ => category,
+  };
+
+  String _description(String category) => switch (category) {
+    'Medication schedules' =>
+      'Allow authorized medication schedules and reminders.',
+    'Appointments' =>
+      'Allow appointment dates, doctor details, and appointment status.',
+    'Medical Reports' =>
+      'Allow authorized investigation reports and medical documents.',
+    _ => '',
+  };
+
+  Widget _profileIcon(String name, IconData icon) => Column(
+    children: [
+      CircleAvatar(
+        radius: 30,
+        backgroundColor: AppColors.blushPink,
+        child: Icon(icon, color: AppColors.burgundy, size: 28),
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: 110,
+        child: Text(
+          name,
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+    ],
+  );
+
+  Widget _sharingCard(String category) => Card(
+    color: AppColors.white,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+      side: const BorderSide(color: AppColors.divider),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LocalizedText(
+                  _title(category),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                LocalizedText(
+                  _description(category),
+                  style: const TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _permissions[category] ?? false,
+            onChanged: _saving.contains(category)
+                ? null
+                : (value) => _changePermission(category, value),
+            activeTrackColor: AppColors.success,
+            inactiveTrackColor: AppColors.divider,
+            activeThumbColor: AppColors.white,
+          ),
+        ],
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.background,
     appBar: AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      title: const LocalizedText('Manage sharing permissions'),
+      title: const LocalizedText('Partner details'),
     ),
     body: ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const LocalizedText(
-          'Only enabled categories will be available to the linked partner.',
-          style: TextStyle(color: AppColors.secondaryText),
-        ),
-        const SizedBox(height: 10),
-        ..._permissions.keys.map(
-          (permission) => SwitchListTile(
-            value: _permissions[permission]!,
-            activeThumbColor: AppColors.burgundy,
-            title: Text(permission),
-            onChanged: (value) =>
-                setState(() => _permissions[permission] = value),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _profileIcon(widget.patientName, Icons.person_rounded),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(Icons.link_rounded, color: AppColors.success),
+            ),
+            _profileIcon(widget.partnerName, Icons.person_outline_rounded),
+          ],
         ),
         const SizedBox(height: 12),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, _permissions),
-          child: const LocalizedText('Save permissions'),
+        Center(
+          child: Chip(
+            avatar: const Icon(Icons.check_circle, color: AppColors.success),
+            label: const LocalizedText('Connected'),
+            backgroundColor: AppColors.blushPink,
+          ),
         ),
+        const SizedBox(height: 18),
+        const LocalizedText(
+          'Sharing settings',
+          style: TextStyle(
+            color: AppColors.burgundy,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...partnerSharingCategories.map(_sharingCard),
       ],
     ),
   );

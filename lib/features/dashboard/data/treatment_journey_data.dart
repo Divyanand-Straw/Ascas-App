@@ -26,6 +26,7 @@ class TreatmentMilestone {
   final bool applicable;
   final String? relatedAppointmentId;
   final List<HealthRecord> relatedHealthRecords;
+  final ClinicalStageResults? clinicalResults;
 
   const TreatmentMilestone({
     required this.id,
@@ -46,6 +47,7 @@ class TreatmentMilestone {
     this.applicable = true,
     this.relatedAppointmentId,
     this.relatedHealthRecords = const [],
+    this.clinicalResults,
   });
 
   String? get displayDate {
@@ -67,6 +69,58 @@ class HealthRecord {
     required this.documentType,
     required this.uploadDate,
     required this.relatedStage,
+  });
+}
+
+class ClinicalStageResults {
+  final String? cycleDay;
+  final String? scanDate;
+  final String? rightOvary;
+  final String? leftOvary;
+  final String? follicleCount;
+  final List<String> follicleMeasurements;
+  final String? endometrialThickness;
+  final String? endometrialPattern;
+  final String? assessment;
+  final String? nextAppointmentDate;
+  final String? nextAppointmentTime;
+  final String? eggsRetrieved;
+  final String? eggsInseminated;
+  final String? fertilisationResult;
+  final String? embryoDevelopment;
+  final String? embryoGrade;
+  final String? embryosTransferred;
+  final String? procedureDate;
+  final String? spermPreparation;
+  final String? testDate;
+  final String? testResult;
+  final String? doctorNote;
+  final String? patientInstructions;
+
+  const ClinicalStageResults({
+    this.cycleDay,
+    this.scanDate,
+    this.rightOvary,
+    this.leftOvary,
+    this.follicleCount,
+    this.follicleMeasurements = const [],
+    this.endometrialThickness,
+    this.endometrialPattern,
+    this.assessment,
+    this.nextAppointmentDate,
+    this.nextAppointmentTime,
+    this.eggsRetrieved,
+    this.eggsInseminated,
+    this.fertilisationResult,
+    this.embryoDevelopment,
+    this.embryoGrade,
+    this.embryosTransferred,
+    this.procedureDate,
+    this.spermPreparation,
+    this.testDate,
+    this.testResult,
+    this.doctorNote,
+    this.patientInstructions,
   });
 }
 

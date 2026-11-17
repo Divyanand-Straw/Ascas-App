@@ -1121,7 +1121,7 @@ class _TimelineSummary extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Text(
+          LocalizedText(
             '${pathway.completedCount} of $total applicable milestones completed',
             style: const TextStyle(color: AppColors.white, fontSize: 12),
           ),
@@ -1331,6 +1331,18 @@ class _TreatmentMilestoneTile extends StatelessWidget {
                           height: 1.35,
                         ),
                       ),
+                      TextButton(
+                        onPressed: onTap,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.burgundy,
+                          padding: const EdgeInsets.only(top: 7),
+                        ),
+                        child: const LocalizedText(
+                          'View Stage Instructions & Clinical Notes',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1377,6 +1389,7 @@ class TreatmentMilestoneDetailsScreen extends StatelessWidget {
             title: 'About This Stage',
             child: LocalizedText(milestone.description),
           ),
+          _ClinicalResultsSection(milestone: milestone),
           if (pathway.isDevelopmentSample)
             const Padding(
               padding: EdgeInsets.only(bottom: 14),
@@ -1447,7 +1460,7 @@ class TreatmentMilestoneDetailsScreen extends StatelessWidget {
             ),
           ),
           if (milestone.lastUpdated != null)
-            Text(
+            LocalizedText(
               'Last updated ${milestone.lastUpdated}',
               style: const TextStyle(
                 color: AppColors.secondaryText,
@@ -1503,6 +1516,219 @@ class TreatmentMilestoneDetailsScreen extends StatelessWidget {
       );
 }
 
+class _ClinicalResultsSection extends StatelessWidget {
+  final TreatmentMilestone milestone;
+
+  const _ClinicalResultsSection({required this.milestone});
+
+  @override
+  Widget build(BuildContext context) {
+    final results = milestone.clinicalResults ?? const ClinicalStageResults();
+    final sections = switch (milestone.id) {
+      'baseline-scan' || 'iui-fertility-tests' => [
+        _result('Scan date', results.scanDate),
+        _result('Right ovary', results.rightOvary),
+        _result('Left ovary', results.leftOvary),
+        _result(
+          'Endometrial thickness',
+          results.endometrialThickness,
+          unit: 'mm',
+        ),
+        _result('Endometrial pattern', results.endometrialPattern),
+        _result('Clinical assessment', results.assessment),
+      ],
+      'follicular-monitoring' || 'iui-follicular-monitoring' => [
+        _result('Cycle day', results.cycleDay),
+        _result('Scan date', results.scanDate),
+        _result('Follicle count', results.follicleCount),
+        _result(
+          'Follicle measurements',
+          results.follicleMeasurements.isEmpty
+              ? null
+              : results.follicleMeasurements.join(', '),
+          unit: 'mm',
+        ),
+        _result(
+          'Endometrial thickness',
+          results.endometrialThickness,
+          unit: 'mm',
+        ),
+        _result('Endometrial pattern', results.endometrialPattern),
+        _result('Clinical assessment', results.assessment),
+        _result('Next scan date', results.nextAppointmentDate),
+        _result('Next scan time', results.nextAppointmentTime),
+      ],
+      'egg-retrieval' => [
+        _result('Retrieval date', results.procedureDate),
+        _result('Eggs retrieved', results.eggsRetrieved),
+        _result('Clinical notes', results.doctorNote),
+      ],
+      'fertilisation' => [
+        _result('Eggs inseminated', results.eggsInseminated),
+        _result('Fertilisation result', results.fertilisationResult),
+        _result('Embryology notes', results.doctorNote),
+      ],
+      'embryo-development' => [
+        _result('Embryo development', results.embryoDevelopment),
+        _result('Embryo grading', results.embryoGrade),
+        _result('Embryology notes', results.doctorNote),
+      ],
+      'embryo-transfer' => [
+        _result('Transfer date', results.procedureDate),
+        _result('Embryos transferred', results.embryosTransferred),
+        _result('Clinical instructions', results.patientInstructions),
+      ],
+      'iui-insemination' => [
+        _result('Insemination date', results.procedureDate),
+        _result('Sperm preparation', results.spermPreparation),
+        _result('Procedure details', results.assessment),
+        _result("Doctor's notes", results.doctorNote),
+      ],
+      'pregnancy-test' || 'iui-pregnancy-test' => [
+        _result('Test date', results.testDate),
+        _result('Recorded result', results.testResult),
+        _result('Follow-up instructions', results.patientInstructions),
+      ],
+      _ => const <_ClinicalResult>[],
+    };
+    if (sections.isEmpty) return const SizedBox.shrink();
+    return _DetailSection(
+      title: 'Clinical results',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (milestone.id == 'follicular-monitoring' ||
+              milestone.id == 'iui-follicular-monitoring')
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cards = [
+                  _MeasurementCard(
+                    title: 'Right ovary',
+                    value: _value(results.rightOvary),
+                  ),
+                  _MeasurementCard(
+                    title: 'Left ovary',
+                    value: _value(results.leftOvary),
+                  ),
+                ];
+                if (constraints.maxWidth >= 360) {
+                  return Row(
+                    children: [
+                      Expanded(child: cards[0]),
+                      const SizedBox(width: 10),
+                      Expanded(child: cards[1]),
+                    ],
+                  );
+                }
+                return Column(children: cards);
+              },
+            ),
+          ...sections.map(
+            (section) => _ResultRow(label: section.label, value: section.value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static _ClinicalResult _result(String label, String? value, {String? unit}) =>
+      _ClinicalResult(
+        label: label,
+        value: value?.isNotEmpty == true
+            ? '$value${unit == null ? '' : ' $unit'}'
+            : 'Not yet available',
+      );
+
+  static String _value(String? value) =>
+      value?.isNotEmpty == true ? value! : 'Not yet available';
+}
+
+class _ClinicalResult {
+  final String label;
+  final String value;
+
+  const _ClinicalResult({required this.label, required this.value});
+}
+
+class _ResultRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ResultRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 11),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: LocalizedText(
+            label,
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 11,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: LocalizedText(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              color: AppColors.primaryText,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MeasurementCard extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _MeasurementCard({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(top: 11),
+    padding: const EdgeInsets.all(11),
+    decoration: BoxDecoration(
+      color: AppColors.blushPink,
+      borderRadius: BorderRadius.circular(13),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LocalizedText(
+          title,
+          style: const TextStyle(
+            color: AppColors.burgundy,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 5),
+        LocalizedText(
+          value,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class _DetailHeader extends StatelessWidget {
   final TreatmentMilestone milestone;
   final String treatmentLabel;
@@ -1534,7 +1760,7 @@ class _DetailHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
+        LocalizedText(
           _statusLabel(milestone.status),
           style: const TextStyle(
             color: AppColors.dustyPink,

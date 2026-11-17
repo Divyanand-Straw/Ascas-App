@@ -268,4 +268,148 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enterRegisteredEmail => 'Enter registered email address';
+
+  @override
+  String get partnerAccess => 'Partner Access';
+
+  @override
+  String get connectedPartner => 'Connected partner';
+
+  @override
+  String get partnerDetails => 'Partner details';
+
+  @override
+  String get sharingSettings => 'Sharing settings';
+
+  @override
+  String get shareMedicationSchedule => 'Share Medication Schedule';
+
+  @override
+  String get shareAppointments => 'Share Appointments';
+
+  @override
+  String get shareMedicalReports => 'Share Medical Reports';
+
+  @override
+  String get generateInvitation => 'Generate invitation';
+
+  @override
+  String get invitationCodeCopied => 'Invitation code copied.';
+
+  @override
+  String get securityPin => 'Security PIN';
+
+  @override
+  String get enableAppLock => 'Enable App Lock';
+
+  @override
+  String get changeSecurityPin => 'Change Security PIN';
+
+  @override
+  String get resetSecurityPin => 'Reset Security PIN';
+
+  @override
+  String get timelineInitialConsultationAssessment =>
+      'Initial consultation & assessment';
+
+  @override
+  String get timelineBaselineScanBloodTests => 'Baseline scan & blood tests';
+
+  @override
+  String get timelineCyclePreparationSuppression =>
+      'Cycle preparation / suppression';
+
+  @override
+  String get timelineSpermCollectionPreparation =>
+      'Sperm collection & preparation';
+
+  @override
+  String get timelineEmbryoAssessmentSelection =>
+      'Embryo assessment & selection';
+
+  @override
+  String get timelineLutealSupport => 'Luteal phase support, if prescribed';
+
+  @override
+  String get timelinePregnancyConfirmationScan =>
+      'Pregnancy confirmation scan, if positive';
+
+  @override
+  String get timelineIuiInitialConsultation => 'IUI initial consultation';
+
+  @override
+  String get timelinePreTreatmentFertilityTests =>
+      'Pre-treatment fertility tests';
+
+  @override
+  String get timelineMenstrualCycleDayOne => 'Menstrual cycle – Day 1';
+
+  @override
+  String get timelineOvulationInduction => 'Ovulation induction, if required';
+
+  @override
+  String get timelineOvulationDetectionTrigger =>
+      'Ovulation detection / trigger injection';
+
+  @override
+  String get timelineIuiInsemination => 'Insemination (IUI procedure)';
+
+  @override
+  String get timelineTwoWeekWait => 'Two-week wait';
+
+  @override
+  String get timelinePregnancyFollowUp => 'Pregnancy follow-up, if positive';
+
+  @override
+  String get timelineCompleted => 'Completed';
+
+  @override
+  String get timelineInProgress => 'In progress';
+
+  @override
+  String get timelineUpcoming => 'Upcoming';
+
+  @override
+  String get timelineRescheduled => 'Rescheduled';
+
+  @override
+  String get timelineCancelled => 'Cancelled';
+
+  @override
+  String get timelineAwaitingClinicUpdate => 'Awaiting clinic update';
+
+  @override
+  String get timelineAboutThisStage => 'About This Stage';
+
+  @override
+  String get timelineWhatHappens => 'What Happens';
+
+  @override
+  String get timelineTreatmentInformation => 'Treatment Information';
+
+  @override
+  String get timelineAppointmentsReports => 'Appointments & Reports';
+
+  @override
+  String get timelineClinicInstructions => 'Clinic Instructions';
+
+  @override
+  String get timelineOpenAppointment => 'Open appointment';
+
+  @override
+  String get timelinePreviousStage => 'Previous Stage';
+
+  @override
+  String get timelineNextStage => 'Next Stage';
+
+  @override
+  String get timelineBackToTimeline => 'Back to Timeline';
+
+  @override
+  String get timelineGuideOnly =>
+      'Guide only. This stage is not confirmed as part of your personal treatment plan.';
+
+  @override
+  String get timelineDevelopmentSample =>
+      'Development-only sample: clinic timeline data has not been connected.';
 }

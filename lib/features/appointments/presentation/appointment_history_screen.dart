@@ -8,19 +8,35 @@ import 'data/appointment_data.dart';
 import 'models/appointment_models.dart';
 import 'widgets/appointment_widgets.dart';
 
-class AppointmentHistoryScreen extends StatelessWidget {
+class AppointmentHistoryScreen extends StatefulWidget {
   const AppointmentHistoryScreen({super.key});
 
   @override
+  State<AppointmentHistoryScreen> createState() =>
+      _AppointmentHistoryScreenState();
+}
+
+class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen> {
+  String _filter = 'All';
+
+  @override
   Widget build(BuildContext context) {
-    final completed = sampleHistory
-        .where((appointment) => appointment.status == 'Completed')
-        .toList()
-      ..sort((first, second) => second.date.compareTo(first.date));
-    final cancelled = sampleHistory
-        .where((appointment) => appointment.status == 'Cancelled')
-        .toList()
-      ..sort((first, second) => second.date.compareTo(first.date));
+    final completed =
+        sampleHistory
+            .where((appointment) => appointment.status == 'Completed')
+            .toList()
+          ..sort((first, second) => second.date.compareTo(first.date));
+    final cancelled =
+        sampleHistory
+            .where((appointment) => appointment.status == 'Cancelled')
+            .toList()
+          ..sort((first, second) => second.date.compareTo(first.date));
+    final visibleCompleted = _filter == 'Cancelled'
+        ? <Appointment>[]
+        : completed;
+    final visibleCancelled = _filter == 'Completed'
+        ? <Appointment>[]
+        : cancelled;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -38,13 +54,34 @@ class AppointmentHistoryScreen extends StatelessWidget {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                if (completed.isNotEmpty) ...[
+                Wrap(
+                  spacing: 8,
+                  children: ['All', 'Completed', 'Cancelled'].map((filter) {
+                    return ChoiceChip(
+                      label: LocalizedText(filter),
+                      selected: _filter == filter,
+                      onSelected: (_) => setState(() => _filter = filter),
+                      selectedColor: AppColors.blushPink,
+                      labelStyle: const TextStyle(
+                        color: AppColors.burgundy,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+                if (visibleCompleted.isNotEmpty) ...[
                   const _HistorySectionHeading(title: 'Completed'),
-                  ...completed.map((appointment) => _card(context, appointment)),
+                  ...visibleCompleted.map(
+                    (appointment) => _card(context, appointment),
+                  ),
                 ],
-                if (cancelled.isNotEmpty) ...[
+                if (visibleCancelled.isNotEmpty) ...[
                   const _HistorySectionHeading(title: 'Cancelled'),
-                  ...cancelled.map((appointment) => _card(context, appointment)),
+                  ...visibleCancelled.map(
+                    (appointment) => _card(context, appointment),
+                  ),
                 ],
               ],
             ),

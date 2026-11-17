@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/widgets/step_progress_bar.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/biometric_service.dart';
 import 'registration_complete_screen.dart';
 
 class AppSecurityScreen extends StatefulWidget {
@@ -329,6 +330,8 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                                 isExistingPatient: widget.isExistingPatient,
                                 patientId: widget.patientId,
                                 accountId: widget.accountId,
+                                securityPin: _pinController.text,
+                                biometricEnabled: _biometricEnabled,
                               ),
                             ),
                           );
@@ -356,4 +359,364 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
       ),
     );
   }
+}
+
+class SecurityPinSettingsScreen extends StatelessWidget {
+  final String accountId;
+
+  const SecurityPinSettingsScreen({super.key, required this.accountId});
+
+  Future<String?> _askPin(
+    BuildContext context, {
+    required String title,
+    required String label,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: LocalizedText(title),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          obscureText: true,
+          keyboardType: TextInputType.number,
+          maxLength: 4,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(4),
+          ],
+          decoration: InputDecoration(labelText: label),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const LocalizedText('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.length == 4) {
+                Navigator.pop(context, controller.text);
+              }
+            },
+            child: const LocalizedText('Continue'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  Future<String?> _askNewPin(BuildContext context) => _askPin(
+    context,
+    title: 'Create a new Security PIN',
+    label: 'New 4-digit PIN',
+  );
+
+  Future<bool> _changePin(BuildContext context) async {
+    final service = BiometricService.instance;
+    final current = await _askPin(
+      context,
+      title: 'Verify current Security PIN',
+      label: 'Current PIN',
+    );
+    if (current == null) return false;
+    if (!context.mounted) return false;
+    final next = await _askNewPin(context);
+    if (next == null) return false;
+    if (!context.mounted) return false;
+    final confirmation = await _askPin(
+      context,
+      title: 'Confirm new Security PIN',
+      label: 'Confirm PIN',
+    );
+    if (confirmation != next) {
+      throw StateError('PINs do not match. Please try again.');
+    }
+    await service.changePin(
+      accountId: accountId,
+      currentPin: current,
+      newPin: next,
+    );
+    return true;
+  }
+
+  Future<bool> _resetPin(BuildContext context) async {
+    final service = BiometricService.instance;
+    if (!await service.authenticateForSensitiveAction(
+      'Authenticate to reset your Thaai Seyali Security PIN.',
+    )) {
+      throw StateError(
+        'Biometric verification is required to reset the Security PIN.',
+      );
+    }
+    if (!context.mounted) return false;
+    final next = await _askNewPin(context);
+    if (next == null) return false;
+    if (!context.mounted) return false;
+    final confirmation = await _askPin(
+      context,
+      title: 'Confirm new Security PIN',
+      label: 'Confirm PIN',
+    );
+    if (confirmation != next) {
+      throw StateError('PINs do not match. Please try again.');
+    }
+    await service.setPin(accountId: accountId, pin: next);
+    return true;
+  }
+
+  Future<void> _run(
+    BuildContext context,
+    Future<bool> Function(BuildContext) action,
+  ) async {
+    try {
+      if (await action(context) && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: LocalizedText('Security PIN updated.')),
+        );
+      }
+    } on StateError catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: LocalizedText(error.message.toString())),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final service = BiometricService.instance;
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        title: const LocalizedText('Security PIN'),
+      ),
+      body: AnimatedBuilder(
+        animation: service,
+        builder: (context, _) => ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: [
+            const LocalizedText(
+              'Manage your Security PIN, biometrics and app lock in one place.',
+              style: TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FutureBuilder<bool>(
+              future: service.hasPin(accountId),
+              builder: (context, snapshot) => _securityCard(
+                icon: Icons.pin_outlined,
+                title: 'Security PIN',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: LocalizedText(
+                            'Your PIN protects access to Thaai Seyali on this device.',
+                            style: TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _StatusPill(
+                          label: snapshot.data == true
+                              ? 'Configured'
+                              : 'Not configured',
+                          active: snapshot.data == true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: snapshot.data == true
+                                ? () => _run(context, _changePin)
+                                : null,
+                            child: const LocalizedText('Change Security PIN'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextButton(
+                            onPressed: snapshot.data == true
+                                ? () => _run(context, _resetPin)
+                                : null,
+                            child: const LocalizedText('Reset Security PIN'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            _securityCard(
+              icon: Icons.fingerprint_rounded,
+              title: 'Biometric Authentication',
+              child: FutureBuilder<BiometricAvailability>(
+                future: service.availability(),
+                builder: (context, snapshot) {
+                  final available =
+                      snapshot.data?.available == true &&
+                      snapshot.data?.enrolled == true;
+                  return SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: service.enabled,
+                    title: const LocalizedText('Fingerprint or Face ID'),
+                    subtitle: LocalizedText(
+                      available
+                          ? 'Use biometrics before falling back to your PIN.'
+                          : 'Biometrics are not available on this device.',
+                    ),
+                    onChanged: available
+                        ? (value) async {
+                            final success = value
+                                ? await service.enable()
+                                : await service.disable();
+                            if (!success && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: LocalizedText(
+                                    'Biometric authentication could not be changed.',
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        : null,
+                    activeThumbColor: const Color(0xFF6B1837),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 14),
+            _securityCard(
+              icon: Icons.lock_outline_rounded,
+              title: 'App Lock',
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: service.appLockEnabled,
+                title: const LocalizedText('Enable App Lock'),
+                subtitle: const LocalizedText(
+                  'Protect the app when it returns from another application.',
+                ),
+                onChanged: (value) async {
+                  final pin = value
+                      ? null
+                      : await _askPin(
+                          context,
+                          title: 'Verify current Security PIN',
+                          label: 'Current PIN',
+                        );
+                  if (!value && pin == null) return;
+                  final success = await service.setAppLockEnabled(
+                    value,
+                    pin: pin,
+                  );
+                  if (!success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: LocalizedText(
+                          'Authentication was not completed.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                activeThumbColor: const Color(0xFF6B1837),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _securityCard({
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Card(
+      color: const Color(0xFFFFF5F7),
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: Color(0xFFF0D9E1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8E9EE),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: Color(0xFFC9879D)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: LocalizedText(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF6B1837),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final bool active;
+
+  const _StatusPill({required this.label, required this.active});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: active ? const Color(0xFFF8E9EE) : const Color(0xFFEDE7E9),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: LocalizedText(
+      label,
+      style: TextStyle(
+        color: active ? const Color(0xFF6B1837) : AppColors.secondaryText,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
 }

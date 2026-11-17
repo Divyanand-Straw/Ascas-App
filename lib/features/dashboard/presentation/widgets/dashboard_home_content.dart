@@ -6,13 +6,13 @@ import '../../../../core/widgets/copyable_patient_id.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../appointments/presentation/appointment_detail_screen.dart';
 import '../../../appointments/presentation/doctor_information_screen.dart';
-import '../../../appointments/presentation/doctor_profile_screen.dart';
 import '../../../appointments/presentation/models/appointment_models.dart';
 import '../../../communication/presentation/communication_screen.dart';
 import '../../../education/presentation/education_screen.dart';
 import '../../../medical_records/presentation/medical_records_screen.dart';
 import '../../../medication/presentation/demo_reminder_card.dart';
 import '../../../medication/presentation/medication_screen.dart';
+import '../../data/treatment_journey_data.dart';
 import '../journey_sections.dart';
 import 'dashboard_card.dart';
 
@@ -27,6 +27,10 @@ enum DashboardPatientState {
   postProcedureRecovery,
   followUpCare,
 }
+
+const _fertilityJourneyBurgundy = Color(0xFF6B1837);
+const _fertilityJourneyBlush = Color(0xFFF8E9EE);
+const _fertilityJourneyDustyPink = Color(0xFFC9879D);
 
 class DashboardHomeContent extends StatelessWidget {
   final String patientName;
@@ -57,14 +61,14 @@ class DashboardHomeContent extends StatelessWidget {
   }
 
   String get _treatment => switch (patientState) {
-    DashboardPatientState.ivf => 'IVF treatment',
-    DashboardPatientState.icsi => 'ICSI treatment',
-    DashboardPatientState.iui => 'IUI treatment',
+    DashboardPatientState.ivf => 'IVF Cycle 1',
+    DashboardPatientState.icsi => 'ICSI Treatment',
+    DashboardPatientState.iui => 'IUI Treatment',
     DashboardPatientState.fet => 'Frozen Embryo Transfer (FET)',
-    DashboardPatientState.embryoTransfer => 'Embryo transfer',
-    DashboardPatientState.twoWeekWait => 'Post-transfer care',
-    DashboardPatientState.postProcedureRecovery => 'Post-procedure care',
-    DashboardPatientState.followUpCare => 'Follow-up care',
+    DashboardPatientState.embryoTransfer => 'Embryo Transfer',
+    DashboardPatientState.twoWeekWait => 'Two-Week Wait',
+    DashboardPatientState.postProcedureRecovery => 'Follow-up Care',
+    DashboardPatientState.followUpCare => 'Follow-up Care',
     DashboardPatientState.newPatient => 'Care pathway pending',
   };
 
@@ -110,32 +114,39 @@ class DashboardHomeContent extends StatelessWidget {
           const SizedBox(height: 20),
           const _AdmissionCard(),
         ],
-        if (_can('Appointments')) ...[
-          const SizedBox(height: 24),
-          DashboardSectionHeader(
-            title: 'Next Appointment',
-            action: 'View all',
-            onAction: () => onNavigate(2),
-          ),
-          const SizedBox(height: 12),
-          AnimatedBuilder(
-            animation: appointmentStore,
-            builder: (context, _) =>
-                _AppointmentCard(appointment: appointmentStore.nearestUpcoming),
-          ),
-        ],
         if (_can('Treatment Journey')) ...[
           const SizedBox(height: 22),
-          DashboardSectionHeader(
-            title: 'Fertility Journey',
-            action: 'View Journey',
-            onAction: () => onNavigate(1),
-          ),
-          const SizedBox(height: 12),
-          _TreatmentSnapshot(
+          _CurrentPathwayCard(
             treatment: _treatment,
             currentStage: _currentStage,
             onTap: () => onNavigate(1),
+          ),
+        ],
+        if (_can('Appointments')) ...[
+          const SizedBox(height: 22),
+          AnimatedBuilder(
+            animation: appointmentStore,
+            builder: (context, _) => _UpcomingVisitCard(
+              appointment: appointmentStore.nearestUpcoming,
+              patientName: patientName,
+              mobileNumber: mobileNumber,
+            ),
+          ),
+        ],
+        if (!isLinkedPartner) ...[
+          const SizedBox(height: 22),
+          _CareTeamSection(
+            patientName: patientName,
+            mobileNumber: mobileNumber,
+            onViewAll: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DoctorInformationScreen(
+                  patientName: patientName,
+                  mobileNumber: mobileNumber,
+                ),
+              ),
+            ),
           ),
         ],
         if (_can('Medication schedules')) ...[
@@ -156,37 +167,14 @@ class DashboardHomeContent extends StatelessWidget {
         if (_can('Prescriptions'))
           _SharedCategoryCard(
             title: 'Prescriptions',
-            onTap: () => onNavigate(3),
-          ),
-        if (!isLinkedPartner) ...[
-          const SizedBox(height: 22),
-          DashboardSectionHeader(
-            title: 'Our Doctors',
-            action: 'View all',
-            onAction: () => Navigator.push(
+            onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => DoctorInformationScreen(
-                  patientName: patientName,
-                  mobileNumber: mobileNumber,
-                ),
+                builder: (_) => const MedicationScheduleScreen(),
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 198,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: sampleDoctors.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) => _DoctorCard(
-                doctor: sampleDoctors[index],
-                patientName: patientName,
-                mobileNumber: mobileNumber,
-              ),
-            ),
-          ),
+        if (!isLinkedPartner) ...[
           const SizedBox(height: 22),
           const DashboardSectionHeader(title: 'Quick Links'),
           const SizedBox(height: 12),
@@ -276,12 +264,12 @@ class _WelcomeSection extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
+                    height: 1.2,
                   ),
                 ),
                 if (patientId.isNotEmpty) ...[
@@ -372,94 +360,437 @@ class _AdmissionCard extends StatelessWidget {
   }
 }
 
-class _AppointmentCard extends StatelessWidget {
-  final Appointment? appointment;
+class _CurrentPathwayCard extends StatelessWidget {
+  final String treatment;
+  final String currentStage;
+  final VoidCallback onTap;
 
-  const _AppointmentCard({required this.appointment});
+  const _CurrentPathwayCard({
+    required this.treatment,
+    required this.currentStage,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final item = appointment;
-    if (item == null) {
-      return const DashboardCard(
-        child: LocalizedText(
-          'No upcoming appointments.',
-          style: TextStyle(color: AppColors.secondaryText),
-        ),
-      );
-    }
-    return DashboardCard(
-      color: AppColors.burgundy,
+    final pathway = pathwayFor(treatment);
+    final milestones = pathway.applicableMilestones;
+    final total = milestones.length;
+    final progress = total == 0 ? 0.0 : pathway.completedCount / total;
+    final nextMilestone = pathway.nextMilestone;
+    final completedLabel = pathway.completedCount == 0
+        ? 'No milestones completed'
+        : '${pathway.completedCount} milestone${pathway.completedCount == 1 ? '' : 's'} completed';
+    final upcomingLabel = nextMilestone == null
+        ? 'Clinic update pending'
+        : nextMilestone.name;
+
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: _fertilityJourneyBlush,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.blushPink,
-                  borderRadius: BorderRadius.circular(13),
+              const Icon(
+                Icons.route_outlined,
+                color: _fertilityJourneyDustyPink,
+                size: 17,
+              ),
+              const SizedBox(width: 7),
+              const Expanded(
+                child: LocalizedText(
+                  'CURRENT PATHWAY',
+                  style: TextStyle(
+                    color: _fertilityJourneyBurgundy,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.calendar_month_outlined,
-                  color: AppColors.burgundy,
-                  size: 20,
+              ),
+              const LocalizedText(
+                'Cycle day —',
+                style: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
+          LocalizedText(
+            treatment,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: _fertilityJourneyBurgundy,
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const LocalizedText(
+            'Clinic-managed treatment pathway',
+            style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const LocalizedText(
+                      'Current stage',
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    LocalizedText(
+                      currentStage,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _fertilityJourneyBurgundy,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${(progress * 100).round()}%',
+                style: const TextStyle(
+                  color: _fertilityJourneyBurgundy,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 7,
+              backgroundColor: _fertilityJourneyDustyPink.withValues(alpha: .3),
+              valueColor: const AlwaysStoppedAnimation(
+                _fertilityJourneyBurgundy,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: LocalizedText(
+                  completedLabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 10,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  item.doctorName,
+                child: LocalizedText(
+                  upcomingLabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
                   style: const TextStyle(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.w700,
+                    color: AppColors.secondaryText,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: .62),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.flag_outlined,
+                  color: _fertilityJourneyDustyPink,
+                  size: 19,
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const LocalizedText(
+                        'Next milestone',
+                        style: TextStyle(
+                          color: _fertilityJourneyBurgundy,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      LocalizedText(
+                        nextMilestone?.name ?? 'Not available',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (nextMilestone != null)
+                        LocalizedText(
+                          nextMilestone.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 13),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _fertilityJourneyBurgundy,
+                foregroundColor: AppColors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+              child: const LocalizedText('View Fertility Journey →'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingVisitCard extends StatelessWidget {
+  final Appointment? appointment;
+  final String patientName;
+  final String mobileNumber;
+
+  const _UpcomingVisitCard({
+    required this.appointment,
+    required this.patientName,
+    required this.mobileNumber,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final item = appointment;
+    if (item == null) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: _fertilityJourneyBlush,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const LocalizedText(
+          'No upcoming clinical visits.',
+          style: TextStyle(color: AppColors.secondaryText),
+        ),
+      );
+    }
+    final doctor = sampleDoctors.cast<Doctor?>().firstWhere(
+      (candidate) => candidate?.name == item.doctorName,
+      orElse: () => null,
+    );
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: _fertilityJourneyBurgundy,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_month_outlined,
+                color: _fertilityJourneyDustyPink,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: const LocalizedText(
+                  'UPCOMING CLINICAL VISIT',
+                  style: TextStyle(
+                    color: _fertilityJourneyDustyPink,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
                   ),
                 ),
               ),
               _StatusBadge(label: item.status),
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 5,
-            runSpacing: 4,
+          const SizedBox(height: 15),
+          Row(
             children: [
-              LocalizedText(
-                '${item.date.day} ${_month(item.date.month)}  •  ${item.time}',
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: _fertilityJourneyBlush,
+                foregroundImage: doctor?.profileImageUrl == null
+                    ? null
+                    : NetworkImage(doctor!.profileImageUrl!),
+                child: doctor?.profileImageUrl == null
+                    ? Text(
+                        doctor?.initials ?? _initials(item.doctorName),
+                        style: const TextStyle(
+                          color: _fertilityJourneyBurgundy,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.doctorName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (item.specialty.isNotEmpty)
+                      Text(
+                        item.specialty,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _fertilityJourneyDustyPink,
+                          fontSize: 11,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${item.date.day} ${_month(item.date.month)} ${item.date.year}  •  ${item.time}',
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${item.clinic}  •  ${item.consultationMode}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _fertilityJourneyDustyPink,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
           LocalizedText(
-            '${item.appointmentType}  •  ${item.consultationMode}',
+            item.appointmentType,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.dustyPink, fontSize: 12),
+            style: const TextStyle(color: AppColors.white, fontSize: 12),
           ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              style: TextButton.styleFrom(foregroundColor: AppColors.white),
+          const SizedBox(height: 13),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.white,
+                foregroundColor: _fertilityJourneyBurgundy,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AppointmentDetailsScreen(appointment: item),
+                  builder: (_) => AppointmentDetailsScreen(
+                    appointment: item,
+                    patientName: patientName,
+                    mobileNumber: mobileNumber,
+                  ),
                 ),
               ),
-              child: const LocalizedText('View Details'),
+              icon: const Icon(Icons.info_outline_rounded, size: 18),
+              label: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LocalizedText('View Details'),
+                  Text(' & '),
+                  LocalizedText('Instructions'),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  static String _initials(String value) {
+    final parts = value.trim().split(RegExp(r'\s+'));
+    if (parts.length > 1) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    return value.isEmpty ? '?' : value[0].toUpperCase();
   }
 
   String _month(int month) => const [
@@ -479,68 +810,157 @@ class _AppointmentCard extends StatelessWidget {
   ][month];
 }
 
-class _TreatmentSnapshot extends StatelessWidget {
-  final String treatment;
-  final String currentStage;
-  final VoidCallback onTap;
+class _CareTeamSection extends StatelessWidget {
+  final String patientName;
+  final String mobileNumber;
+  final VoidCallback onViewAll;
 
-  const _TreatmentSnapshot({
-    required this.treatment,
-    required this.currentStage,
-    required this.onTap,
+  const _CareTeamSection({
+    required this.patientName,
+    required this.mobileNumber,
+    required this.onViewAll,
   });
 
   @override
-  Widget build(BuildContext context) => DashboardCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LocalizedText(
-          treatment,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColors.burgundy,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 5),
-        const SizedBox(height: 7),
-        const LocalizedText(
-          'Current stage',
-          style: TextStyle(
-            color: AppColors.secondaryText,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 4),
-        LocalizedText(
-          currentStage,
-          style: const TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _StatusBadge(
-          label: currentStage == 'Clinic update pending'
-              ? 'Awaiting clinic update'
-              : 'Current stage',
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          alignment: WrapAlignment.spaceBetween,
-          children: [
-            TextButton(
-              onPressed: onTap,
-              child: const LocalizedText('View Journey'),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LocalizedText(
+                  'Your Care Team',
+                  style: TextStyle(
+                    color: AppColors.primaryText,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 4),
+                LocalizedText(
+                  'The specialists supporting your care.',
+                  style: TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          SizedBox(
+            width: 102,
+            child: TextButton(
+              onPressed: onViewAll,
+              style: TextButton.styleFrom(
+                foregroundColor: _fertilityJourneyBurgundy,
+                padding: EdgeInsets.zero,
+              ),
+              child: const LocalizedText(
+                'View All Doctors',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 13),
+      ...sampleDoctors.map(
+        (doctor) => _CareTeamDoctorRow(
+          doctor: doctor,
+          patientName: patientName,
+          mobileNumber: mobileNumber,
+        ),
+      ),
+    ],
+  );
+}
+
+class _CareTeamDoctorRow extends StatelessWidget {
+  final Doctor doctor;
+  final String patientName;
+  final String mobileNumber;
+
+  const _CareTeamDoctorRow({
+    required this.doctor,
+    required this.patientName,
+    required this.mobileNumber,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 9),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: AppColors.divider),
+    ),
+    child: Row(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: _fertilityJourneyBlush,
+          foregroundImage: doctor.profileImageUrl == null
+              ? null
+              : NetworkImage(doctor.profileImageUrl!),
+          child: doctor.profileImageUrl == null
+              ? Text(
+                  doctor.initials,
+                  style: const TextStyle(
+                    color: _fertilityJourneyBurgundy,
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+              : null,
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                doctor.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                doctor.qualifications?.isNotEmpty == true
+                    ? '${doctor.specialty} · ${doctor.qualifications}'
+                    : doctor.specialty,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 11,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: null,
+          tooltip: 'Doctor messaging unavailable',
+          style: IconButton.styleFrom(
+            backgroundColor: _fertilityJourneyBlush,
+            disabledForegroundColor: _fertilityJourneyDustyPink,
+          ),
+          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
         ),
       ],
     ),
@@ -552,85 +972,6 @@ class _MedicationReminder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const DemoReminderCard(compact: true);
-}
-
-class _DoctorCard extends StatelessWidget {
-  final Doctor doctor;
-  final String patientName;
-  final String mobileNumber;
-
-  const _DoctorCard({
-    required this.doctor,
-    required this.patientName,
-    required this.mobileNumber,
-  });
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 190,
-    child: DashboardCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.blushPink,
-                child: Text(
-                  doctor.initials,
-                  style: const TextStyle(
-                    color: AppColors.burgundy,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  doctor.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.primaryText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Text(
-            doctor.specialty,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 11,
-            ),
-          ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: 34,
-            child: OutlinedButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => DoctorProfileScreen(
-                    doctor: doctor,
-                    patientName: patientName,
-                    mobileNumber: mobileNumber,
-                  ),
-                ),
-              ),
-              child: const LocalizedText('View Profile'),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }
 
 class _QuickLinks extends StatelessWidget {

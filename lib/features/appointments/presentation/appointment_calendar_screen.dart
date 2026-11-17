@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/localized_text.dart';
 
-import '../../../core/theme/app_colors.dart';
 import 'available_date_screen.dart';
 import 'models/appointment_models.dart';
 
@@ -24,6 +23,16 @@ class AppointmentCalendarScreen extends StatefulWidget {
 }
 
 class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
+  static const _deepBurgundy = Color(0xFF6B1837);
+  static const _burgundyDark = Color(0xFF4D1029);
+  static const _dustyPink = Color(0xFFC9879D);
+  static const _blushPink = Color(0xFFF8E9EE);
+  static const _palePink = Color(0xFFFFF5F7);
+  static const _primaryText = Color(0xFF30232A);
+  static const _secondaryText = Color(0xFF806D76);
+  static const _mutedDate = Color(0xFFC5AAB5);
+  static const _border = Color(0xFFEADCE2);
+
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
   DateTime? _selectedDate;
 
@@ -44,24 +53,31 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
           _selectedDate?.year == date.year &&
           _selectedDate?.month == date.month &&
           _selectedDate?.day == date.day;
+      final today =
+          date.year == DateTime.now().year &&
+          date.month == DateTime.now().month &&
+          date.day == DateTime.now().day;
       cells.add(
         InkWell(
           onTap: past ? null : () => setState(() => _selectedDate = date),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? AppColors.burgundy : null,
-              borderRadius: BorderRadius.circular(10),
+              color: selected ? _deepBurgundy : Colors.transparent,
+              shape: BoxShape.circle,
+              border: today && !selected
+                  ? Border.all(color: _dustyPink, width: 1.5)
+                  : null,
             ),
             child: LocalizedText(
               '$day',
               style: TextStyle(
                 color: past
-                    ? AppColors.divider
+                    ? _mutedDate
                     : selected
-                    ? AppColors.white
-                    : AppColors.primaryText,
+                    ? Colors.white
+                    : _primaryText,
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
               ),
@@ -71,11 +87,15 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
       );
     }
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: _palePink,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: _deepBurgundy,
         elevation: 0,
-        title: LocalizedText('Choose a date'),
+        foregroundColor: Colors.white,
+        title: const LocalizedText(
+          'Choose a date',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -83,7 +103,7 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
           Text(
             widget.doctor.name,
             style: const TextStyle(
-              color: AppColors.primaryText,
+              color: _primaryText,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -91,54 +111,120 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
           const SizedBox(height: 5),
           LocalizedText(
             'Sample dates for prototype demonstration.',
-            style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
+            style: TextStyle(color: _secondaryText, fontSize: 11),
           ),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.divider),
+              border: Border.all(color: _border),
+              boxShadow: [
+                BoxShadow(
+                  color: _burgundyDark.withValues(alpha: 0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => setState(
-                        () => _month = DateTime(_month.year, _month.month - 1),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _deepBurgundy,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => setState(
+                          () =>
+                              _month = DateTime(_month.year, _month.month - 1),
+                        ),
+                        color: Colors.white,
+                        tooltip: 'Previous month',
+                        icon: const Icon(Icons.chevron_left),
                       ),
-                      icon: const Icon(Icons.chevron_left),
-                    ),
-                    Expanded(
-                      child: LocalizedText(
-                        '${_monthName(_month.month)} ${_month.year}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.primaryText,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: LocalizedText(
+                          '${_monthName(_month.month)} ${_month.year}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => setState(
-                        () => _month = DateTime(_month.year, _month.month + 1),
+                      IconButton(
+                        onPressed: () => setState(
+                          () =>
+                              _month = DateTime(_month.year, _month.month + 1),
+                        ),
+                        color: Colors.white,
+                        tooltip: 'Next month',
+                        icon: const Icon(Icons.chevron_right),
                       ),
-                      icon: const Icon(Icons.chevron_right),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 16),
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    LocalizedText('M'),
-                    LocalizedText('T'),
-                    LocalizedText('W'),
-                    LocalizedText('T'),
-                    LocalizedText('F'),
-                    LocalizedText('S'),
-                    LocalizedText('S'),
+                    LocalizedText(
+                      'M',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    LocalizedText(
+                      'T',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    LocalizedText(
+                      'W',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    LocalizedText(
+                      'T',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    LocalizedText(
+                      'F',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    LocalizedText(
+                      'S',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    LocalizedText(
+                      'S',
+                      style: TextStyle(
+                        color: _deepBurgundy,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -169,9 +255,10 @@ class _AppointmentCalendarScreenState extends State<AppointmentCalendarScreen> {
                     ),
                   ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.burgundy,
-              foregroundColor: AppColors.white,
-              disabledBackgroundColor: AppColors.divider,
+              backgroundColor: _deepBurgundy,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: _blushPink,
+              disabledForegroundColor: _mutedDate,
               minimumSize: const Size.fromHeight(48),
               elevation: 0,
               shape: RoundedRectangleBorder(

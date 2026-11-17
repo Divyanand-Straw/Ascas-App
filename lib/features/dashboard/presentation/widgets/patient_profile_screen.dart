@@ -17,6 +17,7 @@ import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../auth/presentation/consent_privacy_screen.dart';
+import '../../../auth/presentation/app_security_screen.dart';
 import '../../../partner_access/presentation/patient_partner_access_screen.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
 import 'dashboard_card.dart';
@@ -534,6 +535,22 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             ]),
             _sectionTitle(context, 'Privacy & security'),
             _card([
+              _option(
+                icon: Icons.pin_outlined,
+                title: 'Security PIN',
+                subtitle: 'Change or reset your app unlock PIN.',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SecurityPinSettingsScreen(
+                      accountId: widget.accountId.isEmpty
+                          ? widget.mobileNumber
+                          : widget.accountId,
+                    ),
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: AppColors.divider),
               SwitchListTile(
                 value: BiometricService.instance.enabled,
                 onChanged: _toggleBiometric,

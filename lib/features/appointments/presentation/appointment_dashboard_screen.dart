@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/localization/localized_text.dart';
-
-import '../../../core/theme/app_colors.dart';
-import 'data/appointment_data.dart';
-import 'widgets/appointment_widgets.dart';
-import 'doctor_information_screen.dart';
-import 'appointment_detail_screen.dart';
 import 'appointment_history_screen.dart';
 import 'clinic_location_screen.dart';
+import 'doctor_information_screen.dart';
 import 'upcoming_appointments_screen.dart';
 
 class AppointmentDashboardScreen extends StatelessWidget {
@@ -26,209 +21,156 @@ class AppointmentDashboardScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: appointmentStore,
-      builder: (context, _) {
-        final appointment = appointmentStore.nearestUpcoming;
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const LocalizedText(
-                'Appointments',
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const LocalizedText(
-                'YOUR NEXT VISIT',
-                style: TextStyle(
-                  color: AppColors.burgundy,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 9),
-              if (appointment != null)
-                AppointmentCard(
-                  appointment: appointment,
+  Widget build(BuildContext context) => SingleChildScrollView(
+    padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const LocalizedText(
+          'Appointments',
+          style: TextStyle(
+            color: _primaryText,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 7),
+        const LocalizedText(
+          'Manage your clinic visits and appointments.',
+          style: TextStyle(color: _secondaryText, fontSize: 13, height: 1.4),
+        ),
+        const SizedBox(height: 22),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final gap = constraints.maxWidth < 360 ? 10.0 : 14.0;
+            return GridView.count(
+              key: const ValueKey('appointment-action-grid'),
+              crossAxisCount: 2,
+              crossAxisSpacing: gap,
+              mainAxisSpacing: gap,
+              childAspectRatio: constraints.maxWidth < 360 ? 0.94 : 1.02,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _AppointmentActionCard(
+                  key: const ValueKey('appointment-book-visit'),
+                  icon: Icons.add_circle_outline_rounded,
+                  title: 'Book Visit',
+                  description: 'Schedule a clinic appointment',
+                  highlighted: true,
                   onTap: () => _open(
                     context,
-                    AppointmentDetailsScreen(
-                      appointment: appointment,
+                    DoctorInformationScreen(
                       patientName: patientName,
                       mobileNumber: mobileNumber,
                     ),
                   ),
-                )
-              else
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 18),
-                  child: Center(
-                    child: LocalizedText(
-                      'No upcoming appointments.',
-                      style: TextStyle(color: AppColors.secondaryText),
+                ),
+                _AppointmentActionCard(
+                  key: const ValueKey('appointment-upcoming'),
+                  icon: Icons.event_available_rounded,
+                  title: 'Upcoming',
+                  description: 'View scheduled visits',
+                  onTap: () => _open(
+                    context,
+                    UpcomingAppointmentsScreen(
+                      patientName: patientName,
+                      mobileNumber: mobileNumber,
                     ),
                   ),
                 ),
-              const SizedBox(height: 14),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final spacing = 12.0;
-                  final width = (constraints.maxWidth - spacing) / 2;
-                  return Wrap(
-                    spacing: spacing,
-                    runSpacing: spacing,
-                    alignment: WrapAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: width,
-                        child: AppointmentActionTile(
-                          icon: Icons.add_circle_outline,
-                          title: 'REQUEST',
-                          subtitle: 'Choose a doctor and time',
-                          onTap: () => _open(
-                            context,
-                            DoctorInformationScreen(
-                              patientName: patientName,
-                              mobileNumber: mobileNumber,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: width,
-                        child: AppointmentActionTile(
-                          icon: Icons.event_available_outlined,
-                          title: 'UPCOMING',
-                          subtitle: 'View upcoming visits',
-                          onTap: () => _open(
-                            context,
-                            UpcomingAppointmentsScreen(
-                              patientName: patientName,
-                              mobileNumber: mobileNumber,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: width,
-                        child: AppointmentActionTile(
-                          icon: Icons.history_outlined,
-                          title: 'HISTORY',
-                          subtitle: 'Past consultations',
-                          onTap: () =>
-                              _open(context, const AppointmentHistoryScreen()),
-                        ),
-                      ),
-                      SizedBox(
-                        width: width,
-                        child: AppointmentActionTile(
-                          icon: Icons.location_on_outlined,
-                          title: 'CLINIC',
-                          subtitle: 'Directions and details',
-                          onTap: () =>
-                              _open(context, const ClinicLocationScreen()),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  const Expanded(
-                    child: LocalizedText(
-                      'APPOINTMENT REQUESTS',
-                      style: TextStyle(
-                        color: AppColors.burgundy,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => _open(
-                      context,
-                      const AppointmentInfoScreen(
-                        title: 'Appointment requests',
-                        description:
-                            'Submitted appointment requests will appear here.',
-                      ),
-                    ),
-                    child: LocalizedText('View all'),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.divider),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryText.withValues(alpha: 0.04),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                _AppointmentActionCard(
+                  key: const ValueKey('appointment-history'),
+                  icon: Icons.history_rounded,
+                  title: 'History',
+                  description: 'View previous appointments',
+                  onTap: () => _open(context, const AppointmentHistoryScreen()),
                 ),
-                child: Row(
-                  children: [
-                    _AppointmentIcon(icon: Icons.pending_actions_outlined),
-                    SizedBox(width: 11),
-                    Expanded(
-                      child: LocalizedText(
-                        'Submitted appointment requests will appear here when available.',
-                        style: TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
+                _AppointmentActionCard(
+                  key: const ValueKey('appointment-clinic'),
+                  icon: Icons.local_hospital_outlined,
+                  title: 'Clinic',
+                  description: 'Clinic information and facilities',
+                  onTap: () => _open(context, const ClinicLocationScreen()),
                 ),
-              ),
-              const SizedBox(height: 18),
-              LocalizedText(
-                'Prototype sample data only. Live doctor availability will be supplied by Thaai Seyali.',
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 10,
-                  height: 1.4,
-                ),
+              ],
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+
+class _AppointmentActionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final bool highlighted;
+  final VoidCallback onTap;
+
+  const _AppointmentActionCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+    this.highlighted = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = highlighted ? Colors.white : _burgundy;
+    final secondary = highlighted ? _blush : _secondaryText;
+    return Material(
+      color: highlighted ? _burgundy : _blush,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryText.withValues(alpha: 0.07),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
-        );
-      },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: foreground, size: 31),
+              const Spacer(),
+              LocalizedText(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              LocalizedText(
+                description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: secondary, fontSize: 11, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _AppointmentIcon extends StatelessWidget {
-  final IconData icon;
-
-  const _AppointmentIcon({required this.icon});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 40,
-    height: 40,
-    decoration: BoxDecoration(
-      color: AppColors.blushPink,
-      borderRadius: BorderRadius.circular(13),
-    ),
-    child: Icon(icon, color: AppColors.burgundy, size: 20),
-  );
-}
+const _burgundy = Color(0xFF6B1837);
+const _blush = Color(0xFFF8E9EE);
+const _primaryText = Color(0xFF30232A);
+const _secondaryText = Color(0xFF806D76);

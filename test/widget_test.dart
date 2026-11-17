@@ -8,10 +8,21 @@ import 'package:app/core/widgets/date_of_birth_picker.dart';
 import 'package:app/core/widgets/copyable_patient_id.dart';
 import 'package:app/features/auth/presentation/new_patient/patient_details_screen.dart'
     as new_patient;
+import 'package:app/features/auth/presentation/linked_member/linked_member_otp_screen.dart';
 import 'package:app/features/appointments/presentation/appointment_dashboard_screen.dart';
+import 'package:app/features/appointments/presentation/appointment_detail_screen.dart';
+import 'package:app/features/appointments/presentation/appointment_history_screen.dart';
 import 'package:app/features/appointments/presentation/data/appointment_data.dart';
+import 'package:app/features/appointments/presentation/clinic_location_screen.dart';
 import 'package:app/features/appointments/presentation/doctor_information_screen.dart';
+import 'package:app/features/appointments/presentation/available_time_screen.dart';
+import 'package:app/features/appointments/presentation/available_date_screen.dart';
+import 'package:app/features/appointments/presentation/booking_request_screen.dart';
+import 'package:app/features/appointments/presentation/booking_review_screen.dart';
+import 'package:app/features/appointments/presentation/models/appointment_models.dart';
+import 'package:app/features/appointments/presentation/upcoming_appointments_screen.dart';
 import 'package:app/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:app/features/dashboard/presentation/widgets/dashboard_home_content.dart';
 import 'package:app/features/dashboard/presentation/journey_sections.dart';
 import 'package:app/features/dashboard/presentation/widgets/dashboard_card.dart';
 import 'package:app/features/dashboard/data/treatment_journey_data.dart';
@@ -30,6 +41,8 @@ Future<void> _pumpLiveDashboard(WidgetTester tester) =>
 Future<void> _pumpRouteTransition(WidgetTester tester) =>
     tester.pump(const Duration(seconds: 1));
 
+void _noopNavigation(int index) {}
+
 void main() {
   testWidgets('patient ID copies only the ID and confirms the action', (
     WidgetTester tester,
@@ -39,7 +52,7 @@ void main() {
       (call) async => null,
     );
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(body: CopyablePatientId(patientId: 'TS-12345')),
       ),
     );
@@ -74,23 +87,34 @@ void main() {
 
     expect(find.text('Select year'), findsOneWidget);
     final year = DateTime.now().year - 30;
-    await tester.tap(find.text('$year'));
+    await tester.tap(find.text('Select year'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(ValueKey('dob-year-option-$year')),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(ValueKey('dob-year-option-$year')));
     await tester.pumpAndSettle();
 
     expect(find.text('Select month · $year'), findsOneWidget);
-    await tester.tap(find.text('April'));
+    await tester.tap(find.text('Select month · $year'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('dob-month-option-4')));
     await tester.pumpAndSettle();
 
-    final calendar = tester.widget<CalendarDatePicker>(
+    final calendar = tester.widget<GridView>(
       find.byKey(const ValueKey('dob-day-calendar')),
     );
-    expect(calendar.initialDate?.year, year);
-    expect(calendar.initialDate?.month, 4);
+    expect(calendar, isA<GridView>());
     final secondDay = find.descendant(
       of: find.byKey(const ValueKey('dob-day-calendar')),
       matching: find.text('2'),
     );
     await tester.tap(secondDay.first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Set Date'));
+    await tester.tap(find.text('Set Date'));
     await tester.pumpAndSettle();
     expect(
       tester
@@ -137,7 +161,7 @@ void main() {
   });
 
   testWidgets('Thaai Seyali app loads', (WidgetTester tester) async {
-    await tester.pumpWidget(const ThaaiSeyazhiApp());
+    await tester.pumpWidget(const ThaaiSeyaliApp());
 
     expect(find.text('THAAI SEYALI'), findsOneWidget);
   });
@@ -151,9 +175,60 @@ void main() {
 
     expect(find.text('No prescriptions available'), findsOneWidget);
     expect(find.text('No active prescriptions'), findsOneWidget);
+    expect(
+      tester.widget<DashboardCard>(find.byType(DashboardCard).first).color,
+      AppColors.blushPink,
+    );
     expect(find.text('Clinic prescription'), findsNothing);
     expect(find.text('Mark taken'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  test('duplicate appointment submissions are rejected', () async {
+    SharedPreferences.setMockInitialValues({});
+    await initializeAppointmentData(accountId: 'duplicate-booking-test');
+    final bookingDate = DateTime(2027, 1, 20);
+    final firstSubmission = addAppointment(
+      doctor: sampleDoctors.first,
+      date: bookingDate,
+      time: '09:30 AM',
+      patientName: 'Test Patient',
+      appointmentType: 'Fertility consultation',
+      consultationMode: 'In clinic',
+      reason: 'Follow-up consultation',
+      notes: '',
+    );
+    final duplicateSubmission = addAppointment(
+      doctor: sampleDoctors.first,
+      date: bookingDate,
+      time: '09:30 AM',
+      patientName: ' Test Patient ',
+      appointmentType: 'Fertility consultation',
+      consultationMode: 'In clinic',
+      reason: 'Follow-up consultation',
+      notes: '',
+    );
+    final duplicateExpectation = expectLater(
+      duplicateSubmission,
+      throwsA(isA<DuplicateAppointmentException>()),
+    );
+
+    await firstSubmission;
+    await duplicateExpectation;
+    expect(
+      sampleAppointments
+          .where(
+            (appointment) =>
+                appointment.patientName == 'Test Patient' &&
+                appointment.date == bookingDate,
+          )
+          .length,
+      1,
+    );
+    final preferences = await SharedPreferences.getInstance();
+    await NotificationService.instance.clearAll();
+    await preferences.clear();
+    await initializeAppointmentData(accountId: 'duplicate-booking-test');
   });
 
   testWidgets('notification screen shows the persisted empty state', (
@@ -168,7 +243,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('appointment requests do not show fabricated sample slots', (
+  testWidgets('appointments landing page shows four navigation cards', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -184,16 +259,441 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text(
-        'Submitted appointment requests will appear here when available.',
-      ),
+      find.byKey(const ValueKey('appointment-action-grid')),
       findsOneWidget,
     );
-    expect(find.text('14 May · 10:30 AM · Sample slot'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('appointment-book-visit')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('appointment-upcoming')), findsOneWidget);
+    expect(find.byKey(const ValueKey('appointment-history')), findsOneWidget);
+    expect(find.byKey(const ValueKey('appointment-clinic')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Your Next Visit updates when an appointment is submitted', (
+  testWidgets('appointment landing cards open their existing screens', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppointmentDashboardScreen(
+            patientName: 'Patient',
+            mobileNumber: '',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('appointment-book-visit')));
+    await tester.pumpAndSettle();
+    expect(find.byType(DoctorInformationScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('appointment-upcoming')));
+    await tester.pumpAndSettle();
+    expect(find.byType(UpcomingAppointmentsScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('appointment-history')),
+    );
+    await tester.tap(find.byKey(const ValueKey('appointment-history')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppointmentHistoryScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('appointment-clinic')),
+    );
+    await tester.tap(find.byKey(const ValueKey('appointment-clinic')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ClinicLocationScreen), findsOneWidget);
+    expect(find.text('Clinic information'), findsOneWidget);
+  });
+
+  testWidgets('Home Prescriptions opens the medication schedule', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: DashboardHomeContent(
+              patientName: 'Patient',
+              patientState: DashboardPatientState.ivf,
+              onNavigate: _noopNavigation,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final prescriptions = find.text('Prescriptions');
+    await tester.ensureVisible(prescriptions);
+    await tester.tap(prescriptions);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MedicationScheduleScreen), findsOneWidget);
+  });
+
+  testWidgets('appointment details show structured data and status actions', (
+    WidgetTester tester,
+  ) async {
+    Appointment buildAppointment(String status) => Appointment(
+      title: 'Monitoring consultation',
+      date: DateTime(2026, 12, 12),
+      time: '10:30 AM',
+      clinic: 'Thaai Seyali Clinic',
+      status: status,
+      doctorName: 'Dr. Meera Sharma',
+      specialty: 'Fertility Specialist',
+      appointmentType: 'Monitoring consultation',
+      consultationMode: 'In clinic',
+      reason: 'Follow-up monitoring',
+      clinicAddress: 'Verified clinic address',
+      preparationGuidance: const ['Bring your clinic report'],
+      notes: 'Patient notes',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppointmentDetailsScreen(
+            appointment: buildAppointment('Confirmed'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Doctor information'), findsOneWidget);
+    expect(find.text('Appointment schedule'), findsOneWidget);
+    expect(find.text('Clinic information'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Preparation guidance'), 300);
+    expect(find.text('Preparation guidance'), findsOneWidget);
+    expect(find.text('Bring your clinic report'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Reschedule appointment'), 300);
+    expect(find.text('Reschedule appointment'), findsOneWidget);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppointmentDetailsScreen(
+            appointment: buildAppointment('Completed'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Book another visit'), findsOneWidget);
+    expect(find.text('Reschedule appointment'), findsNothing);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppointmentDetailsScreen(
+            appointment: buildAppointment('Cancelled'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Reschedule appointment'), findsNothing);
+  });
+
+  testWidgets('OTP form remains usable with the keyboard inset', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LinkedMemberOtpScreen(mobileNumber: '9876543210'),
+      ),
+    );
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    tester.view.viewInsets = FakeViewPadding.zero;
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('time selection shows sample and supplied availability', (
+    WidgetTester tester,
+  ) async {
+    const doctorWithoutAvailability = Doctor(
+      name: 'Dr. Meera Sharma',
+      initials: 'MS',
+      specialty: 'Fertility Specialist',
+      languages: 'English',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AvailableTimeScreen(
+          doctor: doctorWithoutAvailability,
+          selectedDate: DateTime(2026, 12, 12),
+          patientName: 'Patient',
+          mobileNumber: '9876543210',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text(
+        'Demo time slots only; these are not live clinic availability.',
+      ),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.scrollUntilVisible(
+      find.text('06:30 PM'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(
+      find.text(
+        'Demo time slots only; these are not live clinic availability.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('09:30 AM'), findsOneWidget);
+    expect(find.text('12:00 PM'), findsOneWidget);
+    expect(find.text('06:30 PM'), findsOneWidget);
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.widgetWithText(ElevatedButton, 'Continue'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, '04:00 PM'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+
+    const doctorWithAvailability = Doctor(
+      name: 'Dr. Meera Sharma',
+      initials: 'MS',
+      specialty: 'Fertility Specialist',
+      languages: 'English',
+      workingDays: 'Monday to Friday',
+      morningHours: '09:00 AM - 12:00 PM',
+      availableTimeSlots: ['10:30 AM'],
+      unavailableTimeSlots: ['11:00 AM'],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AvailableTimeScreen(
+          doctor: doctorWithAvailability,
+          selectedDate: DateTime(2026, 12, 12),
+          patientName: 'Patient',
+          mobileNumber: '9876543210',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('10:30 AM'), findsOneWidget);
+    expect(find.text('11:00 AM'), findsOneWidget);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, '11:00 AM'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.text('10:30 AM'));
+    await tester.pump();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BookingRequestScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byType(AvailableTimeScreen), findsOneWidget);
+    expect(find.text('Selected time'), findsOneWidget);
+    expect(find.text('10:30 AM'), findsWidgets);
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.widgetWithText(ElevatedButton, 'Continue'),
+          )
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('selected date continues to time selection workflow', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AvailableDateScreen(
+          doctor: Doctor(
+            name: 'Dr. Meera Sharma',
+            initials: 'MS',
+            specialty: 'Fertility Specialist',
+            languages: 'English',
+          ),
+          selectedDate: DateTime(2026, 12, 12),
+          patientName: 'Patient',
+          mobileNumber: '9876543210',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text("Doctor's Working Hours"), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Demo working hours'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Demo working hours'), findsOneWidget);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AvailableTimeScreen), findsOneWidget);
+    expect(find.text('10:30 AM'), findsOneWidget);
+    expect(find.text('Choose a time'), findsOneWidget);
+  });
+
+  testWidgets('doctor working-hours page fits a small Tamil layout', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ta'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AvailableDateScreen(
+          doctor: sampleDoctors.first,
+          selectedDate: DateTime(2026, 12, 12),
+          patientName: 'Patient',
+          mobileNumber: '9876543210',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('மருத்துவர் விவரங்கள் மற்றும் பணிநேரம்'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('செயல்விளக்கப் பணிநேரம்'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('செயல்விளக்கப் பணிநேரம்'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(
+        'இவை பொதுவான பணிநேரங்கள் மட்டுமே; உறுதிப்படுத்தப்பட்ட சந்திப்பு நேரங்கள் அல்ல.',
+      ),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('தொடரவும்'));
+    await tester.pumpAndSettle();
+    expect(find.text('நேரத்தைத் தேர்ந்தெடுக்கவும்'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(
+        'செயல்விளக்க நேரங்கள் மட்டுமே; இவை மருத்துவமையத்தின் நேரடி கிடைப்புத் தகவல் அல்ல.',
+      ),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(
+      find.text(
+        'செயல்விளக்க நேரங்கள் மட்டுமே; இவை மருத்துவமையத்தின் நேரடி கிடைப்புத் தகவல் அல்ல.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'appointment request saves a selected reason and confirms locally',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await initializeAppointmentData(accountId: 'patient-flow-test');
+      final doctor = sampleDoctors.first;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AvailableTimeScreen(
+            doctor: doctor,
+            selectedDate: DateTime(2026, 12, 12),
+            patientName: 'Patient',
+            mobileNumber: '9876543210',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('09:30 AM'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BookingRequestScreen), findsOneWidget);
+      await tester.tap(find.byType(DropdownButtonFormField<String>).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('IVF consultation').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'Review medication',
+      );
+      tester.testTextInput.hide();
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView), const Offset(0, -240));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Review booking'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BookingReviewScreen), findsOneWidget);
+      expect(find.text('09:30 AM'), findsOneWidget);
+      expect(find.text('IVF consultation'), findsOneWidget);
+      expect(find.text('Review medication'), findsOneWidget);
+      await tester.tap(find.text('Confirm Booking'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Your demo booking was saved on this device. It has not been sent to or confirmed by the clinic.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Appointment ID'), findsOneWidget);
+      expect(find.text('Requested'), findsOneWidget);
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.getString('patient-flow-test_appointment_records'),
+        isNotNull,
+      );
+      expect(tester.takeException(), isNull);
+      await NotificationService.instance.clearAll();
+      sampleAppointments.clear();
+      sampleHistory.clear();
+      appointmentStore.refresh();
+      await preferences.clear();
+    },
+  );
+
+  testWidgets('appointment landing page remains available after booking', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -224,8 +724,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('New appointment request'), findsOneWidget);
-    expect(find.text('YOUR NEXT VISIT'), findsOneWidget);
+    expect(find.byKey(const ValueKey('appointment-upcoming')), findsOneWidget);
+    expect(find.byKey(const ValueKey('appointment-history')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -307,7 +807,10 @@ void main() {
   testWidgets('dashboard home and journey fit narrow English layout', (
     WidgetTester tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'appointment_records': '[]',
+      'appointment_history': '[]',
+    });
     tester.view.physicalSize = const Size(320, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -348,7 +851,15 @@ void main() {
     await _pumpLiveDashboard(tester);
     expect(find.text('Appointments'), findsWidgets);
     expect(tester.takeException(), isNull);
-    expect(find.text('No upcoming appointments.'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('appointment-action-grid')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('appointment-book-visit')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('appointment-upcoming')), findsOneWidget);
 
     await tester.tap(
       find.descendant(
@@ -440,19 +951,11 @@ void main() {
       ),
     );
     await _pumpLiveDashboard(tester);
-    final doctorsHeader = find.ancestor(
-      of: find.text('Our Doctors'),
-      matching: find.byType(DashboardSectionHeader),
-    );
-    await tester.ensureVisible(doctorsHeader);
-    expect(
-      tester.widget<DashboardSectionHeader>(doctorsHeader).onAction,
-      isNotNull,
-    );
-    final viewAllButton = find.descendant(
-      of: doctorsHeader,
-      matching: find.byType(TextButton),
-    );
+    expect(find.text('Your Care Team'), findsOneWidget);
+    final viewAllButton = find.widgetWithText(TextButton, 'View All Doctors');
+    expect(find.text('View All Doctors'), findsOneWidget);
+    await tester.ensureVisible(find.text('View All Doctors'));
+    expect(tester.widget<TextButton>(viewAllButton).onPressed, isNotNull);
     expect(viewAllButton.hitTestable(), findsOneWidget);
     expect(
       Navigator.of(tester.element(find.byType(DashboardScreen))).canPop(),
@@ -736,7 +1239,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(find.text('Close'));
+    await tester.binding.handlePopRoute();
     await _pumpLiveDashboard(tester);
     final milestoneDisclaimer = find.text(
       'No milestone is marked complete unless your clinic provides that status.',
@@ -747,7 +1250,7 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(milestoneDisclaimer, findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.byType(TreatmentTimelineScreen))).pop();
     await _pumpLiveDashboard(tester);
 
     await tester.ensureVisible(find.text('IVF Timeline'));
@@ -937,21 +1440,19 @@ void main() {
     await _pumpLiveDashboard(tester);
 
     expect(find.text('Priya Sharma'), findsOneWidget);
-    expect(find.text('Patient ID: TS-12345'), findsOneWidget);
+    expect(find.text('Patient ID'), findsOneWidget);
+    expect(find.text('TS-12345'), findsOneWidget);
     expect(find.text('9876543210'), findsOneWidget);
     expect(find.text('01/01/1990'), findsOneWidget);
     final profileHeader = find.ancestor(
-      of: find.text('Patient ID: TS-12345'),
+      of: find.text('TS-12345'),
       matching: find.byType(DashboardCard),
     );
     expect(
       tester.widget<DashboardCard>(profileHeader.first).color,
       AppColors.burgundy,
     );
-    expect(
-      tester.widget<Text>(find.text('Patient ID: TS-12345')).style?.fontSize,
-      8,
-    );
+    expect(tester.widget<Text>(find.text('TS-12345')).style?.fontSize, 8);
     expect(tester.takeException(), isNull);
   });
 
@@ -973,6 +1474,7 @@ void main() {
       partnerMobile: '9123456780',
       partnerUserId: 'user:partner',
     );
+    await links.approveRequest(request.linkId);
 
     await tester.pumpWidget(
       MaterialApp(

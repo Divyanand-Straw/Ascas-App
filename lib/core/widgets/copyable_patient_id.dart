@@ -43,12 +43,13 @@ class CopyablePatientId extends StatelessWidget {
         borderRadius: borderRadius,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(patientId, style: textStyle),
+              Text(patientId, softWrap: true, style: textStyle),
               if (showCopyIcon) ...[
-                const SizedBox(width: 4),
                 Icon(Icons.copy_outlined, size: 12, color: textStyle?.color),
               ],
             ],
@@ -60,13 +61,19 @@ class CopyablePatientId extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: decoration,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LocalizedText('Patient ID', style: labelStyle),
-          const SizedBox(width: 4),
-          id,
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) => Wrap(
+          spacing: 4,
+          runSpacing: 2,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            LocalizedText('Patient ID', style: labelStyle),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+              child: id,
+            ),
+          ],
+        ),
       ),
     );
   }

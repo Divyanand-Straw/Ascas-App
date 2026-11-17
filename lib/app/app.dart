@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
-import '../core/constants/app_constants.dart';
 import '../core/services/notification_service.dart';
 import '../core/services/locale_service.dart';
 import '../core/services/biometric_service.dart';
@@ -15,14 +14,14 @@ import '../features/splash/presentation/splash_screen.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
-class ThaaiSeyazhiApp extends StatefulWidget {
-  const ThaaiSeyazhiApp({super.key});
+class ThaaiSeyaliApp extends StatefulWidget {
+  const ThaaiSeyaliApp({super.key});
 
   @override
-  State<ThaaiSeyazhiApp> createState() => _ThaaiSeyazhiAppState();
+  State<ThaaiSeyaliApp> createState() => _ThaaiSeyaliAppState();
 }
 
-class _ThaaiSeyazhiAppState extends State<ThaaiSeyazhiApp>
+class _ThaaiSeyaliAppState extends State<ThaaiSeyaliApp>
     with WidgetsBindingObserver {
   final _biometricService = BiometricService.instance;
 
@@ -64,7 +63,7 @@ class _ThaaiSeyazhiAppState extends State<ThaaiSeyazhiApp>
       valueListenable: LocaleService.locale,
       builder: (context, locale, child) => MaterialApp(
         navigatorKey: navigatorKey,
-        title: AppConstants.appName,
+        onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         locale: locale,

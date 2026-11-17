@@ -36,9 +36,12 @@ void main() {
         partnerName: 'Partner One',
         partnerMobile: '9123456780',
       );
-      expect(request.status, PartnerLinkStatus.active);
-      expect(request.patientConsentTimestamp, invitation.createdAt);
+      expect(request.status, PartnerLinkStatus.pending);
+      expect(request.patientConsentTimestamp, isNull);
       expect(request.partnerAcceptanceTimestamp, isNotNull);
+      final approved = await service.approveRequest(request.linkId);
+      expect(approved.status, PartnerLinkStatus.active);
+      expect(approved.patientConsentTimestamp, isNotNull);
       expect(
         await service.activeLinkForPartner(
           '9123456780',
@@ -156,7 +159,7 @@ void main() {
       ),
       throwsA(isA<StateError>()),
     );
-    expect(request.status, PartnerLinkStatus.active);
+    expect(request.status, PartnerLinkStatus.pending);
   });
 
   test(
@@ -174,7 +177,8 @@ void main() {
         partnerName: 'Partner One',
         partnerMobile: '9123456780',
       );
-      expect(activeLink.status, PartnerLinkStatus.active);
+      final approvedLink = await service.approveRequest(activeLink.linkId);
+      expect(approvedLink.status, PartnerLinkStatus.active);
 
       final thirdInvitation = await service.generateInvitation(
         patientUserId: 'patient-account-3',

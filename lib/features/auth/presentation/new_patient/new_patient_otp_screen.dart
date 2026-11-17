@@ -129,8 +129,8 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
   Widget _buildOtpInput() {
     return OtpInput(
       key: _otpInputKey,
-      boxWidth: 50,
-      boxHeight: 64,
+      boxWidth: 54,
+      boxHeight: 68,
       textStyle: const TextStyle(
         color: Colors.black,
         fontSize: 23,
@@ -244,14 +244,11 @@ class _NewPatientOtpScreenState extends State<NewPatientOtpScreen> {
                 ),
               ),
               const SizedBox(height: 35),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [_buildOtpInput()],
-              ),
+              _buildOtpInput(),
               const SizedBox(height: 35),
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _verifyOtp,
                   style: ElevatedButton.styleFrom(
