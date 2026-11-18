@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../data/models/auth_models.dart';
-import '../data/repositories/auth_repository.dart';
+import '../../data/models/auth_models.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'linked_member_access_screen.dart';
 
 class LinkedMemberOtpScreen extends StatefulWidget {

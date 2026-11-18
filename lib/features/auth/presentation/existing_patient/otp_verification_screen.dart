@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'clinic_record_access_screen.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../dashboard/presentation/dashboard_screen.dart';
-import '../data/models/auth_models.dart';
-import '../data/repositories/auth_repository.dart';
+import '../../../dashboard/presentation/dashboard_screen.dart';
+import '../../data/models/auth_models.dart';
+import '../../data/repositories/auth_repository.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String mobileNumber;

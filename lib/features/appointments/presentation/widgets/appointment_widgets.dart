@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/localization/localized_text.dart';
+import '../../../../core/localization/localized_text.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../models/appointment_models.dart';
