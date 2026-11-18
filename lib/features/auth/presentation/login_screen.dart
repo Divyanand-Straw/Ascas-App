@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
-import 'forgot_password/forgot_password_screen.dart';
-import 'register_screen.dart';
+import '../data/models/auth_models.dart';
+import '../data/repositories/auth_repository.dart';
+import 'existing_patient/otp_verification_screen.dart';
+import 'patient_type_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,45 +17,98 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  bool _obscurePassword = true;
+  final _phoneController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _sendOtp() async {
     if (!_formKey.currentState!.validate()) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Login backend integration is coming soon.'),
-      ),
-    );
+    final phone = _phoneController.text.trim();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await AuthRepository.instance.sendOtp(
+        phone: phone,
+        purpose: OtpPurpose.login,
+      );
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationScreen(
+            mobileNumber: phone,
+            challengeId: response.challengeId,
+            initialCountdownSeconds: response.retryAfterSeconds,
+            fromExistingPatient: true,
+          ),
+        ),
+      );
+    } on ApiError catch (e) {
+      if (!mounted) return;
+
+      if (e.errorCode == 'USER_NOT_FOUND') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No patient account found for this mobile number.'),
+            action: SnackBarAction(
+              label: 'Register',
+              textColor: Colors.amber,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PatientTypeScreen()),
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to request OTP: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  void _showPendingMessage(String provider) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$provider login integration is coming soon.')),
-    );
-  }
-
-  InputDecoration _fieldDecoration({
+  InputDecoration _phoneFieldDecoration({
     required String hint,
-    required IconData icon,
-    Widget? suffix,
   }) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 14),
-      prefixIcon: Icon(icon, color: AppColors.secondaryText),
-      suffixIcon: suffix,
+      prefixIcon: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        child: const Text(
+          '+91',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primaryText,
+          ),
+        ),
+      ),
       filled: true,
       fillColor: AppColors.background,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
@@ -68,38 +123,6 @@ class _LoginScreenState extends State<LoginScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required Widget icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryText,
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: AppColors.divider),
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 9),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -141,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 15),
-                        Text(
+                        const Text(
                           'THAAI SEYAZHI',
                           style: TextStyle(
                             color: Colors.white,
@@ -151,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
+                        const Text(
                           'தாய் செயழி',
                           style: TextStyle(
                             color: Colors.white,
@@ -170,10 +193,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 18),
                         Text(
                           l10n.myJourney,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 27,
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Log in with your registered mobile number using secure one-time passcode (OTP).',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.secondaryText,
+                            height: 1.4,
                           ),
                         ),
                         const SizedBox(height: 28),
@@ -182,8 +214,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                l10n.emailAddress,
+                              const Text(
+                                'Mobile Number',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -192,86 +224,31 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 8),
                               TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: _fieldDecoration(
-                                  hint: l10n.enterEmailAddress,
-                                  icon: Icons.email_outlined,
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                maxLength: 10,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                decoration: _phoneFieldDecoration(
+                                  hint: 'Enter 10-digit mobile number',
                                 ),
                                 validator: (value) {
-                                  if (value == null ||
-                                      !RegExp(r'^[^@]+@[^@]+\.[^@]+$')
-                                          .hasMatch(value.trim())) {
-                                    return l10n.validEmailAddress;
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Mobile number is required';
+                                  }
+                                  if (!RegExp(r'^[6-9]\d{9}$').hasMatch(value.trim())) {
+                                    return 'Enter a valid 10-digit mobile number';
                                   }
                                   return null;
                                 },
                               ),
                               const SizedBox(height: 20),
-                              Text(
-                                l10n.password,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primaryText,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: _fieldDecoration(
-                                  hint: l10n.enterPassword,
-                                  icon: Icons.lock_outline,
-                                  suffix: IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
-                                    },
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
-                                    ),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return l10n.pleaseEnterPassword;
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 10),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ForgotPasswordScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: Text(
-                                    l10n.forgotPasswordQuestion,
-                                    style: TextStyle(
-                                      color: AppColors.burgundy,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
                                 height: 53,
                                 child: ElevatedButton(
-                                  onPressed: _login,
+                                  onPressed: _isLoading ? null : _sendOtp,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.burgundy,
                                     foregroundColor: Colors.white,
@@ -279,81 +256,52 @@ class _LoginScreenState extends State<LoginScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: Text(
-                                    l10n.login,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2.5,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Get OTP',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 25),
-                        Center(
-                          child: Text(
-                            l10n.orLoginWith,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
-                              color: AppColors.secondaryText,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 17),
-                        Row(
-                          children: [
-                            _buildSocialButton(
-                              icon: const FaIcon(
-                                FontAwesomeIcons.google,
-                                size: 17,
-                              ),
-                              label: 'Google',
-                              onPressed: () {
-                                _showPendingMessage('Google');
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            _buildSocialButton(
-                              icon: const FaIcon(
-                                FontAwesomeIcons.apple,
-                                size: 21,
-                              ),
-                              label: 'Apple',
-                              onPressed: () {
-                                _showPendingMessage('Apple');
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 35),
                         Center(
                           child: Wrap(
                             alignment: WrapAlignment.center,
                             children: [
                               Text(
                                 l10n.noAccount,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.secondaryText,
                                 ),
                               ),
+                              const SizedBox(width: 4),
                               GestureDetector(
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const RegisterScreen(),
+                                      builder: (context) => const PatientTypeScreen(),
                                     ),
                                   );
                                 },
                                 child: Text(
                                   l10n.createAccount,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     color: AppColors.burgundy,
                                     fontWeight: FontWeight.bold,
@@ -381,19 +329,15 @@ class LoginCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-
     path.lineTo(0, size.height - 45);
-
     path.quadraticBezierTo(
       size.width * 0.5,
       size.height + 35,
       size.width,
       size.height - 45,
     );
-
     path.lineTo(size.width, 0);
     path.close();
-
     return path;
   }
 

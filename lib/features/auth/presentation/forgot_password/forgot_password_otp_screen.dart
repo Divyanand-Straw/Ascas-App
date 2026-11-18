@@ -108,18 +108,15 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
       return;
     }
 
-    if (_enteredOtp != '123456') {
-      for (final controller in _controllers) {
-        controller.clear();
-      }
-
-      _focusNodes[0].requestFocus();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid OTP. Please try again.')),
-      );
-      return;
-    }
+    // In Phone OTP authentication, password reset is superseded by mobile OTP login.
+    // If accessed, reject hardcoded mock OTP and require mobile login.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Password authentication has been replaced by secure Phone OTP login.'),
+      ),
+    );
+    Navigator.pop(context);
+    return;
 
     if (widget.onVerified != null) {
       widget.onVerified!();

@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,20 +5,26 @@ import 'package:flutter/services.dart';
 import 'clinic_record_access_screen.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../dashboard/presentation/dashboard_screen.dart';
+import '../data/models/auth_models.dart';
+import '../data/repositories/auth_repository.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String mobileNumber;
+  final String? challengeId;
+  final int initialCountdownSeconds;
   final bool fromExistingPatient;
 
   const OtpVerificationScreen({
     super.key,
     required this.mobileNumber,
+    this.challengeId,
+    this.initialCountdownSeconds = 45,
     this.fromExistingPatient = false,
   });
 
   @override
-  State<OtpVerificationScreen> createState() =>
-      _OtpVerificationScreenState();
+  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
@@ -30,14 +35,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       List.generate(6, (_) => FocusNode());
 
   Timer? _timer;
-
-  int _remainingSeconds = 42;
+  late int _remainingSeconds;
   bool _canResend = false;
+  bool _isVerifying = false;
+  bool _isResending = false;
+
+  late String _currentChallengeId;
+  int? _remainingAttempts;
 
   @override
   void initState() {
     super.initState();
+    _currentChallengeId = widget.challengeId ?? '';
+    _remainingSeconds = widget.initialCountdownSeconds;
     _startCountdown();
+
+    if (_currentChallengeId.isEmpty) {
+      _requestInitialOtp();
+    }
   }
 
   @override
@@ -55,11 +70,26 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
+  Future<void> _requestInitialOtp() async {
+    try {
+      final res = await AuthRepository.instance.sendOtp(
+        phone: widget.mobileNumber,
+        purpose: OtpPurpose.login,
+      );
+      if (mounted) {
+        setState(() {
+          _currentChallengeId = res.challengeId;
+          _remainingSeconds = res.retryAfterSeconds;
+        });
+        _startCountdown();
+      }
+    } catch (_) {}
+  }
+
   void _startCountdown() {
     _timer?.cancel();
 
     setState(() {
-      _remainingSeconds = 42;
       _canResend = false;
     });
 
@@ -72,7 +102,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           });
         } else {
           timer.cancel();
-
           setState(() {
             _canResend = true;
           });
@@ -85,17 +114,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     if (widget.mobileNumber.length != 10) {
       return widget.mobileNumber;
     }
-
     return '•••••• ${widget.mobileNumber.substring(6)}';
   }
 
   String get _formattedTime {
-    final minutes =
-        (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
-
-    final seconds =
-        (_remainingSeconds % 60).toString().padLeft(2, '0');
-
+    final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
@@ -115,64 +139,157 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     setState(() {});
   }
 
-  void _resendOtp() {
-    if (!_canResend) return;
+  Future<void> _resendOtp() async {
+    if (!_canResend || _isResending) return;
 
-    for (final controller in _otpControllers) {
-      controller.clear();
+    setState(() {
+      _isResending = true;
+    });
+
+    try {
+      final res = await AuthRepository.instance.sendOtp(
+        phone: widget.mobileNumber,
+        purpose: OtpPurpose.login,
+      );
+
+      for (final controller in _otpControllers) {
+        controller.clear();
+      }
+
+      _focusNodes[0].requestFocus();
+
+      setState(() {
+        _currentChallengeId = res.challengeId;
+        _remainingSeconds = res.retryAfterSeconds;
+        _remainingAttempts = null;
+      });
+
+      _startCountdown();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('A new verification code has been dispatched.'),
+        ),
+      );
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to resend code: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+        });
+      }
     }
-
-    _focusNodes[0].requestFocus();
-    _startCountdown();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('OTP resend is a prototype action.'),
-      ),
-    );
   }
 
-  void _verifyOtp() {
-    final otp = _enteredOtp;
+  Future<void> _verifyOtp() async {
+    final otp = _enteredOtp.trim();
 
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter the 6-digit OTP.'),
+          content: Text('Please enter the full 6-digit verification code.'),
         ),
       );
       return;
     }
 
-    if (otp != '123456') {
+    setState(() {
+      _isVerifying = true;
+    });
+
+    try {
+      final session = await AuthRepository.instance.verifyOtp(
+        challengeId: _currentChallengeId,
+        phone: widget.mobileNumber,
+        purpose: OtpPurpose.login,
+        otp: otp,
+      );
+
+      _timer?.cancel();
+
+      if (!mounted) return;
+
+      if (session.hasCompletedProfile && session.profile != null) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DashboardScreen(
+              patientName: session.profile!.fullName,
+              mobileNumber: widget.mobileNumber,
+              dateOfBirth: session.profile!.dob ?? '',
+              preferredLanguage: session.profile!.preferredLanguage,
+              accountId: session.user.id,
+            ),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ClinicRecordAccessScreen(
+              mobileNumber: widget.mobileNumber,
+            ),
+          ),
+        );
+      }
+    } on ApiError catch (e) {
+      if (!mounted) return;
+
+      if (e.errorCode == 'INVALID_OTP') {
+        setState(() {
+          _remainingAttempts = e.remainingAttempts;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.remainingAttempts != null
+                  ? 'Incorrect verification code. ${e.remainingAttempts} attempt(s) remaining.'
+                  : 'Incorrect verification code. Please try again.',
+            ),
+          ),
+        );
+      } else if (e.errorCode == 'MAX_ATTEMPTS_EXCEEDED') {
+        setState(() {
+          _remainingAttempts = 0;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Maximum attempts exceeded. Please request a new code.'),
+          ),
+        );
+      } else if (e.errorCode == 'OTP_EXPIRED') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Verification code expired. Please request a new one.'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Incorrect OTP. Please try again.'),
-        ),
+        SnackBar(content: Text('Verification failed: $e')),
       );
-      return;
-    }
-
-    _timer?.cancel();
-
-    if (widget.fromExistingPatient) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ClinicRecordAccessScreen(
-            mobileNumber: widget.mobileNumber,
-          ),
-        ),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ClinicRecordAccessScreen(
-            mobileNumber: widget.mobileNumber,
-          ),
-        ),
-      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+        });
+      }
     }
   }
 
@@ -201,15 +318,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(
-              color: AppColors.divider,
-            ),
+            borderSide: const BorderSide(color: AppColors.divider),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
-            borderSide: const BorderSide(
-              color: AppColors.divider,
-            ),
+            borderSide: const BorderSide(color: AppColors.divider),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(11),
@@ -226,6 +339,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLockedOut = _remainingAttempts == 0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -250,167 +365,118 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           'STEP 3 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 1.3,
+                            letterSpacing: 1.2,
                           ),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'OTP verification',
+                          'Mobile verification',
                           style: TextStyle(
-                            color: AppColors.burgundy,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryText,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
-                      'Exit',
-                      style: TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 24),
                 ],
               ),
-
-              const SizedBox(height: 16),
-
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
-
-              const SizedBox(height: 16),
-
-              const StepProgressBar(currentStep: 3),
-
-              const SizedBox(height: 35),
-
+              const SizedBox(height: 12),
+              const StepProgressBar(currentStep: 3, totalSteps: 8),
+              const SizedBox(height: 24),
               const Text(
-                'OTP VERIFICATION',
-                style: TextStyle(
-                  color: AppColors.burgundy,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              const Text(
-                'Enter the 6-digit code',
+                'Verify your mobile',
                 style: TextStyle(
                   color: AppColors.primaryText,
-                  fontSize: 25,
-                  height: 1.2,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
-              const SizedBox(height: 12),
-
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
-                  children: [
-                    const TextSpan(text: 'Sent to +91 '),
-                    TextSpan(
-                      text: _maskedMobileNumber,
-                      style: const TextStyle(
-                        color: AppColors.primaryText,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              Text(
+                'Enter the 6-digit verification code sent to $_maskedMobileNumber',
+                style: const TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 13,
+                  height: 1.45,
                 ),
               ),
-
-              const SizedBox(height: 35),
-
+              const SizedBox(height: 28),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(
                   6,
                   (index) => _buildOtpBox(index),
                 ),
               ),
-
-              const SizedBox(height: 35),
-
+              if (_remainingAttempts != null && _remainingAttempts! > 0) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '$_remainingAttempts attempt(s) remaining',
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _formattedTime,
+                    style: const TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _canResend && !_isResending ? _resendOtp : null,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.burgundy,
+                      disabledForegroundColor:
+                          AppColors.secondaryText.withValues(alpha: 0.5),
+                    ),
+                    child: _isResending
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Resend Code',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _verifyOtp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.burgundy,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                  ),
-                  child: const Text(
-                    'Verify OTP',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  onPressed: isLockedOut || _isVerifying ? null : _verifyOtp,
+                  child: _isVerifying
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const Text('Verify and proceed'),
                 ),
               ),
-
-              const SizedBox(height: 18),
-
-              Center(
-                child: _canResend
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Didn’t receive the code?',
-                            style: TextStyle(
-                              color: AppColors.secondaryText,
-                              fontSize: 12,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _resendOtp,
-                            child: const Text(
-                              'Resend OTP',
-                              style: TextStyle(
-                                color: AppColors.burgundy,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Text(
-                        'Resend OTP in $_formattedTime',
-                        style: const TextStyle(
-                          color: AppColors.secondaryText,
-                          fontSize: 12,
-                        ),
-                      ),
-              ),
-
               const SizedBox(height: 12),
             ],
           ),

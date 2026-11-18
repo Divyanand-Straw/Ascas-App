@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/services/locale_service.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/login_screen.dart';
 import 'dashboard_home_content.dart';
 
@@ -263,6 +264,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
     );
     if (confirmed == true && mounted) {
+      await AuthRepository.instance.logout();
       await LocaleService.resetForLogout();
       BiometricService.instance.endSession();
       if (!mounted) return;

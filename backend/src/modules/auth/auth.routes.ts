@@ -15,13 +15,55 @@ import {
   MockOtpRepository,
   MockRefreshTokenRepository,
 } from './mock.auth.repository';
+import {
+  PostgresUserRepository,
+  PostgresPatientProfileRepository,
+  PostgresOtpRepository,
+  PostgresRefreshTokenRepository,
+} from './postgres.auth.repository';
 import { createSmsProvider } from './sms.provider';
+import { ISmsProvider } from './sms.provider.interface';
+import { Pool } from 'pg';
+import { pool } from '../../config/database';
 
 export interface AuthModuleDependencies {
   authService?: AuthService;
 }
 
 let defaultAuthServiceInstance: AuthService | null = null;
+
+/**
+ * Creates a production-ready AuthService backed by PostgreSQL repositories.
+ */
+export const createPersistentAuthService = (
+  customPool?: Pool,
+  customSmsProvider?: ISmsProvider
+): AuthService => {
+  const dbUrl = process.env.DATABASE_URL?.trim();
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!dbUrl || dbUrl === 'your_supabase_connection_string')
+  ) {
+    throw new Error(
+      'Authentication module initialization failed in production: DATABASE_URL must be configured with a valid PostgreSQL URI.'
+    );
+  }
+
+  const p = customPool || pool;
+  const userRepo = new PostgresUserRepository(p);
+  const profileRepo = new PostgresPatientProfileRepository(p);
+  const otpRepo = new PostgresOtpRepository(p);
+  const tokenRepo = new PostgresRefreshTokenRepository(p);
+  const smsProvider = customSmsProvider || createSmsProvider();
+
+  return new AuthService(
+    userRepo,
+    profileRepo,
+    otpRepo,
+    tokenRepo,
+    smsProvider
+  );
+};
 
 /**
  * Returns the shared default AuthService for development and test environments.
@@ -123,5 +165,5 @@ export const createAuthRouter = (deps?: AuthModuleDependencies): Router => {
   return router;
 };
 
-// Default export router
-export default createAuthRouter();
+// Default export router factory for backward compatibility
+export default (deps?: AuthModuleDependencies): Router => createAuthRouter(deps);
