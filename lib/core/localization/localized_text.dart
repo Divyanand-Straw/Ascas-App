@@ -83,6 +83,41 @@ const Map<String, String> _tamilText = {
   'Medication Schedule': 'மருந்து அட்டவணை',
   'Frozen Embryo Stage': 'உறையவைக்கப்பட்ட கருவின் நிலை',
   'Personal Details': 'தனிப்பட்ட விவரங்கள்',
+  'Full Name': 'முழுப் பெயர்',
+  'Date of Birth': 'பிறந்த தேதி',
+  'Mobile Number': 'கைபேசி எண்',
+  'Email Address': 'மின்னஞ்சல் முகவரி',
+  'Update': 'புதுப்பிக்கவும்',
+  'Verify Email Address': 'மின்னஞ்சல் முகவரியைச் சரிபார்க்கவும்',
+  'Enter the six-digit code sent to:':
+      'அனுப்பப்பட்ட ஆறு இலக்கக் குறியீட்டை உள்ளிடவும்:',
+  'Enter the six-digit OTP.': 'ஆறு இலக்க OTP-ஐ உள்ளிடவும்.',
+  'OTP sent successfully.': 'OTP வெற்றிகரமாக அனுப்பப்பட்டது.',
+  'OTP has expired. Please request a new OTP.':
+      'OTP காலாவதியானது. புதிய OTP-ஐக் கோரவும்.',
+  'Unable to send OTP.': 'OTP-ஐ அனுப்ப முடியவில்லை.',
+  'OTP verification failed.': 'OTP சரிபார்ப்பு தோல்வியடைந்தது.',
+  'Unable to connect to the email server.':
+      'மின்னஞ்சல் சேவையகத்துடன் இணைக்க முடியவில்லை.',
+  'Personal details updated successfully':
+      'தனிப்பட்ட விவரங்கள் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டன',
+  'This mobile number belongs to another account.':
+      'இந்த கைபேசி எண் மற்றொரு கணக்கிற்குச் சொந்தமானது.',
+  'Only patient account details can be changed here.':
+      'நோயாளர் கணக்கு விவரங்களை மட்டுமே இங்கே மாற்ற முடியும்.',
+  'The account could not be found.': 'கணக்கைக் கண்டறிய முடியவில்லை.',
+  'Verify OTP': 'OTP சரிபார்க்கவும்',
+  'Resend OTP': 'OTP மீண்டும் அனுப்பு',
+  'Email updated successfully': 'மின்னஞ்சல் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது',
+  'Invalid email address': 'தவறான மின்னஞ்சல் முகவரி',
+  'Incorrect OTP': 'தவறான OTP',
+  'OTP expired': 'OTP காலாவதியானது',
+  'Please enter a valid full name.': 'சரியான முழுப் பெயரை உள்ளிடவும்.',
+  'Please enter a valid mobile number.': 'சரியான கைபேசி எண்ணை உள்ளிடவும்.',
+  'Please enter a valid date of birth.': 'சரியான பிறந்த தேதியை உள்ளிடவும்.',
+  'Enter a new email address to verify before removing the saved email.': 'சேமித்த மின்னஞ்சலை நீக்குவதற்கு முன் புதிய மின்னஞ்சல் முகவரியைச் சரிபார்க்கவும்.',
+  'Please wait before requesting another OTP':
+      'மற்றொரு OTP கோருவதற்கு முன் காத்திருக்கவும்',
   'Medical Details': 'மருத்துவ விவரங்கள்',
   'Export Data': 'தரவை ஏற்றுமதி செய்',
   'Notification Settings': 'அறிவிப்பு அமைப்புகள்',
@@ -1020,7 +1055,6 @@ const Map<String, String> _tamilText = {
   'No medication confirmations recorded yet.\n\nHistory is saved when a permitted dose is marked taken or skipped.': 'மருந்து எடுத்தது குறித்த உறுதிப்படுத்தல்கள் இன்னும் பதிவு செய்யப்படவில்லை.\n\nஅனுமதிக்கப்பட்ட மருந்தளவை எடுத்ததாகவோ தவிர்த்ததாகவோ குறிக்கும்போது வரலாறு சேமிக்கப்படும்.',
   'No messages yet.\nStart a local prototype conversation.':
       'செய்திகள் எதுவும் இல்லை.\nமுன்மாதிரி உரையாடலைத் தொடங்கவும்.',
-  'OR SIGN UP WITH': 'அல்லது இதன் மூலம் பதிவு செய்யவும்',
   'OTP VERIFICATION': 'OTP சரிபார்ப்பு',
   'OTP resend is a prototype action.':
       'OTP மீண்டும் அனுப்புவது முன்மாதிரி நடவடிக்கை.',
@@ -1036,7 +1070,6 @@ const Map<String, String> _tamilText = {
   'Password must contain at least 8 characters.':
       'கடவுச்சொல்லில் குறைந்தது 8 எழுத்துகள் இருக்க வேண்டும்.',
   'PDF (prototype)': 'PDF (முன்மாதிரி)',
-  'Password updated': 'கடவுச்சொல் புதுப்பிக்கப்பட்டது',
   'Patient ID / MRN': 'நோயாளர் ID / MRN',
   'Patient Inbox': 'நோயாளர் இன்பாக்ஸ்',
   'Patient • Pending': 'நோயாளர் • நிலுவையில்',
@@ -1069,7 +1102,6 @@ const Map<String, String> _tamilText = {
   'Required terms and privacy consent':
       'விதிமுறைகள் மற்றும் தனியுரிமைக்கான கட்டாய ஒப்புதல்',
   'Reschedule appointment': 'சந்திப்பை மறுஅட்டவணை செய்யவும்',
-  'Resend OTP': 'OTP-ஐ மீண்டும் அனுப்பவும்',
   'Resend code': 'குறியீட்டை மீண்டும் அனுப்பவும்',
   'Review profile': 'சுயவிவரத்தை மதிப்பாய்வு செய்யவும்',
   'Review this permission change before saving.':
@@ -1173,7 +1205,6 @@ const Map<String, String> _tamilText = {
   'Validate invitation': 'அழைப்பைச் சரிபார்க்கவும்',
   'Verified phone numbers, email addresses and opening hours will appear here when provided by the clinic.': 'மருத்துவமனை வழங்கிய சரிபார்க்கப்பட்ட தொலைபேசி எண்கள், மின்னஞ்சல் முகவரிகள் மற்றும் திறந்திருக்கும் நேரங்கள் இங்கே தோன்றும்.',
   'Verify & Continue': 'சரிபார்த்து தொடரவும்',
-  'Verify OTP': 'OTP-ஐ சரிபார்க்கவும்',
   'Verify your mobile number': 'உங்கள் கைபேசி எண்ணைச் சரிபார்க்கவும்',
   'Video resources are not available because no verified clinic video links are configured.': 'சரிபார்க்கப்பட்ட மருத்துவமனை காணொளி இணைப்புகள் அமைக்கப்படாததால் காணொளி வளங்கள் கிடைக்கவில்லை.',
   'View Details': 'விவரங்களைக் காண்க',
@@ -1241,13 +1272,6 @@ String _localizedDynamicText(String text) {
 
   if (text.startsWith('Change ') && text.endsWith('?')) {
     return '${text.substring(7, text.length - 1)} ஐ மாற்றவா?';
-  }
-  if (text.endsWith(' sign-in integration is coming soon.')) {
-    final provider = text.substring(
-      0,
-      text.length - ' sign-in integration is coming soon.'.length,
-    );
-    return '$provider உள்நுழைவு இணைப்பு விரைவில் கிடைக்கும்.';
   }
   return text;
 }

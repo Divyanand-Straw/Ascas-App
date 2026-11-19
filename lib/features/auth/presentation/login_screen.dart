@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_colors.dart';
@@ -32,33 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  Widget _buildSocialButton({
-    required Widget icon,
-    required String label,
-  }) => Expanded(
-    child: OutlinedButton(
-      onPressed: _showBackendPending,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primaryText,
-        backgroundColor: Colors.white,
-        side: const BorderSide(color: AppColors.divider),
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          icon,
-          const SizedBox(width: 9),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    ),
-  );
 
   InputDecoration _fieldDecoration({
     required String hint,
@@ -247,39 +219,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
                         const SizedBox(height: 22),
-                        Center(
-                          child: Text(
-                            l10n.orLoginWith,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
-                              color: AppColors.secondaryText,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            _buildSocialButton(
-                              icon: const FaIcon(
-                                FontAwesomeIcons.google,
-                                size: 17,
-                              ),
-                              label: 'Google',
-                            ),
-                            const SizedBox(width: 12),
-                            _buildSocialButton(
-                              icon: const FaIcon(
-                                FontAwesomeIcons.apple,
-                                size: 21,
-                              ),
-                              label: 'Apple',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 25),
                         Center(
                           child: Wrap(
                             alignment: WrapAlignment.center,

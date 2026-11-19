@@ -129,9 +129,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgotPasswordQuestion => 'Forgot Password?';
 
   @override
-  String get orLoginWith => 'OR LOGIN WITH';
-
-  @override
   String get noAccount => 'Don\'t have an account? ';
 
   @override
@@ -255,7 +252,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resetPasswordDescription =>
-      'Enter your registered mobile number and email address. We will help you verify your identity and reset your password.';
+      'Enter the mobile number and email address registered to your account. We will send a verification code to your email to continue with password recovery.';
 
   @override
   String get registeredMobileNumber => 'Registered mobile number';

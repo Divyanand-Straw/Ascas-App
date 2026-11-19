@@ -9,6 +9,7 @@ enum AccountRole { patient, partner }
 class AccountIdentity {
   final String accountId;
   final String mobileNumber;
+  final String email;
   final String fullName;
   final String dateOfBirth;
   final String patientId;
@@ -19,6 +20,7 @@ class AccountIdentity {
   const AccountIdentity({
     required this.accountId,
     required this.mobileNumber,
+    this.email = '',
     required this.fullName,
     required this.dateOfBirth,
     required this.patientId,
@@ -30,6 +32,7 @@ class AccountIdentity {
   Map<String, Object?> toJson() => {
     'account_id': accountId,
     'mobile_number': mobileNumber,
+    'email': email,
     'full_name': fullName,
     'date_of_birth': dateOfBirth,
     'patient_id': patientId,
@@ -42,6 +45,7 @@ class AccountIdentity {
       AccountIdentity(
         accountId: json['account_id'] as String,
         mobileNumber: json['mobile_number'] as String,
+        email: json['email'] as String? ?? '',
         fullName: json['full_name'] as String,
         dateOfBirth: json['date_of_birth'] as String? ?? '',
         patientId: json['patient_id'] as String? ?? '',
@@ -128,12 +132,116 @@ class AccountIdentityService {
     return null;
   }
 
+  Future<AccountIdentity?> accountForId(String accountId) async {
+    String normalized = accountId;
+    if (RegExp(r'^[6-9]\d{9}$').hasMatch(accountId)) {
+      normalized = 'user:$accountId';
+    }
+    for (final account in await _readAccounts()) {
+      if (account.accountId == normalized) return account;
+    }
+    return null;
+  }
+
+  Future<AccountIdentity> updateEmailAddress({
+    required String accountId,
+    required String email,
+  }) => _serialize(() async {
+    final normalizedEmail = email.trim();
+    final normalizedAccountId = RegExp(r'^[6-9]\d{9}$').hasMatch(accountId)
+        ? 'user:$accountId'
+        : accountId;
+    final accounts = await _readAccounts();
+    for (var i = 0; i < accounts.length; i++) {
+      final account = accounts[i];
+      if (account.accountId == normalizedAccountId) {
+        if (account.role != AccountRole.patient) {
+          throw StateError(
+            'Only the patient account email can be changed here.',
+          );
+        }
+        final updated = AccountIdentity(
+          accountId: account.accountId,
+          mobileNumber: account.mobileNumber,
+          email: normalizedEmail,
+          fullName: account.fullName,
+          dateOfBirth: account.dateOfBirth,
+          patientId: account.patientId,
+          preferredLanguage: account.preferredLanguage,
+          gender: account.gender,
+          role: account.role,
+        );
+        accounts[i] = updated;
+        await _writeAccounts(accounts);
+        return updated;
+      }
+    }
+    throw StateError('The account could not be found.');
+  });
+
+  Future<AccountIdentity> updatePatientDetails({
+    required String accountId,
+    required String fullName,
+    required String mobileNumber,
+    required String dateOfBirth,
+    required String email,
+  }) => _serialize(() async {
+    final normalizedAccountId = RegExp(r'^[6-9]\d{9}$').hasMatch(accountId)
+        ? 'user:$accountId'
+        : accountId;
+    final mobile = _normalizeMobile(mobileNumber);
+    final name = fullName.trim();
+    final normalizedEmail = email.trim();
+    if (name.length < 2) {
+      throw StateError('Please enter a valid full name.');
+    }
+    if (_dateKey(dateOfBirth) == null) {
+      throw StateError('Please enter a valid date of birth.');
+    }
+    if (normalizedEmail.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(normalizedEmail)) {
+      throw StateError('Invalid email address.');
+    }
+
+    final accounts = await _readAccounts();
+    for (var i = 0; i < accounts.length; i++) {
+      final account = accounts[i];
+      if (account.accountId != normalizedAccountId) continue;
+      if (account.role != AccountRole.patient) {
+        throw StateError('Only patient account details can be changed here.');
+      }
+      if (accounts.any(
+        (other) =>
+            other.accountId != account.accountId &&
+            other.mobileNumber == mobile,
+      )) {
+        throw StateError('This mobile number belongs to another account.');
+      }
+      final updated = AccountIdentity(
+        accountId: account.accountId,
+        mobileNumber: mobile,
+        email: normalizedEmail,
+        fullName: name,
+        dateOfBirth: dateOfBirth.trim(),
+        patientId: account.patientId,
+        preferredLanguage: account.preferredLanguage,
+        gender: account.gender,
+        role: account.role,
+      );
+      accounts[i] = updated;
+      await _writeAccounts(accounts);
+      return updated;
+    }
+    throw StateError('The account could not be found.');
+  });
+
   Future<AccountIdentity> createOrGetNewPatient({
     required String mobileNumber,
     required String fullName,
     required String dateOfBirth,
     required String preferredLanguage,
     String gender = '',
+    String email = '',
   }) => _serialize(() async {
     final mobile = _normalizeMobile(mobileNumber);
     if (fullName.trim().isEmpty) {
@@ -153,6 +261,7 @@ class AccountIdentityService {
     final identity = AccountIdentity(
       accountId: 'user:$mobile',
       mobileNumber: mobile,
+      email: email.trim(),
       fullName: fullName.trim(),
       dateOfBirth: dateOfBirth,
       patientId: _generatePatientId(accounts),

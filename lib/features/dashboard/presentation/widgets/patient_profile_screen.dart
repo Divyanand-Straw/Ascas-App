@@ -18,6 +18,9 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../auth/presentation/consent_privacy_screen.dart';
 import '../../../auth/presentation/app_security_screen.dart';
+import '../../../auth/data/account_identity_service.dart';
+import '../../../auth/presentation/forgot_password/change_email_address_screen.dart';
+import '../../../../core/services/email_otp_service.dart';
 import '../../../partner_access/presentation/patient_partner_access_screen.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
 import 'dashboard_card.dart';
@@ -26,12 +29,14 @@ import 'dashboard_home_content.dart';
 class PatientProfileData {
   final String name;
   final String mobile;
+  final String email;
   final String dateOfBirth;
   final String language;
 
   const PatientProfileData({
     required this.name,
     required this.mobile,
+    this.email = '',
     required this.dateOfBirth,
     required this.language,
   });
@@ -43,6 +48,7 @@ class PatientProfileScreen extends StatefulWidget {
   final String patientId;
   final DashboardPatientState patientState;
   final String mobileNumber;
+  final String email;
   final String dateOfBirth;
   final String preferredLanguage;
   final String accountId;
@@ -55,6 +61,7 @@ class PatientProfileScreen extends StatefulWidget {
     this.patientId = '',
     required this.patientState,
     required this.mobileNumber,
+    this.email = '',
     required this.dateOfBirth,
     required this.preferredLanguage,
     this.accountId = '',
@@ -68,6 +75,7 @@ class PatientProfileScreen extends StatefulWidget {
 class _PatientProfileScreenState extends State<PatientProfileScreen> {
   late String _name;
   late String _mobile;
+  late String _email;
   late String _dateOfBirth;
   late String _language;
   String get _initials {
@@ -87,6 +95,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     _name = widget.patientName;
     _mobile = widget.mobileNumber;
     _dateOfBirth = widget.dateOfBirth;
+    _email = widget.email;
     _language = widget.preferredLanguage.isEmpty
         ? 'English'
         : widget.preferredLanguage;
@@ -95,23 +104,31 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 
   Future<void> _loadPreferences() async {
     final preferences = await SharedPreferences.getInstance();
+    final identity = widget.accountId.isEmpty
+        ? null
+        : await AccountIdentityService().accountForId(widget.accountId);
     if (!mounted) return;
     setState(() {
-      _name = preferences.getString(_profileKey('name')) ?? _name;
-      _mobile = preferences.getString(_profileKey('mobile')) ?? _mobile;
-      _dateOfBirth = preferences.getString(_profileKey('dob')) ?? _dateOfBirth;
+      if (identity?.role == AccountRole.patient) {
+        _name = identity!.fullName;
+        _mobile = identity.mobileNumber;
+        _dateOfBirth = identity.dateOfBirth;
+        _email = identity.email;
+      } else {
+        _name = preferences.getString(_profileKey('name')) ?? _name;
+        _mobile = preferences.getString(_profileKey('mobile')) ?? _mobile;
+        _dateOfBirth =
+            preferences.getString(_profileKey('dob')) ?? _dateOfBirth;
+      }
     });
   }
 
-  Future<void> _saveProfile(PatientProfileData profile) async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_profileKey('name'), profile.name);
-    await preferences.setString(_profileKey('mobile'), profile.mobile);
-    await preferences.setString(_profileKey('dob'), profile.dateOfBirth);
+  void _applyProfile(PatientProfileData profile) {
     if (!mounted) return;
     setState(() {
       _name = profile.name;
       _mobile = profile.mobile;
+      _email = profile.email;
       _dateOfBirth = profile.dateOfBirth;
       _language = profile.language;
     });
@@ -119,18 +136,22 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Future<void> _editProfile() async {
-    final profile = await Navigator.push<PatientProfileData>(
+    await Navigator.push<void>(
       context,
       MaterialPageRoute(
         builder: (_) => PersonalDetailsScreen(
           name: _name,
           mobile: _mobile,
+          email: _email,
           dateOfBirth: _dateOfBirth,
           language: _language,
+          accountId: widget.accountId.isEmpty
+              ? widget.mobileNumber
+              : widget.accountId,
+          onProfileUpdated: _applyProfile,
         ),
       ),
     );
-    if (profile != null) await _saveProfile(profile);
   }
 
   Future<void> _openLanguage() async {
@@ -159,6 +180,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final profile = PatientProfileData(
       name: _name,
       mobile: _mobile,
+      email: _email,
       dateOfBirth: _dateOfBirth,
       language: result,
     );
@@ -513,8 +535,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             _card([
               _option(
                 icon: Icons.person_outline_rounded,
-                title: 'Personal & Medical Details',
-                subtitle: 'Update your care profile.',
+                title: 'Personal Details',
+                subtitle: 'Update your personal information.',
                 onTap: _editProfile,
               ),
               const Divider(height: 1, color: AppColors.divider),
@@ -612,6 +634,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                       fullName: _name,
                       dateOfBirth: _dateOfBirth,
                       mobileNumber: _mobile,
+                      email: _email,
                       preferredLanguage: _language,
                       isExistingPatient: true,
                       patientId: widget.patientId,
@@ -738,15 +761,25 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 class PersonalDetailsScreen extends StatefulWidget {
   final String name;
   final String mobile;
+  final String email;
   final String dateOfBirth;
   final String language;
+  final String accountId;
+  final Future<String> Function(String email)? requestOtp;
+  final Future<String> Function(String email, String otp)? verifyOtp;
+  final ValueChanged<PatientProfileData>? onProfileUpdated;
 
   const PersonalDetailsScreen({
     super.key,
     required this.name,
     required this.mobile,
+    required this.email,
     required this.dateOfBirth,
     required this.language,
+    required this.accountId,
+    this.requestOtp,
+    this.verifyOtp,
+    this.onProfileUpdated,
   });
 
   @override
@@ -757,6 +790,13 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   late final TextEditingController _name;
   late final TextEditingController _mobile;
   late final TextEditingController _dob;
+  late final TextEditingController _emailController;
+  late String _savedName;
+  late String _savedMobile;
+  late String _savedEmail;
+  late String _savedDateOfBirth;
+  bool _isEditing = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -764,6 +804,11 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     _name = TextEditingController(text: widget.name);
     _mobile = TextEditingController(text: widget.mobile);
     _dob = TextEditingController(text: widget.dateOfBirth);
+    _emailController = TextEditingController(text: widget.email);
+    _savedName = widget.name;
+    _savedMobile = widget.mobile;
+    _savedEmail = widget.email;
+    _savedDateOfBirth = widget.dateOfBirth;
   }
 
   @override
@@ -771,31 +816,150 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     _name.dispose();
     _mobile.dispose();
     _dob.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     final name = _name.text.trim();
     final mobile = _mobile.text.trim();
-    if (name.length < 2 ||
-        !RegExp(r'^[6-9]\d{9}$').hasMatch(mobile) ||
-        parseDateOfBirth(_dob.text) == null) {
+    final dateOfBirth = _dob.text.trim();
+    final email = _emailController.text.trim();
+    if (name.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: LocalizedText('Please enter valid profile details.'),
+          content: LocalizedText('Please enter a valid full name.'),
         ),
       );
       return;
     }
-    Navigator.pop(
-      context,
-      PatientProfileData(
-        name: name,
-        mobile: mobile,
-        dateOfBirth: _dob.text.trim(),
-        language: widget.language,
-      ),
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: LocalizedText('Please enter a valid mobile number.'),
+        ),
+      );
+      return;
+    }
+    if (parseDateOfBirth(dateOfBirth) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: LocalizedText('Please enter a valid date of birth.'),
+        ),
+      );
+      return;
+    }
+    final emailChanged =
+        email.toLowerCase() != _savedEmail.trim().toLowerCase();
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: LocalizedText('Invalid email address')),
+      );
+      return;
+    }
+    if (emailChanged && email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: LocalizedText(
+            'Enter a new email address to verify before removing the saved email.',
+          ),
+        ),
+      );
+      return;
+    }
+    final profile = PatientProfileData(
+      name: name,
+      mobile: mobile,
+      email: emailChanged ? email : _savedEmail.trim(),
+      dateOfBirth: dateOfBirth,
+      language: widget.language,
     );
+    setState(() => _isSubmitting = true);
+    try {
+      final accountService = AccountIdentityService();
+      if (emailChanged) {
+        final requestOtp = widget.requestOtp ?? EmailOtpService.requestOtp;
+        final message = await requestOtp(email);
+        if (!mounted) return;
+        final verified = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeEmailAddressScreen(
+              newEmail: email,
+              initialMessage: message,
+              requestOtp: widget.requestOtp,
+              verifyOtp: widget.verifyOtp,
+              onVerified: () async {
+                await accountService.updatePatientDetails(
+                  accountId: widget.accountId,
+                  fullName: profile.name,
+                  mobileNumber: profile.mobile,
+                  dateOfBirth: profile.dateOfBirth,
+                  email: profile.email,
+                );
+              },
+            ),
+          ),
+        );
+        if (verified != true || !mounted) return;
+      } else {
+        await accountService.updatePatientDetails(
+          accountId: widget.accountId,
+          fullName: profile.name,
+          mobileNumber: profile.mobile,
+          dateOfBirth: profile.dateOfBirth,
+          email: profile.email,
+        );
+      }
+      if (!mounted) return;
+      setState(() {
+        _savedName = profile.name;
+        _savedMobile = profile.mobile;
+        _savedEmail = profile.email;
+        _savedDateOfBirth = profile.dateOfBirth;
+        _isEditing = false;
+      });
+      widget.onProfileUpdated?.call(profile);
+      if (!emailChanged) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: LocalizedText('Personal details updated successfully'),
+          ),
+        );
+      }
+    } on Exception catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            localizedText(
+              context,
+              error.toString().replaceFirst('Exception: ', ''),
+            ),
+          ),
+        ),
+      );
+    } on StateError catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(localizedText(context, error.message.toString())),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _name.text = _savedName;
+      _mobile.text = _savedMobile;
+      _emailController.text = _savedEmail;
+      _dob.text = _savedDateOfBirth;
+      _isEditing = false;
+    });
   }
 
   Future<void> _selectDate() async {
@@ -809,14 +973,82 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   }
 
   InputDecoration _dec(String hint) => InputDecoration(
-    hintText: hint,
+    labelText: localizedText(context, hint),
+    floatingLabelBehavior: FloatingLabelBehavior.always,
     filled: true,
     fillColor: AppColors.white,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: AppColors.divider),
     ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.divider),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
+    ),
   );
+
+  Widget _detailCard({
+    required String keyName,
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    final displayValue = value.trim().isEmpty
+        ? localizedText(context, 'Not provided')
+        : value;
+    return Container(
+      key: ValueKey('personal-details-value-$keyName'),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.blushPink,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.burgundy, size: 20),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  localizedText(context, label),
+                  style: const TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  displayValue,
+                  key: ValueKey('personal-details-text-$keyName'),
+                  style: const TextStyle(
+                    color: AppColors.primaryText,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -825,50 +1057,136 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: LocalizedText('Personal & Medical Details'),
+        title: LocalizedText('Personal Details'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          TextField(controller: _name, decoration: _dec('Full name')),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _mobile,
-            keyboardType: TextInputType.phone,
-            decoration: _dec('Mobile number'),
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _dob,
-            readOnly: true,
-            onTap: _selectDate,
-            decoration: _dec(
-              'Date of birth',
-            ).copyWith(suffixIcon: const Icon(Icons.calendar_today_outlined)),
-          ),
+          if (_isEditing) ...[
+            TextField(
+              key: const ValueKey('personal-details-name'),
+              controller: _name,
+              decoration: _dec('Full Name'),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('personal-details-date-of-birth'),
+              controller: _dob,
+              readOnly: true,
+              onTap: _selectDate,
+              decoration: _dec(
+                'Date of Birth',
+              ).copyWith(suffixIcon: const Icon(Icons.calendar_today_outlined)),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('personal-details-mobile'),
+              controller: _mobile,
+              keyboardType: TextInputType.phone,
+              decoration: _dec('Mobile Number'),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('personal-details-email'),
+              controller: _emailController,
+              decoration: _dec('Email Address')
+                  .copyWith(hintText: localizedText(context, 'Not provided')),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ] else ...[
+            _detailCard(
+              keyName: 'name',
+              label: 'Full Name',
+              value: _savedName,
+              icon: Icons.person_outline_rounded,
+            ),
+            _detailCard(
+              keyName: 'date-of-birth',
+              label: 'Date of Birth',
+              value: _savedDateOfBirth,
+              icon: Icons.cake_outlined,
+            ),
+            _detailCard(
+              keyName: 'mobile',
+              label: 'Mobile Number',
+              value: _savedMobile,
+              icon: Icons.phone_outlined,
+            ),
+            _detailCard(
+              keyName: 'email',
+              label: 'Email Address',
+              value: _savedEmail,
+              icon: Icons.email_outlined,
+            ),
+          ],
           const SizedBox(height: 18),
           LocalizedText(
             'Hospital-managed clinical records and treatment information cannot be edited here.',
             style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: LocalizedText('Cancel'),
+          if (_isEditing)
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    key: const ValueKey('personal-details-cancel'),
+                    onPressed: _isSubmitting ? null : _cancelEditing,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.burgundy,
+                      side: const BorderSide(color: AppColors.burgundy),
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const LocalizedText('Cancel'),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _save,
-                  child: LocalizedText('Save'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    key: const ValueKey('personal-details-save'),
+                    onPressed: _isSubmitting ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.burgundy,
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : const LocalizedText('Save'),
+                  ),
                 ),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                key: const ValueKey('personal-details-update'),
+                onPressed: () => setState(() => _isEditing = true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.burgundy,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const LocalizedText('Update'),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );

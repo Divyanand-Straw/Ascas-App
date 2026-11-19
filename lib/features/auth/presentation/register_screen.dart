@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/localization/localized_text.dart';
-
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -57,10 +54,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _showPendingMessage(String provider) {
+  void _showPolicyUnavailable(String policy) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: LocalizedText('$provider sign-in integration is coming soon.'),
+        content: LocalizedText('$policy information is not available yet.'),
       ),
     );
   }
@@ -102,38 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required Widget icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryText,
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: AppColors.divider),
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 9),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ],
         ),
       ),
     );
@@ -317,7 +282,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               style: TextStyle(fontSize: 12),
                             ),
                             GestureDetector(
-                              onTap: () => _showPendingMessage('Terms'),
+                              onTap: () => _showPolicyUnavailable('Terms'),
                               child: const LocalizedText(
                                 'Terms',
                                 style: TextStyle(
@@ -329,7 +294,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const LocalizedText(', '),
                             GestureDetector(
                               onTap: () =>
-                                  _showPendingMessage('Privacy Policy'),
+                                  _showPolicyUnavailable('Privacy Policy'),
                               child: const LocalizedText(
                                 'Privacy Policy',
                                 style: TextStyle(
@@ -374,38 +339,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
 
                 const SizedBox(height: 22),
-
-                const Center(
-                  child: LocalizedText(
-                    'OR SIGN UP WITH',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                      color: AppColors.secondaryText,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    _buildSocialButton(
-                      icon: const FaIcon(FontAwesomeIcons.google, size: 17),
-                      label: 'Google',
-                      onPressed: () => _showPendingMessage('Google'),
-                    ),
-                    const SizedBox(width: 12),
-                    _buildSocialButton(
-                      icon: const FaIcon(FontAwesomeIcons.apple, size: 21),
-                      label: 'Apple',
-                      onPressed: () => _showPendingMessage('Apple'),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 25),
 
                 Center(
                   child: Wrap(

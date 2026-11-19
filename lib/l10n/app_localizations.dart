@@ -332,12 +332,6 @@ abstract class AppLocalizations {
   /// **'Forgot Password?'**
   String get forgotPasswordQuestion;
 
-  /// No description provided for @orLoginWith.
-  ///
-  /// In en, this message translates to:
-  /// **'OR LOGIN WITH'**
-  String get orLoginWith;
-
   /// No description provided for @noAccount.
   ///
   /// In en, this message translates to:
@@ -575,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @resetPasswordDescription.
   ///
   /// In en, this message translates to:
-  /// **'Enter your registered mobile number and email address. We will help you verify your identity and reset your password.'**
+  /// **'Enter the mobile number and email address registered to your account. We will send a verification code to your email to continue with password recovery.'**
   String get resetPasswordDescription;
 
   /// No description provided for @registeredMobileNumber.

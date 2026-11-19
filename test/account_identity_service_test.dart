@@ -26,6 +26,7 @@ void main() {
         dateOfBirth: '02/04/1994',
         preferredLanguage: 'Tamil',
         gender: 'Female',
+        email: 'registered@example.com',
       );
       final retry = await service.createOrGetNewPatient(
         mobileNumber: '9876543210',
@@ -42,6 +43,7 @@ void main() {
       expect(retry.fullName, 'New Patient');
       expect(retry.dateOfBirth, '02/04/1994');
       expect(retry.gender, 'Female');
+      expect(retry.email, 'registered@example.com');
     },
   );
 
@@ -99,6 +101,107 @@ void main() {
       final stored = await service.accountForMobile(registered.mobileNumber);
       expect(stored?.accountId, verified.accountId);
       expect(stored?.patientId, verified.patientId);
+    },
+  );
+
+  test(
+    'verified email update changes only the selected patient account',
+    () async {
+      final first = await service.createOrGetNewPatient(
+        mobileNumber: '9876543210',
+        fullName: 'Patient One',
+        dateOfBirth: '02/04/1994',
+        preferredLanguage: 'English',
+        email: 'old-one@example.com',
+      );
+      final second = await service.createOrGetNewPatient(
+        mobileNumber: '8765432109',
+        fullName: 'Patient Two',
+        dateOfBirth: '03/05/1993',
+        preferredLanguage: 'Tamil',
+        email: 'patient-two@example.com',
+      );
+
+      final updated = await service.updateEmailAddress(
+        accountId: first.accountId,
+        email: 'new-one@example.com',
+      );
+
+      expect(updated.email, 'new-one@example.com');
+      expect(updated.fullName, first.fullName);
+      expect(updated.patientId, first.patientId);
+      expect(
+        (await service.accountForId(first.accountId))?.email,
+        'new-one@example.com',
+      );
+      expect(
+        (await service.accountForId(second.accountId))?.email,
+        'patient-two@example.com',
+      );
+
+      final partner = await service.createOrGetPartner(
+        mobileNumber: '9123456780',
+        fullName: 'Partner One',
+      );
+      await expectLater(
+        service.updateEmailAddress(
+          accountId: partner.accountId,
+          email: 'partner@example.com',
+        ),
+        throwsA(isA<StateError>()),
+      );
+    },
+  );
+
+  test(
+    'patient detail updates preserve identity and reject duplicate mobile',
+    () async {
+      final first = await service.createOrGetNewPatient(
+        mobileNumber: '9876543210',
+        fullName: 'Patient One',
+        dateOfBirth: '02/04/1994',
+        preferredLanguage: 'Tamil',
+        gender: 'Female',
+        email: 'patient@example.com',
+      );
+      final second = await service.createOrGetNewPatient(
+        mobileNumber: '8765432109',
+        fullName: 'Patient Two',
+        dateOfBirth: '03/05/1993',
+        preferredLanguage: 'English',
+      );
+
+      final updated = await service.updatePatientDetails(
+        accountId: first.accountId,
+        fullName: 'Updated Patient',
+        mobileNumber: '9123456780',
+        dateOfBirth: '14/09/1995',
+        email: first.email,
+      );
+
+      expect(updated.accountId, first.accountId);
+      expect(updated.fullName, 'Updated Patient');
+      expect(updated.mobileNumber, '9123456780');
+      expect(updated.dateOfBirth, '14/09/1995');
+      expect(updated.email, 'patient@example.com');
+      expect(updated.patientId, first.patientId);
+      expect(updated.preferredLanguage, 'Tamil');
+      expect(updated.gender, 'Female');
+      expect(
+        (await service.accountForMobile('9123456780'))?.accountId,
+        first.accountId,
+      );
+
+      await expectLater(
+        service.updatePatientDetails(
+          accountId: first.accountId,
+          fullName: 'Patient One',
+          mobileNumber: second.mobileNumber,
+          dateOfBirth: first.dateOfBirth,
+          email: first.email,
+        ),
+        throwsA(isA<StateError>()),
+      );
     },
   );
 

@@ -147,6 +147,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           fullName: _nameController.text.trim(),
           dateOfBirth: _dobController.text.trim(),
           mobileNumber: widget.mobileNumber,
+          email: _emailController.text.trim(),
           preferredLanguage: _selectedLanguage,
           gender: _selectedGender!,
         ),

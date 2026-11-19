@@ -8,6 +8,7 @@ import '../../../core/services/locale_service.dart';
 import '../../../core/services/biometric_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/login_screen.dart';
+import '../../auth/data/account_identity_service.dart';
 import '../../appointments/presentation/appointment_dashboard_screen.dart';
 import '../../appointments/presentation/data/appointment_data.dart';
 import '../../notifications/presentation/notifications_screen.dart';
@@ -26,6 +27,7 @@ class DashboardScreen extends StatefulWidget {
   final String patientId;
   final DashboardPatientState patientState;
   final String mobileNumber;
+  final String email;
   final String dateOfBirth;
   final String preferredLanguage;
   final String accountId;
@@ -42,6 +44,7 @@ class DashboardScreen extends StatefulWidget {
     this.patientId = '',
     this.patientState = DashboardPatientState.ivf,
     this.mobileNumber = '',
+    this.email = '',
     this.dateOfBirth = '',
     this.preferredLanguage = '',
     this.accountId = '',
@@ -61,6 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   late String _patientName;
   late String _mobileNumber;
+  late String _email;
   late String _dateOfBirth;
   late String _preferredLanguage;
   bool _partnerLinkActive = false;
@@ -73,6 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _patientName = widget.patientName;
     _mobileNumber = widget.mobileNumber;
+    _email = widget.email;
     _dateOfBirth = widget.dateOfBirth;
     _preferredLanguage = widget.preferredLanguage;
     if (widget.isLinkedPartner) {
@@ -98,6 +103,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final dataOwner = widget.dataOwnerAccountId.isEmpty
         ? (widget.isLinkedPartner ? '' : widget.accountId)
         : widget.dataOwnerAccountId;
+    if (!widget.isLinkedPartner) {
+      final accountId = widget.accountId.isEmpty
+          ? widget.mobileNumber
+          : widget.accountId;
+      if (accountId.isNotEmpty) {
+        final identity = await AccountIdentityService().accountForId(accountId);
+        if (mounted && identity != null) {
+          setState(() {
+            _email = identity.email;
+            _patientName = identity.fullName;
+            _mobileNumber = identity.mobileNumber;
+            _dateOfBirth = identity.dateOfBirth;
+            _preferredLanguage = identity.preferredLanguage;
+          });
+        }
+      }
+    }
     await initializeAppointmentData(
       accountId: dataOwner.isEmpty ? null : dataOwner,
     );
@@ -172,6 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       patientId: widget.patientId,
       patientState: widget.patientState,
       mobileNumber: _mobileNumber,
+      email: _email,
       dateOfBirth: _dateOfBirth,
       preferredLanguage: _currentLanguage,
       accountId: widget.accountId.isEmpty
@@ -182,6 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() {
           _patientName = profile.name;
           _mobileNumber = profile.mobile;
+          _email = profile.email;
           _dateOfBirth = profile.dateOfBirth;
           _preferredLanguage = profile.language;
         });

@@ -131,9 +131,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get forgotPasswordQuestion => 'கடவுச்சொல்லை மறந்துவிட்டீர்களா?';
 
   @override
-  String get orLoginWith => 'அல்லது இதன் மூலம் உள்நுழையவும்';
-
-  @override
   String get noAccount => 'கணக்கு இல்லையா? ';
 
   @override
@@ -258,7 +255,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get resetPasswordDescription =>
-      'பதிவு செய்த கைபேசி எண் மற்றும் மின்னஞ்சல் முகவரியை உள்ளிடவும். உங்கள் அடையாளத்தைச் சரிபார்த்து கடவுச்சொல்லை மீட்டமைக்க உதவுவோம்.';
+      'உங்கள் கணக்கில் பதிவு செய்த கைபேசி எண்ணையும் மின்னஞ்சல் முகவரியையும் உள்ளிடவும். கடவுச்சொல் மீட்பைத் தொடர மின்னஞ்சலுக்கு சரிபார்ப்புக் குறியீட்டை அனுப்புவோம்.';
 
   @override
   String get registeredMobileNumber => 'பதிவு செய்த கைபேசி எண்';

@@ -12,6 +12,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
   final String fullName;
   final String dateOfBirth;
   final String mobileNumber;
+  final String email;
   final String preferredLanguage;
   final String gender;
   final bool isExistingPatient;
@@ -25,6 +26,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
     required this.fullName,
     required this.dateOfBirth,
     required this.mobileNumber,
+    this.email = '',
     required this.preferredLanguage,
     this.gender = '',
     this.isExistingPatient = false,
@@ -49,6 +51,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
               dateOfBirth: dateOfBirth,
               preferredLanguage: preferredLanguage,
               gender: gender,
+              email: email,
             );
       if (accountId.isNotEmpty && identity.accountId != accountId) {
         throw StateError(
@@ -81,6 +84,7 @@ class RegistrationCompleteScreen extends StatelessWidget {
           builder: (_) => DashboardScreen(
             patientName: identity.fullName,
             mobileNumber: identity.mobileNumber,
+            email: identity.email,
             dateOfBirth: identity.dateOfBirth,
             preferredLanguage: identity.preferredLanguage,
             accountId: identity.accountId,

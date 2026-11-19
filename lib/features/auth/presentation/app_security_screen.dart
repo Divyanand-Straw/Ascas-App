@@ -13,6 +13,7 @@ class AppSecurityScreen extends StatefulWidget {
   final String fullName;
   final String dateOfBirth;
   final String mobileNumber;
+  final String email;
   final String preferredLanguage;
   final String gender;
   final bool isExistingPatient;
@@ -24,6 +25,7 @@ class AppSecurityScreen extends StatefulWidget {
     required this.fullName,
     required this.dateOfBirth,
     required this.mobileNumber,
+    this.email = '',
     required this.preferredLanguage,
     this.gender = '',
     this.isExistingPatient = false,
@@ -324,6 +326,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                               builder: (context) => RegistrationCompleteScreen(
                                 fullName: widget.fullName,
                                 dateOfBirth: widget.dateOfBirth,
+                                email: widget.email,
                                 mobileNumber: widget.mobileNumber,
                                 preferredLanguage: widget.preferredLanguage,
                                 gender: widget.gender,

@@ -3,15 +3,24 @@ import 'package:flutter/material.dart';
 import '../../../../core/localization/localized_text.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../login_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String registeredMobile;
   final String registeredEmail;
+  final String? resetAuthorizationToken;
+  final Future<void> Function(
+    String resetAuthorizationToken,
+    String newPassword,
+  )?
+  resetPassword;
 
   const ResetPasswordScreen({
     super.key,
     required this.registeredMobile,
     required this.registeredEmail,
+    this.resetAuthorizationToken,
+    this.resetPassword,
   });
 
   @override
@@ -19,12 +28,39 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  static const _backendUnavailableMessage =
+      'We could not update your password right now. Please try again later.';
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  int get _passwordStrength {
+    final password = _passwordController.text;
+    if (password.isEmpty) return 0;
+    var score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (RegExp(r'[a-z]').hasMatch(password) &&
+        RegExp(r'[A-Z]').hasMatch(password)) {
+      score++;
+    }
+    if (RegExp(r'\d').hasMatch(password)) score++;
+    if (RegExp(r'[^A-Za-z0-9]').hasMatch(password)) score++;
+    return score;
+  }
+
+  String get _passwordStrengthLabel {
+    if (_passwordController.text.isEmpty) return '';
+    if (_passwordController.text.length < 8) return 'Weak';
+    if (_passwordStrength <= 2) return 'Fair';
+    if (_passwordStrength <= 4) return 'Good';
+    return 'Strong';
+  }
 
   String? get _confirmPasswordError {
     final confirmation = _confirmPasswordController.text;
@@ -41,107 +77,62 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
-  void _updatePassword() {
-    final password = _passwordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
+  Future<void> _updatePassword() async {
+    if (_isSubmitting) return;
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
     if (password.isEmpty || confirmPassword.isEmpty) {
-      _showMessage('Please fill in both password fields.');
+      setState(() => _errorMessage = 'Please fill in both password fields.');
       return;
     }
 
     if (password.length < 8) {
-      _showMessage('Password must contain at least 8 characters.');
+      setState(
+        () => _errorMessage = 'Password must contain at least 8 characters.',
+      );
       return;
     }
 
     if (password != confirmPassword) {
-      _showMessage('Passwords do not match.');
+      setState(() => _errorMessage = 'Passwords do not match.');
       return;
     }
 
-    _showSuccessDialog();
-  }
+    final token = widget.resetAuthorizationToken;
+    final resetPassword = widget.resetPassword;
+    if (token == null || token.trim().isEmpty || resetPassword == null) {
+      setState(() => _errorMessage = _backendUnavailableMessage);
+      return;
+    }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await resetPassword(token, password);
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Your password has been updated successfully. Please log in with your new password.',
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 65,
-                height: 65,
-                decoration: BoxDecoration(
-                  color: AppColors.blushPink,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: AppColors.burgundy,
-                  size: 38,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const LocalizedText(
-                'Password updated',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const LocalizedText(
-                'This password change is not saved until account services are connected. You can return to login.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.burgundy,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const LocalizedText(
-                    'Back to Login',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+        ),
+      );
+    } on Exception catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Widget _buildPasswordField({
@@ -302,12 +293,31 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 icon: Icons.phone_outlined,
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 18),
 
               _registeredContact(
                 label: 'Registered email address',
                 value: widget.registeredEmail,
                 icon: Icons.email_outlined,
+              ),
+
+              const SizedBox(height: 18),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.blushPink,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const LocalizedText(
+                  'For your security, we need to confirm your account before we can change your password.',
+                  style: TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
               ),
 
               const SizedBox(height: 28),
@@ -322,8 +332,39 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     _obscurePassword = !_obscurePassword;
                   });
                 },
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _errorMessage = null),
               ),
+
+              if (_passwordController.text.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: _passwordStrength / 5,
+                        minHeight: 5,
+                        backgroundColor: AppColors.blushPink,
+                        color: _passwordController.text.length < 8
+                            ? AppColors.error
+                            : _passwordStrength >= 4
+                            ? AppColors.success
+                            : AppColors.dustyPink,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _passwordStrengthLabel,
+                      style: TextStyle(
+                        color: _passwordController.text.length < 8
+                            ? AppColors.error
+                            : AppColors.secondaryText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
 
               const SizedBox(height: 24),
 
@@ -337,7 +378,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     _obscureConfirmPassword = !_obscureConfirmPassword;
                   });
                 },
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _errorMessage = null),
                 errorText: _confirmPasswordError,
               ),
 
@@ -364,6 +405,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ],
               ),
 
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(
+                    color: AppColors.error,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 38),
 
               SizedBox(
@@ -371,7 +424,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 height: 53,
                 child: ElevatedButton(
                   key: const ValueKey('reset-password-submit'),
-                  onPressed: _updatePassword,
+                  onPressed: _isSubmitting ? null : _updatePassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
                     foregroundColor: Colors.white,
@@ -381,21 +434,39 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const LocalizedText(
-                    'Update Password',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const LocalizedText(
+                          'Set New Password',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
 
               const SizedBox(height: 25),
 
-              const Center(
-                child: LocalizedText(
-                  'Your account security matters to us.',
-                  style: TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 12,
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  child: const LocalizedText(
+                    'Back to Login',
+                    style: TextStyle(
+                      color: AppColors.burgundy,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -428,10 +499,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         InputDecorator(
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.secondaryText),
-            suffixIcon: const Icon(
-              Icons.verified_outlined,
-              color: AppColors.success,
-            ),
             filled: true,
             fillColor: AppColors.blushPink,
             border: OutlineInputBorder(

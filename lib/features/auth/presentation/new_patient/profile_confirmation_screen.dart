@@ -11,6 +11,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
   final String fullName;
   final String dateOfBirth;
   final String mobileNumber;
+  final String email;
   final String preferredLanguage;
   final String gender;
   final bool isExistingPatient;
@@ -22,6 +23,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
     required this.fullName,
     required this.dateOfBirth,
     required this.mobileNumber,
+    this.email = '',
     required this.preferredLanguage,
     this.gender = '',
     this.isExistingPatient = false,
@@ -262,6 +264,10 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
                     const Divider(color: AppColors.divider, height: 1),
 
+                    _detailRow('Email', email.isEmpty ? 'Not provided' : email),
+
+                    const Divider(color: AppColors.divider, height: 1),
+
                     _detailRow(
                       'Gender',
                       gender.isEmpty ? 'Not provided' : gender,
@@ -324,6 +330,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                             ? AppSecurityScreen(
                                 fullName: fullName,
                                 dateOfBirth: dateOfBirth,
+                                email: email,
                                 mobileNumber: mobileNumber,
                                 preferredLanguage: preferredLanguage,
                                 gender: gender,
@@ -335,6 +342,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 fullName: fullName,
                                 dateOfBirth: dateOfBirth,
                                 mobileNumber: mobileNumber,
+                                email: email,
                                 preferredLanguage: preferredLanguage,
                                 gender: gender,
                               ),

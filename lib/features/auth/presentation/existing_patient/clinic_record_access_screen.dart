@@ -158,6 +158,7 @@ class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
             fullName: identity.fullName,
             dateOfBirth: identity.dateOfBirth,
             mobileNumber: identity.mobileNumber,
+            email: identity.email,
             preferredLanguage: identity.preferredLanguage,
             gender: identity.gender,
             isExistingPatient: true,

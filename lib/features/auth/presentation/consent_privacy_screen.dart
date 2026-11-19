@@ -9,6 +9,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
   final String fullName;
   final String dateOfBirth;
   final String mobileNumber;
+  final String email;
   final String preferredLanguage;
   final String gender;
   final bool isExistingPatient;
@@ -20,6 +21,7 @@ class ConsentPrivacyScreen extends StatefulWidget {
     required this.fullName,
     required this.dateOfBirth,
     required this.mobileNumber,
+    this.email = '',
     required this.preferredLanguage,
     this.gender = '',
     this.isExistingPatient = false,
@@ -366,6 +368,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                                 fullName: widget.fullName,
                                 dateOfBirth: widget.dateOfBirth,
                                 mobileNumber: widget.mobileNumber,
+                                email: widget.email,
                                 preferredLanguage: widget.preferredLanguage,
                                 gender: widget.gender,
                                 isExistingPatient: widget.isExistingPatient,
