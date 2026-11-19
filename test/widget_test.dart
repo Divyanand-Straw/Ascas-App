@@ -413,7 +413,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: LinkedMemberOtpScreen(mobileNumber: '9876543210'),
+        home: LinkedMemberOtpScreen(
+          mobileNumber: '9876543210',
+          challengeId: 'test-challenge',
+        ),
       ),
     );
     await tester.pump();
@@ -426,6 +429,7 @@ void main() {
     tester.view.viewInsets = FakeViewPadding.zero;
     await tester.pump();
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('time selection shows sample and supplied availability', (

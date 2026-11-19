@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
+import '../data/models/auth_models.dart';
+import '../data/repositories/auth_repository.dart';
 import 'forgot_password/forgot_password_screen.dart';
-import 'register_screen.dart';
+import 'existing_patient/otp_verification_screen.dart';
+import 'patient_type_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,47 +18,114 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _phoneController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  void _showBackendPending() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(localizedText(context, 'No backend is integrated yet.')),
+  Future<void> _sendOtp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final phone = _phoneController.text.trim();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await AuthRepository.instance.sendOtp(
+        phone: phone,
+        purpose: OtpPurpose.login,
+      );
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationScreen(
+            mobileNumber: phone,
+            challengeId: response.challengeId,
+            initialCountdownSeconds: response.retryAfterSeconds,
+            fromExistingPatient: true,
+          ),
+        ),
+      );
+    } on ApiError catch (e) {
+      if (!mounted) return;
+
+      if (e.errorCode == 'USER_NOT_FOUND') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'No patient account found for this mobile number.',
+            ),
+            action: SnackBarAction(
+              label: 'Register',
+              textColor: Colors.amber,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PatientTypeScreen()),
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to request OTP: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  InputDecoration _phoneFieldDecoration({required String hint}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 14),
+      prefixIcon: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        child: const Text(
+          '+91',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primaryText,
+          ),
+        ),
+      ),
+      filled: true,
+      fillColor: AppColors.background,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.divider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
       ),
     );
   }
-
-  InputDecoration _fieldDecoration({
-    required String hint,
-    required IconData icon,
-  }) => InputDecoration(
-    hintText: hint,
-    hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 14),
-    prefixIcon: Icon(icon, color: AppColors.secondaryText),
-    filled: true,
-    fillColor: AppColors.background,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.divider),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.divider),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
-    ),
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -136,46 +207,74 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Text(
-                          l10n.emailAddress,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryText,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          key: const ValueKey('login-email-field'),
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: _fieldDecoration(
-                            hint: l10n.enterEmailAddress,
-                            icon: Icons.email_outlined,
-                          ),
-                          validator: (value) =>
-                              RegExp(r'^[^@]+@[^@]+\.[^@]+$')
-                                  .hasMatch(value?.trim() ?? '')
-                              ? null
-                              : l10n.validEmailAddress,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.password,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryText,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          key: const ValueKey('login-password-field'),
-                          controller: _passwordController,
-                          obscureText: true,
-                          decoration: _fieldDecoration(
-                            hint: l10n.enterPassword,
-                            icon: Icons.lock_outline,
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Mobile Number',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryText,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                key: const ValueKey('login-mobile-field'),
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                maxLength: 10,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                decoration: _phoneFieldDecoration(
+                                  hint: 'Enter 10-digit mobile number',
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Mobile number is required';
+                                  }
+                                  if (!RegExp(r'^[6-9]\d{9}$')
+                                      .hasMatch(value.trim())) {
+                                    return 'Enter a valid 10-digit mobile number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 53,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _sendOtp,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.burgundy,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2.5,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Get OTP',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         Align(
@@ -197,30 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 53,
-                          child: ElevatedButton(
-                            onPressed: _showBackendPending,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.burgundy,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              l10n.login,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 35),
                         Center(
                           child: Wrap(
                             alignment: WrapAlignment.center,
@@ -232,13 +308,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: AppColors.secondaryText,
                                 ),
                               ),
+                              const SizedBox(width: 4),
                               GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const RegisterScreen(),
-                                  ),
-                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PatientTypeScreen(),
+                                    ),
+                                  );
+                                },
                                 child: Text(
                                   l10n.createAccount,
                                   style: const TextStyle(

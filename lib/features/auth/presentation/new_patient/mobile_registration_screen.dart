@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/localization/localized_text.dart';
-
 import 'package:flutter/services.dart';
 
-import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../data/models/auth_models.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../login_screen.dart';
 import 'new_patient_otp_screen.dart';
 import '../linked_member/linked_member_otp_screen.dart';
 
@@ -22,6 +23,7 @@ class MobileRegistrationScreen extends StatefulWidget {
 
 class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
   final TextEditingController _mobileController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,9 +31,21 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
     super.dispose();
   }
 
-  void _continue() {
-    final mobile = _mobileController.text.trim();
+  OtpPurpose _resolvePurpose() {
     final type = widget.patientType.trim().toLowerCase();
+    if (type.contains('new patient')) {
+      return OtpPurpose.registration;
+    } else if (type.contains('existing')) {
+      return OtpPurpose.login;
+    } else if (type.contains('linked member')) {
+      return OtpPurpose.linkedMember;
+    }
+    return OtpPurpose.registration;
+  }
+
+  Future<void> _continue() async {
+    final mobile = _mobileController.text.trim();
+    final purpose = _resolvePurpose();
 
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -42,32 +56,87 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
       return;
     }
 
-    if (type.contains('new patient')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NewPatientOtpScreen(mobileNumber: mobile),
-        ),
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await AuthRepository.instance.sendOtp(
+        phone: mobile,
+        purpose: purpose,
       );
-    } else if (type.contains('existing')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NewPatientOtpScreen(
-            mobileNumber: mobile,
-            fromExistingPatient: true,
+
+      if (!mounted) return;
+
+      if (purpose == OtpPurpose.linkedMember) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LinkedMemberOtpScreen(
+              mobileNumber: mobile,
+              challengeId: response.challengeId,
+              initialCountdownSeconds: response.retryAfterSeconds,
+            ),
           ),
-        ),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NewPatientOtpScreen(
+              mobileNumber: mobile,
+              challengeId: response.challengeId,
+              initialCountdownSeconds: response.retryAfterSeconds,
+              purpose: purpose,
+              fromExistingPatient: purpose == OtpPurpose.login,
+            ),
+          ),
+        );
+      }
+    } on ApiError catch (e) {
+      if (!mounted) return;
+
+      if (e.errorCode == 'USER_ALREADY_EXISTS') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'An account already exists for this mobile number. Please log in.',
+            ),
+            action: SnackBarAction(
+              label: 'Log In',
+              textColor: Colors.amber,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
+            ),
+          ),
+        );
+      } else if (e.errorCode == 'USER_NOT_FOUND') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No existing account found. Please register as a New Patient.',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send verification code: $e')),
       );
-    } else if (type.contains('linked member')) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LinkedMemberOtpScreen(mobileNumber: mobile),
-        ),
-      );
-    } else {
-      debugPrint('Unknown patient type: ${widget.patientType}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -94,112 +163,93 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        LocalizedText(
+                        const LocalizedText(
                           'STEP 2 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 1.3,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          widget.patientType.contains('Existing')
-                              ? l10n.existingPatientMobile
-                              : l10n.mobileRegistration,
-                          style: TextStyle(
-                            color: AppColors.burgundy,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          l10n.otpVerification,
+                          style: const TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  TextButton(
-                    onPressed: () =>
-                        Navigator.popUntil(context, (route) => route.isFirst),
-                    child: Text(
-                      l10n.exit,
-                      style: TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 24),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Divider(color: AppColors.divider, height: 1),
-              const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 2),
-              const SizedBox(height: 28),
+              const SizedBox(height: 12),
+              const StepProgressBar(currentStep: 2, totalSteps: 8),
+              const SizedBox(height: 24),
               Text(
-                widget.patientType.contains('Existing')
-                    ? l10n.existingPatient
-                    : l10n.mobileRegistration,
-                style: TextStyle(
-                  color: AppColors.burgundy,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                widget.patientType.contains('Existing')
-                    ? l10n.registeredMobile
-                    : l10n.verifyMobile,
-                style: TextStyle(
+                l10n.enterMobileNumber,
+                style: const TextStyle(
                   color: AppColors.primaryText,
-                  fontSize: 25,
-                  height: 1.2,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
-                widget.patientType.contains('Existing')
-                    ? l10n.registeredMobileHint
-                    : l10n.sendOneTimeCode,
-                style: TextStyle(
+                l10n.sendOneTimeCode,
+                style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 13,
-                  height: 1.5,
+                  height: 1.45,
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               Text(
                 l10n.mobileNumber,
                 style: TextStyle(
                   color: AppColors.primaryText,
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 9),
+              const SizedBox(height: 8),
               Container(
-                height: 56,
                 decoration: BoxDecoration(
                   color: AppColors.white,
-                  borderRadius: BorderRadius.circular(13),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.divider),
                 ),
                 child: Row(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: LocalizedText(
-                        '+91',
-                        style: TextStyle(
-                          color: AppColors.primaryText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 15,
+                      ),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          right: BorderSide(color: AppColors.divider),
                         ),
                       ),
+                      child: const Row(
+                        children: [
+                          Text('🇮🇳', style: TextStyle(fontSize: 16)),
+                          SizedBox(width: 8),
+                          Text(
+                            '+91',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primaryText,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    Container(width: 1, height: 25, color: AppColors.divider),
                     Expanded(
                       child: TextField(
                         controller: _mobileController,
@@ -208,26 +258,25 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        style: const TextStyle(
-                          color: AppColors.primaryText,
-                          fontSize: 14,
-                        ),
                         decoration: InputDecoration(
-                          hintText: l10n.enterMobileNumber,
+                          hintText: l10n.enterTenDigitMobile,
                           hintStyle: TextStyle(
                             color: AppColors.secondaryText,
-                            fontSize: 13,
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 15,
                           ),
                           counterText: '',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 14),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 24),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(15),
@@ -262,8 +311,17 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: _continue,
-                  child: const LocalizedText('Continue'),
+                  onPressed: _isLoading ? null : _continue,
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : const LocalizedText('Continue'),
                 ),
               ),
               const SizedBox(height: 12),

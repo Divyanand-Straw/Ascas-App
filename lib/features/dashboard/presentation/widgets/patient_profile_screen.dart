@@ -15,6 +15,7 @@ import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../auth/presentation/consent_privacy_screen.dart';
 import '../../../auth/presentation/app_security_screen.dart';
@@ -297,6 +298,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
     );
     if (confirmed == true && mounted) {
+      await AuthRepository.instance.logout();
       await LocaleService.resetForLogout();
       await NotificationService.instance.resetForLogout();
       appointmentStore.clearActiveAccount();

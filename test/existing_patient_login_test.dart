@@ -4,23 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('login explains that backend authentication is not integrated', (
+  testWidgets('login requires a registered mobile number', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(_loginApp());
 
     expect(find.text('Welcome back'), findsOneWidget);
     expect(find.text('Log in to continue your journey.'), findsOneWidget);
-    expect(find.textContaining('No backend'), findsNothing);
-    expect(find.byKey(const ValueKey('login-email-field')), findsOneWidget);
-    expect(find.byKey(const ValueKey('login-password-field')), findsOneWidget);
+    expect(find.byKey(const ValueKey('login-mobile-field')), findsOneWidget);
     expect(find.textContaining('123456'), findsNothing);
 
     await tester.ensureVisible(find.byType(ElevatedButton).first);
     await tester.tap(find.byType(ElevatedButton).first);
     await tester.pump();
 
-    expect(find.text('No backend is integrated yet.'), findsOneWidget);
+    expect(find.text('Mobile number is required'), findsOneWidget);
   });
 }
 
