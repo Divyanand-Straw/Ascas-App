@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
+import 'email_otp_testing_screen.dart';
 import 'forgot_password/forgot_password_screen.dart';
 import 'register_screen.dart';
 
@@ -219,6 +221,33 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
+                        if (kDebugMode) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              key: const ValueKey('login-email-otp-testing'),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const EmailOtpTestingScreen(),
+                                ),
+                              ),
+                              icon: const Icon(Icons.mark_email_read_outlined),
+                              label: const Text('Email OTP Testing'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.burgundy,
+                                side: const BorderSide(
+                                  color: AppColors.burgundy,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         const SizedBox(height: 22),
                         Center(

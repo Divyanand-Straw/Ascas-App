@@ -2,7 +2,10 @@ import os
 import unittest
 from unittest.mock import patch
 
+from fastapi import HTTPException
+
 from email_service import send_otp_email
+import main
 
 
 class SendOtpEmailTests(unittest.TestCase):
@@ -37,6 +40,41 @@ class SendOtpEmailTests(unittest.TestCase):
         self.assertIn("5 minutes", html_body)
         self.assertIn("never share this OTP with anyone", html_body)
         self.assertIn("Thaai Seyali", html_body)
+
+
+class EmailOtpFlowTests(unittest.TestCase):
+    def setUp(self):
+        main.otp_store.clear()
+
+    @patch("main.send_otp_email")
+    def test_requested_otp_is_sent_and_can_be_verified(self, send_otp_email):
+        email = "patient@example.com"
+
+        response = main.request_email_otp(main.OTPRequest(email=email))
+
+        self.assertTrue(response["success"])
+        send_otp_email.assert_called_once()
+        sent_email, otp = send_otp_email.call_args.args
+        self.assertEqual(sent_email, email)
+        self.assertRegex(otp, r"^[0-9]{6}$")
+
+        verified = main.verify_email_otp(
+            main.OTPVerification(email=email, otp=otp)
+        )
+
+        self.assertTrue(verified["verified"])
+
+    @patch("main.send_otp_email")
+    def test_incorrect_otp_is_rejected(self, send_otp_email):
+        email = "patient@example.com"
+        main.request_email_otp(main.OTPRequest(email=email))
+
+        with self.assertRaises(HTTPException) as error:
+            main.verify_email_otp(
+                main.OTPVerification(email=email, otp="000000")
+            )
+
+        self.assertEqual(error.exception.status_code, 400)
 
 
 if __name__ == "__main__":

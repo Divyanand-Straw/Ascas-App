@@ -5,12 +5,13 @@ import hmac
 import hashlib
 import secrets
 import logging
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from email_service import send_otp_email
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().with_name(".env"))
 logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="Thaai Seyali Email OTP API", version="1.0.0")
 

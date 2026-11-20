@@ -3,6 +3,7 @@ import 'package:app/features/auth/presentation/forgot_password/forgot_password_o
 import 'package:app/features/auth/presentation/forgot_password/reset_password_screen.dart';
 import 'package:app/features/auth/presentation/app_security_screen.dart';
 import 'package:app/features/auth/presentation/consent_privacy_screen.dart';
+import 'package:app/features/auth/presentation/email_otp_testing_screen.dart';
 import 'package:app/features/auth/presentation/login_screen.dart';
 import 'package:app/features/auth/presentation/new_patient/mobile_registration_screen.dart';
 import 'package:app/features/auth/presentation/new_patient/new_patient_otp_screen.dart';
@@ -84,7 +85,7 @@ void main() {
 
     expect(find.text('Google'), findsNothing);
     expect(find.text('Apple'), findsNothing);
-    expect(find.textContaining('Email OTP Testing'), findsNothing);
+    expect(find.text('Email OTP Testing'), findsOneWidget);
     expect(find.text('Forgot Password?'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Forgot Password?'));
@@ -104,6 +105,71 @@ void main() {
       find.byKey(const ValueKey('forgot-password-send-otp')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('developer login opens email OTP testing', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_loginApp());
+
+    final testingButton = find.byKey(const ValueKey('login-email-otp-testing'));
+    await tester.ensureVisible(testingButton);
+    await tester.tap(testingButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EmailOtpTestingScreen), findsOneWidget);
+  });
+
+  testWidgets('email OTP testing sends and verifies the entered address', (
+    WidgetTester tester,
+  ) async {
+    final requestedEmails = <String>[];
+    final verifiedOtps = <String>[];
+
+    await tester.pumpWidget(
+      _localizedApp(
+        EmailOtpTestingScreen(
+          requestOtp: (email) async {
+            requestedEmails.add(email);
+            return 'OTP sent successfully.';
+          },
+          verifyOtp: (email, otp) async {
+            expect(email, 'patient@example.com');
+            verifiedOtps.add(otp);
+            return 'Email verified successfully.';
+          },
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('email-otp-testing-email')),
+      'patient@example.com',
+    );
+    await tester.pump();
+    final sendButton = find.byKey(const ValueKey('email-otp-testing-send'));
+    expect(tester.widget<OutlinedButton>(sendButton).onPressed, isNotNull);
+    await tester.ensureVisible(sendButton);
+    await tester.tap(sendButton);
+    await tester.pump();
+
+    expect(requestedEmails, ['patient@example.com']);
+    expect(
+      find.text('Enter the six-digit OTP sent to patient@example.com'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('email-otp-testing-otp-0')),
+      '123456',
+    );
+    await tester.tap(find.byKey(const ValueKey('email-otp-testing-verify')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(verifiedOtps, ['123456']);
+    expect(find.text('Email verified successfully.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets(
