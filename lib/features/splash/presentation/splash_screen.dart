@@ -5,17 +5,22 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/repositories/auth_repository.dart';
+import '../../auth/presentation/new_patient/create_login_credentials_screen.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final AuthRepository? authRepository;
+
+  const SplashScreen({super.key, this.authRepository});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  bool _navigationStarted = false;
+
   @override
   void initState() {
     super.initState();
@@ -24,20 +29,36 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkExistingSession() async {
     try {
-      final restored = await AuthRepository.instance.restoreSession();
-      if (!mounted) return;
+      final authRepository = widget.authRepository ?? AuthRepository.instance;
+      final restored = await authRepository.restoreSession();
+      if (!mounted || _navigationStarted) return;
 
-      if (restored) {
-        final session = AuthRepository.instance.currentSession;
-        if (session != null &&
+      if (restored && authRepository.isAuthenticated) {
+        final session = authRepository.currentSession;
+        final pending = authRepository.pendingRegistration;
+        if (session != null && pending?.userId == session.user.id) {
+          _navigationStarted = true;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => buildPendingRegistrationScreen(
+                registration: pending!,
+                mobileNumber: session.user.phone,
+              ),
+            ),
+          );
+        } else if (session != null &&
             session.hasCompletedProfile &&
             session.profile != null) {
+          _navigationStarted = true;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => DashboardScreen(
                 patientName: session.profile!.fullName,
+                patientId: session.profile!.clinicMrn ?? '',
                 mobileNumber: session.user.phone,
+                email: session.user.email ?? '',
                 dateOfBirth: session.profile!.dob ?? '',
                 preferredLanguage: session.profile!.preferredLanguage,
                 accountId: session.user.id,
@@ -52,6 +73,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _onTap() {
+    if (_navigationStarted) return;
+    _navigationStarted = true;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const OnboardingScreen()),

@@ -51,6 +51,7 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final totalSteps = _selectedOption == 0 ? 9 : 8;
     final options = [
       (
         title: l10n.newPatient,
@@ -89,7 +90,7 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
                     child: Column(
                       children: [
                         LocalizedText(
-                          'STEP 1 OF 8',
+                          'STEP 1 OF $totalSteps',
                           style: TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 8,
@@ -125,7 +126,7 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider, height: 1),
               const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 1),
+              StepProgressBar(currentStep: 1, totalSteps: totalSteps),
               const SizedBox(height: 28),
               Text(
                 l10n.secureRegistration,

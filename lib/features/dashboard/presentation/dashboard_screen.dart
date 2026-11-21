@@ -111,10 +111,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final identity = await AccountIdentityService().accountForId(accountId);
         if (mounted && identity != null) {
           setState(() {
-            _email = identity.email;
-            _patientName = identity.fullName;
-            _mobileNumber = identity.mobileNumber;
-            _dateOfBirth = identity.dateOfBirth;
+            _email = widget.email.trim().isNotEmpty
+                ? widget.email.trim()
+                : identity.email;
+            _patientName =
+                widget.patientName.trim().isNotEmpty &&
+                    widget.patientName.trim() != 'Patient'
+                ? widget.patientName
+                : identity.fullName;
+            _mobileNumber = widget.mobileNumber.trim().isNotEmpty
+                ? widget.mobileNumber
+                : identity.mobileNumber;
+            _dateOfBirth = widget.dateOfBirth.trim().isNotEmpty
+                ? widget.dateOfBirth
+                : identity.dateOfBirth;
             _preferredLanguage = identity.preferredLanguage;
           });
         }
@@ -291,6 +301,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: DashboardHomeContent(
                 patientName: _patientName,
                 mobileNumber: _mobileNumber,
+                dateOfBirth: _dateOfBirth,
                 patientId: widget.patientId,
                 patientState: widget.patientState,
                 isLinkedPartner: widget.isLinkedPartner,

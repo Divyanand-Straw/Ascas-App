@@ -1,9 +1,10 @@
 import { Pool, PoolConfig } from 'pg';
-import dotenv from 'dotenv';
+import { loadBackendEnvironment } from './environment';
+import { resolveDatabaseUrl } from './runtime';
 
-dotenv.config();
+loadBackendEnvironment();
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
+const databaseUrl = resolveDatabaseUrl(process.env);
 
 /**
  * Sanitizes connection strings and passwords from error messages to prevent credential leaks.

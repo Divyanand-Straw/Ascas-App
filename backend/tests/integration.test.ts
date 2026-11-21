@@ -25,6 +25,28 @@ describe('ASCAS Phase 1 Backend API Integration Tests', () => {
     });
   });
 
+  it('does not log OTP request payloads or validation diagnostics', async () => {
+    const originalConsoleInfo = console.info;
+    const logLines: string[] = [];
+    console.info = (...args: unknown[]) => logLines.push(args.join(' '));
+
+    try {
+      const response = await fetch(`${baseUrl}/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '+919876543210',
+          purpose: 'UNSUPPORTED',
+        }),
+      });
+
+      assert.equal(response.status, 400);
+      assert.deepEqual(logLines, []);
+    } finally {
+      console.info = originalConsoleInfo;
+    }
+  });
+
   it('should reject invalid verification, unauthenticated access, and invalid refresh token', async () => {
     // 1. Send OTP for REGISTRATION
     const sendRes = await fetch(`${baseUrl}/otp/send`, {
@@ -40,6 +62,8 @@ describe('ASCAS Phase 1 Backend API Integration Tests', () => {
     const sendData = (await sendRes.json()) as any;
     assert.equal(sendData.success, true);
     assert.ok(sendData.data.challengeId);
+    assert.equal('otp' in sendData.data, false);
+    assert.equal(JSON.stringify(sendData).includes('+919876543210'), false);
 
     const challengeId = sendData.data.challengeId;
 
@@ -62,6 +86,19 @@ describe('ASCAS Phase 1 Backend API Integration Tests', () => {
     // 3. Test GET /me without auth header -> 401
     const unauthMe = await fetch(`${baseUrl}/me`);
     assert.equal(unauthMe.status, 401);
+
+    const unauthProfileSave = await fetch(`${baseUrl}/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: 'Patient',
+        lastName: 'Example',
+        dob: '1994-06-15',
+        gender: 'Female',
+        preferredLanguage: 'en',
+      }),
+    });
+    assert.equal(unauthProfileSave.status, 401);
 
     // 4. Test Refresh with invalid token -> 401
     const invalidRefresh = await fetch(`${baseUrl}/token/refresh`, {

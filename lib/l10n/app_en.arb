@@ -77,7 +77,7 @@
   "pleaseEnterOtp": "Please enter the 6-digit OTP.",
   "incorrectOtp": "Incorrect OTP. Please try again.",
   "forgotPasswordTitle": "Reset your password",
-  "resetPasswordDescription": "Enter the mobile number and email address registered to your account. We will send a verification code to your email to continue with password recovery.",
+  "resetPasswordDescription": "Enter the email address registered to your account. If eligible, we will send a verification code to continue with password recovery.",
   "registeredMobileNumber": "Registered mobile number",
   "registeredEmailAddress": "Registered email address",
   "enterTenDigitMobile": "Enter 10-digit mobile number",

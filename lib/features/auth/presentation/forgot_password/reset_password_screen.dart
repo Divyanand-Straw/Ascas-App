@@ -1,12 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../login_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  final String registeredMobile;
   final String registeredEmail;
   final String? resetAuthorizationToken;
   final Future<void> Function(
@@ -17,7 +19,6 @@ class ResetPasswordScreen extends StatefulWidget {
 
   const ResetPasswordScreen({
     super.key,
-    required this.registeredMobile,
     required this.registeredEmail,
     this.resetAuthorizationToken,
     this.resetPassword,
@@ -43,7 +44,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final password = _passwordController.text;
     if (password.isEmpty) return 0;
     var score = 0;
-    if (password.length >= 8) score++;
     if (password.length >= 12) score++;
     if (RegExp(r'[a-z]').hasMatch(password) &&
         RegExp(r'[A-Z]').hasMatch(password)) {
@@ -56,7 +56,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   String get _passwordStrengthLabel {
     if (_passwordController.text.isEmpty) return '';
-    if (_passwordController.text.length < 8) return 'Weak';
+    if (_passwordController.text.length < 12 ||
+        utf8.encode(_passwordController.text).length > 72) {
+      return 'Weak';
+    }
     if (_passwordStrength <= 2) return 'Fair';
     if (_passwordStrength <= 4) return 'Good';
     return 'Strong';
@@ -87,9 +90,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       return;
     }
 
-    if (password.length < 8) {
+    if (password.length < 12) {
       setState(
-        () => _errorMessage = 'Password must contain at least 8 characters.',
+        () => _errorMessage = 'Password must contain at least 12 characters.',
+      );
+      return;
+    }
+
+    if (password.length > 128 || utf8.encode(password).length > 72) {
+      setState(
+        () => _errorMessage =
+            'Password must not exceed 72 UTF-8 bytes or 128 characters.',
       );
       return;
     }
@@ -101,7 +112,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     final token = widget.resetAuthorizationToken;
     final resetPassword = widget.resetPassword;
-    if (token == null || token.trim().isEmpty || resetPassword == null) {
+    if (token == null || token.trim().isEmpty) {
       setState(() => _errorMessage = _backendUnavailableMessage);
       return;
     }
@@ -112,7 +123,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await resetPassword(token, password);
+      if (resetPassword != null) {
+        await resetPassword(token, password);
+      } else {
+        await AuthRepository.instance.completePasswordReset(
+          resetGrant: token,
+          newPassword: password,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
@@ -288,14 +306,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               const SizedBox(height: 38),
 
               _registeredContact(
-                label: 'Registered mobile number',
-                value: '+91 ${widget.registeredMobile}',
-                icon: Icons.phone_outlined,
-              ),
-
-              const SizedBox(height: 18),
-
-              _registeredContact(
                 label: 'Registered email address',
                 value: widget.registeredEmail,
                 icon: Icons.email_outlined,
@@ -344,7 +354,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         value: _passwordStrength / 5,
                         minHeight: 5,
                         backgroundColor: AppColors.blushPink,
-                        color: _passwordController.text.length < 8
+                        color: _passwordStrengthLabel == 'Weak'
                             ? AppColors.error
                             : _passwordStrength >= 4
                             ? AppColors.success
@@ -355,7 +365,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Text(
                       _passwordStrengthLabel,
                       style: TextStyle(
-                        color: _passwordController.text.length < 8
+                        color: _passwordStrengthLabel == 'Weak'
                             ? AppColors.error
                             : AppColors.secondaryText,
                         fontSize: 12,
@@ -395,7 +405,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: LocalizedText(
-                      'Password must contain at least 8 characters.',
+                      'Password must contain at least 12 characters and no more than 72 UTF-8 bytes.',
                       style: TextStyle(
                         color: AppColors.secondaryText,
                         fontSize: 12,

@@ -12,8 +12,9 @@ class ProfileConfirmationScreen extends StatelessWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String email;
+  final String emergencyContact;
   final String preferredLanguage;
-  final String gender;
+  final String? gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -24,8 +25,9 @@ class ProfileConfirmationScreen extends StatelessWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     this.email = '',
+    this.emergencyContact = '',
     required this.preferredLanguage,
-    this.gender = '',
+    this.gender,
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -63,25 +65,32 @@ class ProfileConfirmationScreen extends StatelessWidget {
     return '+91 •••••• ${mobileNumber.substring(6)}';
   }
 
+  String get _maskedEmergencyContact {
+    final digits = emergencyContact.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 4) return 'Provided';
+    return '+91 •••••• ${digits.substring(digits.length - 4)}';
+  }
+
   Widget _detailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 13,
-              ),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 13,
             ),
           ),
           const SizedBox(width: 15),
-          Flexible(
+          Expanded(
             child: Text(
               value,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: const TextStyle(
                 color: AppColors.primaryText,
@@ -97,6 +106,8 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentStep = isExistingPatient ? 5 : 6;
+    final totalSteps = isExistingPatient ? 8 : 9;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -114,12 +125,12 @@ class ProfileConfirmationScreen extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       children: [
                         LocalizedText(
-                          'STEP 5 OF 8',
-                          style: TextStyle(
+                          'STEP $currentStep OF $totalSteps',
+                          style: const TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -157,7 +168,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
               const Divider(color: AppColors.divider, height: 1),
 
               const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 5),
+              StepProgressBar(currentStep: currentStep, totalSteps: totalSteps),
               const SizedBox(height: 32),
 
               const LocalizedText(
@@ -268,12 +279,18 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
                     const Divider(color: AppColors.divider, height: 1),
 
-                    _detailRow(
-                      'Gender',
-                      gender.isEmpty ? 'Not provided' : gender,
-                    ),
+                    if (emergencyContact.isNotEmpty) ...[
+                      _detailRow(
+                        'Emergency contact',
+                        _maskedEmergencyContact,
+                      ),
+                      const Divider(color: AppColors.divider, height: 1),
+                    ],
 
-                    const Divider(color: AppColors.divider, height: 1),
+                    if (gender?.isNotEmpty == true) ...[
+                      _detailRow('Gender', gender!),
+                      const Divider(color: AppColors.divider, height: 1),
+                    ],
 
                     _detailRow('Language', preferredLanguage),
 
@@ -332,6 +349,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 dateOfBirth: dateOfBirth,
                                 email: email,
                                 mobileNumber: mobileNumber,
+                                emergencyContact: emergencyContact,
                                 preferredLanguage: preferredLanguage,
                                 gender: gender,
                                 isExistingPatient: true,
@@ -343,6 +361,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 dateOfBirth: dateOfBirth,
                                 mobileNumber: mobileNumber,
                                 email: email,
+                                emergencyContact: emergencyContact,
                                 preferredLanguage: preferredLanguage,
                                 gender: gender,
                               ),

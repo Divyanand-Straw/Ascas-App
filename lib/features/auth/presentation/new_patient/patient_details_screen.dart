@@ -13,8 +13,13 @@ import '../../../../core/widgets/date_of_birth_picker.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
   final String mobileNumber;
+  final String email;
 
-  const PatientDetailsScreen({super.key, required this.mobileNumber});
+  const PatientDetailsScreen({
+    super.key,
+    required this.mobileNumber,
+    required this.email,
+  });
 
   @override
   State<PatientDetailsScreen> createState() => _PatientDetailsScreenState();
@@ -25,17 +30,14 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _emergencyController = TextEditingController();
 
-  String? _selectedGender;
   String _selectedLanguage = 'English';
 
   @override
   void dispose() {
     _nameController.dispose();
     _dobController.dispose();
-    _emailController.dispose();
     _emergencyController.dispose();
     super.dispose();
   }
@@ -136,13 +138,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    if (_selectedGender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your gender.')),
-      );
-      return;
-    }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -150,9 +145,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           fullName: _nameController.text.trim(),
           dateOfBirth: _dobController.text.trim(),
           mobileNumber: widget.mobileNumber,
-          email: _emailController.text.trim(),
+          email: widget.email,
+          emergencyContact: '+91${_emergencyController.text.trim()}',
           preferredLanguage: _selectedLanguage,
-          gender: _selectedGender!,
         ),
       ),
     );
@@ -183,7 +178,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                       child: Column(
                         children: [
                           LocalizedText(
-                            'STEP 4 OF 8',
+                            'STEP 5 OF 9',
                             style: TextStyle(
                               color: AppColors.dustyPink,
                               fontSize: 9,
@@ -222,7 +217,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 const Divider(color: AppColors.divider, height: 1),
 
                 const SizedBox(height: 16),
-                const StepProgressBar(currentStep: 4),
+                const StepProgressBar(currentStep: 5, totalSteps: 9),
                 const SizedBox(height: 30),
 
                 const LocalizedText(
@@ -274,47 +269,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   controller: _dobController,
                   readOnly: true,
                   onTap: _selectDate,
-                ),
-
-                const SizedBox(height: 20),
-
-                _buildLabel('Gender'),
-
-                Container(
-                  height: 54,
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.divider),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(child: _genderOption('Male')),
-                      Expanded(child: _genderOption('Female')),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                _buildTextField(
-                  label: 'Email',
-                  hint: 'Enter your email address',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email address.';
-                    }
-
-                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                        .hasMatch(value.trim())) {
-                      return 'Please enter a valid email address.';
-                    }
-
-                    return null;
-                  },
                 ),
 
                 const SizedBox(height: 20),
@@ -464,30 +418,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         ),
         child: Text(
           language,
-          style: TextStyle(
-            color: isSelected ? AppColors.white : AppColors.secondaryText,
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _genderOption(String gender) {
-    final isSelected = _selectedGender == gender;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedGender = gender),
-      child: Container(
-        height: 42,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.burgundy : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: Text(
-          gender,
           style: TextStyle(
             color: isSelected ? AppColors.white : AppColors.secondaryText,
             fontSize: 13,

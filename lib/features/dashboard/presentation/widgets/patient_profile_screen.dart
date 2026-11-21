@@ -15,13 +15,13 @@ import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../appointments/presentation/data/appointment_data.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/data/models/auth_models.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../auth/presentation/consent_privacy_screen.dart';
 import '../../../auth/presentation/app_security_screen.dart';
 import '../../../auth/data/account_identity_service.dart';
 import '../../../auth/presentation/forgot_password/change_email_address_screen.dart';
-import '../../../../core/services/email_otp_service.dart';
 import '../../../partner_access/presentation/patient_partner_access_screen.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
 import 'dashboard_card.dart';
@@ -42,6 +42,9 @@ class PatientProfileData {
     required this.language,
   });
 }
+
+String _displayMobileNumber(String mobile) =>
+    mobile.trim().replaceFirst(RegExp(r'^\+91[\s-]*'), '');
 
 class PatientProfileScreen extends StatefulWidget {
   final String patientName;
@@ -95,7 +98,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     super.initState();
     _name = widget.patientName;
     _mobile = widget.mobileNumber;
-    _dateOfBirth = widget.dateOfBirth;
+    _dateOfBirth = formatDateOfBirthValue(widget.dateOfBirth);
     _email = widget.email;
     _language = widget.preferredLanguage.isEmpty
         ? 'English'
@@ -111,15 +114,28 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     if (!mounted) return;
     setState(() {
       if (identity?.role == AccountRole.patient) {
-        _name = identity!.fullName;
-        _mobile = identity.mobileNumber;
-        _dateOfBirth = identity.dateOfBirth;
-        _email = identity.email;
+        _name =
+            widget.patientName.trim().isNotEmpty &&
+                widget.patientName.trim() != 'Patient'
+            ? widget.patientName
+            : identity!.fullName;
+        _mobile = widget.mobileNumber.trim().isNotEmpty
+            ? widget.mobileNumber
+            : identity!.mobileNumber;
+        _dateOfBirth = formatDateOfBirthValue(
+          widget.dateOfBirth.trim().isNotEmpty
+              ? widget.dateOfBirth
+              : identity!.dateOfBirth,
+        );
+        _email = widget.email.trim().isNotEmpty
+            ? widget.email.trim()
+            : identity!.email;
       } else {
         _name = preferences.getString(_profileKey('name')) ?? _name;
         _mobile = preferences.getString(_profileKey('mobile')) ?? _mobile;
-        _dateOfBirth =
-            preferences.getString(_profileKey('dob')) ?? _dateOfBirth;
+        _dateOfBirth = formatDateOfBirthValue(
+          preferences.getString(_profileKey('dob')) ?? _dateOfBirth,
+        );
       }
     });
   }
@@ -130,7 +146,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       _name = profile.name;
       _mobile = profile.mobile;
       _email = profile.email;
-      _dateOfBirth = profile.dateOfBirth;
+      _dateOfBirth = formatDateOfBirthValue(profile.dateOfBirth);
       _language = profile.language;
     });
     widget.onProfileUpdated?.call(profile);
@@ -150,6 +166,20 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               ? widget.mobileNumber
               : widget.accountId,
           onProfileUpdated: _applyProfile,
+          updateProfile:
+              ({
+                required firstName,
+                required lastName,
+                required dateOfBirth,
+                gender,
+                required preferredLanguage,
+              }) => AuthRepository.instance.updatePatientProfile(
+                firstName: firstName,
+                lastName: lastName,
+                dateOfBirth: dateOfBirth,
+                gender: gender,
+                preferredLanguage: preferredLanguage,
+              ),
         ),
       ),
     );
@@ -168,15 +198,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       ),
     );
     if (result == null) return;
-    final language = result == 'Tamil' ? 'ta' : 'en';
-    if (widget.accountId.isEmpty) {
-      await LocaleService.setLanguage(language);
-    } else {
-      await LocaleService.setAccountLanguage(
-        accountId: widget.accountId,
-        languageCode: language,
-      );
-    }
     if (!mounted) return;
     final profile = PatientProfileData(
       name: _name,
@@ -496,8 +517,24 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 7),
-                        if (widget.patientId.isNotEmpty)
+                        if (_mobile.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _profileContactRow(
+                            Icons.phone_outlined,
+                            _displayMobileNumber(_mobile),
+                          ),
+                        ],
+                        if (_dateOfBirth.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          _profileContactRow(
+                            Icons.cake_outlined,
+                            formatDateOfBirthValue(_dateOfBirth),
+                          ),
+                        ],
+                        if (widget.patientId.isNotEmpty) ...[
+                          const SizedBox(height: 4),
                           CopyablePatientId(
+                            key: const ValueKey('profile-patient-id'),
                             patientId: widget.patientId,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -510,22 +547,15 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                             borderRadius: BorderRadius.circular(20),
                             labelStyle: const TextStyle(
                               color: AppColors.dustyPink,
-                              fontSize: 8,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                             textStyle: const TextStyle(
                               color: AppColors.dustyPink,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        if (_mobile.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          _profileContactRow(Icons.phone_outlined, _mobile),
-                        ],
-                        if (_dateOfBirth.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          _profileContactRow(Icons.cake_outlined, _dateOfBirth),
                         ],
                       ],
                     ),
@@ -767,9 +797,23 @@ class PersonalDetailsScreen extends StatefulWidget {
   final String dateOfBirth;
   final String language;
   final String accountId;
-  final Future<String> Function(String email)? requestOtp;
-  final Future<String> Function(String email, String otp)? verifyOtp;
+  final Future<SendEmailOtpResponse> Function(String email)? requestOtp;
+  final Future<VerifyEmailOtpResponse> Function(
+    String challengeId,
+    String email,
+    String otp,
+  )?
+  verifyOtp;
   final ValueChanged<PatientProfileData>? onProfileUpdated;
+  final Future<void> Function({
+    required String firstName,
+    required String lastName,
+    required String dateOfBirth,
+    String? gender,
+    required String preferredLanguage,
+  })?
+  updateProfile;
+  final Future<AuthSession> Function()? refreshSession;
 
   const PersonalDetailsScreen({
     super.key,
@@ -782,6 +826,8 @@ class PersonalDetailsScreen extends StatefulWidget {
     this.requestOtp,
     this.verifyOtp,
     this.onProfileUpdated,
+    this.updateProfile,
+    this.refreshSession,
   });
 
   @override
@@ -804,13 +850,15 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.name);
-    _mobile = TextEditingController(text: widget.mobile);
-    _dob = TextEditingController(text: widget.dateOfBirth);
+    _mobile = TextEditingController(text: _displayMobileNumber(widget.mobile));
+    _dob = TextEditingController(
+      text: formatDateOfBirthValue(widget.dateOfBirth),
+    );
     _emailController = TextEditingController(text: widget.email);
     _savedName = widget.name;
     _savedMobile = widget.mobile;
     _savedEmail = widget.email;
-    _savedDateOfBirth = widget.dateOfBirth;
+    _savedDateOfBirth = formatDateOfBirthValue(widget.dateOfBirth);
   }
 
   @override
@@ -827,6 +875,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     final mobile = _mobile.text.trim();
     final dateOfBirth = _dob.text.trim();
     final email = _emailController.text.trim();
+    final normalizedEmail = normalizeEmail(email);
     if (name.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -851,8 +900,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       );
       return;
     }
-    final emailChanged =
-        email.toLowerCase() != _savedEmail.trim().toLowerCase();
+    final emailChanged = normalizedEmail != normalizeEmail(_savedEmail.trim());
     if (email.isNotEmpty &&
         !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -873,39 +921,77 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     final profile = PatientProfileData(
       name: name,
       mobile: mobile,
-      email: emailChanged ? email : _savedEmail.trim(),
+      email: emailChanged ? normalizedEmail : _savedEmail.trim(),
       dateOfBirth: dateOfBirth,
       language: widget.language,
     );
     setState(() => _isSubmitting = true);
     try {
       final accountService = AccountIdentityService();
+      AuthSession? refreshedSession;
+      if (widget.updateProfile != null) {
+        final parts = name.split(RegExp(r'\s+'));
+        final firstName = parts.first;
+        final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        final parsedDob = parseDateOfBirth(dateOfBirth);
+        final isoDob = parsedDob == null
+            ? dateOfBirth
+            : '${parsedDob.year.toString().padLeft(4, '0')}-${parsedDob.month.toString().padLeft(2, '0')}-${parsedDob.day.toString().padLeft(2, '0')}';
+        await widget.updateProfile!(
+          firstName: firstName,
+          lastName: lastName,
+          dateOfBirth: isoDob,
+          preferredLanguage: widget.language.toLowerCase().startsWith('ta')
+              ? 'ta'
+              : 'en',
+        );
+      }
       if (emailChanged) {
-        final requestOtp = widget.requestOtp ?? EmailOtpService.requestOtp;
-        final message = await requestOtp(email);
+        final requestOtp =
+            widget.requestOtp ??
+            (String email) => AuthRepository.instance.sendEmailOtp(
+              email: email,
+              purpose: EmailOtpPurpose.emailChange,
+            );
+        final response = await requestOtp(profile.email);
         if (!mounted) return;
         final verified = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
             builder: (_) => ChangeEmailAddressScreen(
-              newEmail: email,
-              initialMessage: message,
+              newEmail: profile.email,
+              initialMessage: 'A verification code has been sent.',
+              initialChallengeId: response.challengeId,
               requestOtp: widget.requestOtp,
               verifyOtp: widget.verifyOtp,
               onVerified: () async {
-                await accountService.updatePatientDetails(
-                  accountId: widget.accountId,
-                  fullName: profile.name,
-                  mobileNumber: profile.mobile,
-                  dateOfBirth: profile.dateOfBirth,
-                  email: profile.email,
-                );
+                if (widget.updateProfile != null) {
+                  final refreshSession =
+                      widget.refreshSession ??
+                      AuthRepository.instance.refreshCurrentUser;
+                  final session = await refreshSession();
+                  if (normalizeEmail(session.user.email ?? '') !=
+                      profile.email) {
+                    throw StateError(
+                      'The server did not return the updated email address.',
+                    );
+                  }
+                  refreshedSession = session;
+                } else {
+                  await accountService.updatePatientDetails(
+                    accountId: widget.accountId,
+                    fullName: profile.name,
+                    mobileNumber: profile.mobile,
+                    dateOfBirth: profile.dateOfBirth,
+                    email: profile.email,
+                  );
+                }
               },
             ),
           ),
         );
         if (verified != true || !mounted) return;
-      } else {
+      } else if (widget.updateProfile == null) {
         await accountService.updatePatientDetails(
           accountId: widget.accountId,
           fullName: profile.name,
@@ -915,14 +1001,36 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         );
       }
       if (!mounted) return;
+      final currentSession = refreshedSession;
+      final refreshedProfile = currentSession?.profile;
+      final refreshedName = refreshedProfile?.fullName.trim();
+      final savedProfile = currentSession == null
+          ? profile
+          : PatientProfileData(
+              name: refreshedName == null || refreshedName.isEmpty
+                  ? profile.name
+                  : refreshedName,
+              mobile: currentSession.user.phone,
+              email: currentSession.user.email ?? profile.email,
+              dateOfBirth: refreshedProfile?.dob ?? profile.dateOfBirth,
+              language: refreshedProfile?.preferredLanguage == 'ta'
+                  ? 'Tamil'
+                  : refreshedProfile == null
+                  ? profile.language
+                  : 'English',
+            );
       setState(() {
-        _savedName = profile.name;
-        _savedMobile = profile.mobile;
-        _savedEmail = profile.email;
-        _savedDateOfBirth = profile.dateOfBirth;
+        _savedName = savedProfile.name;
+        _savedMobile = savedProfile.mobile;
+        _savedEmail = savedProfile.email;
+        _savedDateOfBirth = formatDateOfBirthValue(savedProfile.dateOfBirth);
+        _name.text = savedProfile.name;
+        _mobile.text = _displayMobileNumber(savedProfile.mobile);
+        _emailController.text = savedProfile.email;
+        _dob.text = formatDateOfBirthValue(savedProfile.dateOfBirth);
         _isEditing = false;
       });
-      widget.onProfileUpdated?.call(profile);
+      widget.onProfileUpdated?.call(savedProfile);
       if (!emailChanged) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -957,7 +1065,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   void _cancelEditing() {
     setState(() {
       _name.text = _savedName;
-      _mobile.text = _savedMobile;
+      _mobile.text = _displayMobileNumber(_savedMobile);
       _emailController.text = _savedEmail;
       _dob.text = _savedDateOfBirth;
       _isEditing = false;
@@ -1111,7 +1219,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
             _detailCard(
               keyName: 'mobile',
               label: 'Mobile Number',
-              value: _savedMobile,
+              value: _displayMobileNumber(_savedMobile),
               icon: Icons.phone_outlined,
             ),
             _detailCard(
@@ -1231,6 +1339,15 @@ class _LanguageAccessibilityScreenState
       'profile_${widget.accountId}_text_scale',
       _textScale,
     );
+    final languageCode = _language == 'Tamil' ? 'ta' : 'en';
+    if (widget.accountId.isEmpty) {
+      await LocaleService.setLanguage(languageCode);
+    } else {
+      await LocaleService.setAccountLanguage(
+        accountId: widget.accountId,
+        languageCode: languageCode,
+      );
+    }
     if (mounted) Navigator.pop(context, _language);
   }
 
@@ -1255,7 +1372,7 @@ class _LanguageAccessibilityScreenState
               DropdownMenuItem(value: 'Tamil', child: Text(l10n.tamil)),
             ],
             onChanged: (value) {
-              if (value != null) _changeLanguage(value);
+              if (value != null) setState(() => _language = value);
             },
           ),
           const SizedBox(height: 20),
@@ -1277,19 +1394,6 @@ class _LanguageAccessibilityScreenState
         ],
       ),
     );
-  }
-
-  Future<void> _changeLanguage(String language) async {
-    setState(() => _language = language);
-    final languageCode = language == 'Tamil' ? 'ta' : 'en';
-    if (widget.accountId.isEmpty) {
-      await LocaleService.setLanguage(languageCode);
-    } else {
-      await LocaleService.setAccountLanguage(
-        accountId: widget.accountId,
-        languageCode: languageCode,
-      );
-    }
   }
 }
 

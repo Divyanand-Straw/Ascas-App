@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
 
-import 'clinic_record_access_screen.dart';
-import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../core/widgets/otp_input.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../dashboard/presentation/dashboard_screen.dart';
@@ -16,14 +14,14 @@ class OtpVerificationScreen extends StatefulWidget {
   final String mobileNumber;
   final String? challengeId;
   final int initialCountdownSeconds;
-  final bool fromExistingPatient;
+  final AuthRepository? authRepository;
 
   const OtpVerificationScreen({
     super.key,
     required this.mobileNumber,
     this.challengeId,
     this.initialCountdownSeconds = 45,
-    this.fromExistingPatient = false,
+    this.authRepository,
   });
 
   @override
@@ -41,6 +39,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   late String _currentChallengeId;
   int? _remainingAttempts;
+
+  AuthRepository get _authRepository =>
+      widget.authRepository ?? AuthRepository.instance;
 
   @override
   void initState() {
@@ -63,7 +64,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Future<void> _requestInitialOtp() async {
     try {
-      final res = await AuthRepository.instance.sendOtp(
+      final res = await _authRepository.sendOtp(
         phone: widget.mobileNumber,
         purpose: OtpPurpose.login,
       );
@@ -75,6 +76,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       _startCountdown();
     } on ApiError catch (error) {
       if (!mounted) return;
+      _applyRetryAfter(error.retryAfterSeconds);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
@@ -130,7 +132,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     });
 
     try {
-      final res = await AuthRepository.instance.sendOtp(
+      final res = await _authRepository.sendOtp(
         phone: widget.mobileNumber,
         purpose: OtpPurpose.login,
       );
@@ -149,11 +151,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('A new verification code has been dispatched.'),
+          content: Text(
+            'Verification challenge is ready. Use the code from your latest request.',
+          ),
         ),
       );
     } on ApiError catch (e) {
       if (!mounted) return;
+      _applyRetryAfter(e.retryAfterSeconds);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
@@ -167,6 +172,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         });
       }
     }
+  }
+
+  void _applyRetryAfter(int? seconds) {
+    if (seconds == null || seconds <= 0) return;
+    setState(() => _remainingSeconds = seconds);
+    _startCountdown();
   }
 
   Future<void> _verifyOtp() async {
@@ -184,7 +195,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     });
 
     try {
-      final session = await AuthRepository.instance.verifyOtp(
+      final session = await _authRepository.verifyOtp(
         challengeId: _currentChallengeId,
         phone: widget.mobileNumber,
         purpose: OtpPurpose.login,
@@ -195,29 +206,22 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
       if (!mounted) return;
 
-      if (session.hasCompletedProfile && session.profile != null) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DashboardScreen(
-              patientName: session.profile!.fullName,
-              mobileNumber: widget.mobileNumber,
-              dateOfBirth: session.profile!.dob ?? '',
-              preferredLanguage: session.profile!.preferredLanguage,
-              accountId: session.user.id,
-            ),
+      final profile = session.profile;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DashboardScreen(
+            patientName: profile?.fullName ?? 'Patient',
+            mobileNumber: session.user.phone,
+            email: session.user.email ?? '',
+            dateOfBirth: profile?.dob ?? '',
+            preferredLanguage: profile?.preferredLanguage ?? '',
+            patientId: profile?.clinicMrn ?? '',
+            accountId: session.user.id,
           ),
-          (route) => false,
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                ClinicRecordAccessScreen(mobileNumber: widget.mobileNumber),
-          ),
-        );
-      }
+        ),
+        (route) => false,
+      );
     } on ApiError catch (e) {
       if (!mounted) return;
 
@@ -310,16 +314,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     child: Column(
                       children: [
                         LocalizedText(
-                          'STEP 3 OF 8',
-                          style: TextStyle(
-                            color: AppColors.dustyPink,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        LocalizedText(
                           'OTP verification',
                           style: TextStyle(
                             color: AppColors.primaryText,
@@ -346,8 +340,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider, height: 1),
-              const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 3),
               const SizedBox(height: 35),
               const LocalizedText(
                 'OTP VERIFICATION',

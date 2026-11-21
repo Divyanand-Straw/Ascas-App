@@ -85,7 +85,7 @@ All responses from the backend adhere strictly to the standardized envelope defi
 
 ### 3.1 POST `/api/v1/auth/otp/send`
 
-Requests a 6-digit OTP challenge for `LOGIN`, `REGISTRATION`, or `LINKED_MEMBER`.
+Requests a 6-digit OTP challenge for `LOGIN`, `REGISTRATION`, `EXISTING_PATIENT`, or `LINKED_MEMBER`.
 
 - **HTTP Method:** `POST`
 - **Route:** `/api/v1/auth/otp/send`
@@ -98,7 +98,7 @@ Requests a 6-digit OTP challenge for `LOGIN`, `REGISTRATION`, or `LINKED_MEMBER`
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `phone` | `string` | **Yes** | Mobile number (10 digits starting with 6–9, or E.164 format e.g. `+919876543210`) |
-| `purpose` | `string` | **Yes** | One of: `"LOGIN"`, `"REGISTRATION"`, `"LINKED_MEMBER"` |
+| `purpose` | `string` | **Yes** | One of: `"LOGIN"`, `"REGISTRATION"`, `"EXISTING_PATIENT"`, `"LINKED_MEMBER"` |
 
 ```json
 {
@@ -122,7 +122,7 @@ Requests a 6-digit OTP challenge for `LOGIN`, `REGISTRATION`, or `LINKED_MEMBER`
 ```
 
 #### Important Security Behaviors
-- **Anti-Enumeration on LOGIN:** If `purpose` is `"LOGIN"` and the mobile number is **not registered**, the backend still returns `200 OK` with a valid `challengeId` and dummy timer. No SMS is dispatched, preventing account enumeration attacks. The `404 USER_NOT_FOUND` error is returned only upon OTP verification.
+- **Anti-Enumeration on LOGIN and EXISTING_PATIENT:** If either purpose is requested for a mobile number without an active account, the backend still returns `200 OK` with a challenge ID and does not dispatch an SMS. The `404 USER_NOT_FOUND` error is returned only upon OTP verification.
 - **Predecessor Invalidation:** Any existing unconsumed OTP challenges for this phone and purpose are immediately marked invalid.
 
 ---
@@ -143,7 +143,7 @@ Verifies the 6-digit OTP code submitted by the user and establishes an authentic
 | :--- | :--- | :--- | :--- |
 | `challengeId` | `string` | **Yes** | Challenge UUID returned by `/otp/send` |
 | `phone` | `string` | **Yes** | Same mobile number used in `/otp/send` |
-| `purpose` | `string` | **Yes** | Same purpose (`"LOGIN"`, `"REGISTRATION"`, `"LINKED_MEMBER"`) |
+| `purpose` | `string` | **Yes** | Same purpose (`"LOGIN"`, `"REGISTRATION"`, `"EXISTING_PATIENT"`, `"LINKED_MEMBER"`) |
 | `otp` | `string` | **Yes** | Exactly 6 numeric digits (e.g. `"123456"`) |
 | `deviceInfo` | `string` | No | Optional client identifier (e.g. `"Pixel 8 - Android 14"`) |
 
@@ -412,7 +412,7 @@ The following table lists every error code produced by the authentication module
 | **`403`** | `FORBIDDEN` | User attempts to revoke another user's refresh token on `/logout`. | Show generic operation failure; re-authenticate. |
 | **`404`** | `USER_NOT_FOUND` | Phone verified with `purpose: "LOGIN"`, but no patient account exists. | Offer user option to switch to "Register" flow. |
 | **`409`** | `USER_ALREADY_EXISTS` | Phone verified with `purpose: "REGISTRATION"`, but account already exists. | Offer user option to switch to "Login" flow. |
-| **`429`** | `COOLDOWN_ACTIVE` | Resend requested before 45 seconds elapsed. `details.retryAfterSeconds` provided. | Start countdown timer on Resend button; disable button. |
+| **`429`** | `COOLDOWN_ACTIVE` | No resumable challenge exists and resend was requested before 45 seconds elapsed. `details.retryAfterSeconds` is purpose-specific. | Show the returned wait time and keep resend disabled. |
 | **`429`** | `PHONE_RATE_LIMIT_EXCEEDED` | Exceeded 5 OTP requests in the past 60 minutes for this phone number. | Inform user: "Too many attempts. Please try again in 1 hour." |
 | **`429`** | `RATE_LIMIT_EXCEEDED` | Exceeded 15 OTP requests in the past 60 minutes from this IP address. | Inform user: "Too many requests from this network. Try later." |
 | **`500`** | `INTERNAL_SERVER_ERROR`| Unhandled server exception. | Display generic "Something went wrong" toast. |
@@ -425,7 +425,7 @@ The following table lists every error code produced by the authentication module
 | :--- | :--- | :--- | :--- |
 | **OTP Format** | 6 Digits (`100000`–`999999`) | `crypto.randomInt` (CSPRNG) | Uniform distribution, zero predictable bias |
 | **OTP Expiry** | **5 minutes** (300 seconds) | `AuthService.verifyOtp` | Returns `401 OTP_EXPIRED` |
-| **Resend Cooldown** | **45 seconds** | `AuthService.sendOtp` | Returns `429 COOLDOWN_ACTIVE` with remaining seconds |
+| **Resend Cooldown** | **45 seconds per phone and purpose** | `AuthService.sendOtp` | Reuses the current active challenge during cooldown and returns its remaining seconds; otherwise returns `429 COOLDOWN_ACTIVE` |
 | **Attempt Limit** | **3 attempts** per challenge | `AuthService.verifyOtp` | 3rd failed attempt triggers `403 MAX_ATTEMPTS_EXCEEDED` |
 | **Single Use** | One-time consumption | `AuthService.verifyOtp` | Consumed immediately on match; second call returns `401 OTP_ALREADY_USED` |
 | **Phone Rate Limit** | **5 requests / hour** | `AuthService.sendOtp` | Returns `429 PHONE_RATE_LIMIT_EXCEEDED` |

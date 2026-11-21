@@ -25,6 +25,16 @@ String formatDateOfBirth(DateTime date) =>
     '${date.month.toString().padLeft(2, '0')}/'
     '${date.year}';
 
+String formatDateOfBirthValue(String? value) {
+  if (value == null || value.trim().isEmpty) return '';
+  final normalized = value.trim();
+  final dateOnly = normalized.contains('T')
+      ? normalized.substring(0, normalized.indexOf('T'))
+      : normalized;
+  final date = parseDateOfBirth(dateOnly);
+  return date == null ? '' : formatDateOfBirth(date);
+}
+
 Future<DateTime?> showDateOfBirthPicker(
   BuildContext context, {
   DateTime? initialDate,

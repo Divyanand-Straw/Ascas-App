@@ -71,6 +71,9 @@ void main() {
       expect(parseDateOfBirth('1992-08-14'), DateTime(1992, 8, 14));
       expect(parseDateOfBirth('31/02/1992'), isNull);
       expect(formatDateOfBirth(DateTime(1992, 8, 14)), '14/08/1992');
+      expect(formatDateOfBirthValue('1992-08-14T00:00:00.000Z'), '14/08/1992');
+      expect(formatDateOfBirthValue(null), '');
+      expect(formatDateOfBirthValue('1992-02-31'), '');
     },
   );
 
@@ -79,9 +82,13 @@ void main() {
   ) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: new_patient.PatientDetailsScreen(mobileNumber: '9876543210'),
+        home: new_patient.PatientDetailsScreen(
+          mobileNumber: '9876543210',
+          email: '',
+        ),
       ),
     );
+    expect(find.text('Gender'), findsNothing);
     await tester.tap(find.byType(TextFormField).at(1));
     await tester.pumpAndSettle();
 
@@ -1417,48 +1424,58 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('patient profile header uses burgundy and compact patient ID', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(
-      const MaterialApp(
-        locale: Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: DashboardScreen(
-          patientName: 'Priya Sharma',
-          patientId: 'TS-12345',
-          mobileNumber: '9876543210',
-          dateOfBirth: '01/01/1990',
+  testWidgets(
+    'dashboard displays the same readable Patient ID on Home and Profile',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: DashboardScreen(
+            patientName: 'Priya Sharma',
+            patientId: 'TS-12345',
+            mobileNumber: '9876543210',
+            dateOfBirth: '01/01/1990',
+          ),
         ),
-      ),
-    );
-    await _pumpLiveDashboard(tester);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(BottomNavigationBar),
-        matching: find.text('Profile'),
-      ),
-    );
-    await _pumpLiveDashboard(tester);
+      );
+      await _pumpLiveDashboard(tester);
+      expect(find.text('TS-12345'), findsOneWidget);
+      expect(find.text('Patient ID'), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomNavigationBar),
+          matching: find.text('Profile'),
+        ),
+      );
+      await _pumpLiveDashboard(tester);
 
-    expect(find.text('Priya Sharma'), findsOneWidget);
-    expect(find.text('Patient ID'), findsOneWidget);
-    expect(find.text('TS-12345'), findsOneWidget);
-    expect(find.text('9876543210'), findsOneWidget);
-    expect(find.text('01/01/1990'), findsOneWidget);
-    final profileHeader = find.ancestor(
-      of: find.text('TS-12345'),
-      matching: find.byType(DashboardCard),
-    );
-    expect(
-      tester.widget<DashboardCard>(profileHeader.first).color,
-      AppColors.burgundy,
-    );
-    expect(tester.widget<Text>(find.text('TS-12345')).style?.fontSize, 8);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Priya Sharma'), findsOneWidget);
+      expect(find.text('Patient ID'), findsOneWidget);
+      expect(find.text('TS-12345'), findsOneWidget);
+      expect(find.text('9876543210'), findsOneWidget);
+      expect(find.text('01/01/1990'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Patient ID')).dy,
+        greaterThan(tester.getTopLeft(find.text('01/01/1990')).dy),
+      );
+      final profileHeader = find.ancestor(
+        of: find.text('TS-12345'),
+        matching: find.byType(DashboardCard),
+      );
+      expect(
+        tester.widget<DashboardCard>(profileHeader.first).color,
+        AppColors.burgundy,
+      );
+      expect(
+        tester.widget<Text>(find.text('TS-12345')).style?.fontSize,
+        greaterThanOrEqualTo(14),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('linked partner accesses the account after accepting invitation', (
     WidgetTester tester,

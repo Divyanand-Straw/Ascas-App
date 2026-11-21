@@ -10,8 +10,9 @@ class ConsentPrivacyScreen extends StatefulWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String email;
+  final String emergencyContact;
   final String preferredLanguage;
-  final String gender;
+  final String? gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -22,8 +23,9 @@ class ConsentPrivacyScreen extends StatefulWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     this.email = '',
+    this.emergencyContact = '',
     required this.preferredLanguage,
-    this.gender = '',
+    this.gender,
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -94,6 +96,8 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentStep = widget.isExistingPatient ? 6 : 7;
+    final totalSteps = widget.isExistingPatient ? 8 : 9;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -111,12 +115,12 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       children: [
                         LocalizedText(
-                          'STEP 6 OF 8',
-                          style: TextStyle(
+                          'STEP $currentStep OF $totalSteps',
+                          style: const TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -154,7 +158,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
               const Divider(color: AppColors.divider, height: 1),
 
               const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 6),
+              StepProgressBar(currentStep: currentStep, totalSteps: totalSteps),
               const SizedBox(height: 32),
 
               const LocalizedText(
@@ -369,6 +373,7 @@ class _ConsentPrivacyScreenState extends State<ConsentPrivacyScreen> {
                                 dateOfBirth: widget.dateOfBirth,
                                 mobileNumber: widget.mobileNumber,
                                 email: widget.email,
+                                emergencyContact: widget.emergencyContact,
                                 preferredLanguage: widget.preferredLanguage,
                                 gender: widget.gender,
                                 isExistingPatient: widget.isExistingPatient,

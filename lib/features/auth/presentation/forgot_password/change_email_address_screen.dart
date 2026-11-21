@@ -3,21 +3,29 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/localization/localized_text.dart';
-import '../../../../core/services/email_otp_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/otp_input.dart';
+import '../../data/models/auth_models.dart';
+import '../../data/repositories/auth_repository.dart';
 
 class ChangeEmailAddressScreen extends StatefulWidget {
   final String newEmail;
   final String initialMessage;
+  final String initialChallengeId;
   final Future<void> Function() onVerified;
-  final Future<String> Function(String email)? requestOtp;
-  final Future<String> Function(String email, String otp)? verifyOtp;
+  final Future<SendEmailOtpResponse> Function(String email)? requestOtp;
+  final Future<VerifyEmailOtpResponse> Function(
+    String challengeId,
+    String email,
+    String otp,
+  )?
+  verifyOtp;
 
   const ChangeEmailAddressScreen({
     super.key,
     required this.newEmail,
     required this.initialMessage,
+    required this.initialChallengeId,
     required this.onVerified,
     this.requestOtp,
     this.verifyOtp,
@@ -35,11 +43,13 @@ class _ChangeEmailAddressScreenState extends State<ChangeEmailAddressScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   late String _successMessage;
+  late String _challengeId;
 
   @override
   void initState() {
     super.initState();
     _successMessage = widget.initialMessage;
+    _challengeId = widget.initialChallengeId;
     _startCountdown();
   }
 
@@ -74,11 +84,17 @@ class _ChangeEmailAddressScreenState extends State<ChangeEmailAddressScreen> {
       _successMessage = '';
     });
     try {
-      final requestOtp = widget.requestOtp ?? EmailOtpService.requestOtp;
-      final message = await requestOtp(widget.newEmail);
+      final requestOtp =
+          widget.requestOtp ??
+          (String email) => AuthRepository.instance.sendEmailOtp(
+            email: email,
+            purpose: EmailOtpPurpose.emailChange,
+          );
+      final response = await requestOtp(widget.newEmail);
       if (!mounted) return;
       _otpInputKey.currentState?.clear();
-      setState(() => _successMessage = localizedText(context, message));
+      _challengeId = response.challengeId;
+      setState(() => _successMessage = 'A verification code has been sent.');
       _startCountdown();
     } on StateError catch (error) {
       if (!mounted) return;
@@ -110,8 +126,20 @@ class _ChangeEmailAddressScreenState extends State<ChangeEmailAddressScreen> {
       _errorMessage = null;
     });
     try {
-      final verifyOtp = widget.verifyOtp ?? EmailOtpService.verifyOtp;
-      await verifyOtp(widget.newEmail, otp);
+      final verifyOtp =
+          widget.verifyOtp ??
+          (String challengeId, String email, String code) =>
+              AuthRepository.instance.verifyEmailOtp(
+                challengeId: challengeId,
+                email: email,
+                purpose: EmailOtpPurpose.emailChange,
+                otp: code,
+              );
+      final result = await verifyOtp(_challengeId, widget.newEmail, otp);
+      if (result is! EmailChangeOtpVerificationResponse ||
+          result.email != normalizeEmail(widget.newEmail)) {
+        throw StateError('The server did not verify this email address.');
+      }
       await widget.onVerified();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

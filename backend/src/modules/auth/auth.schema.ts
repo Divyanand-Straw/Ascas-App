@@ -24,7 +24,12 @@ export const phoneSchema = z
     message: 'Invalid phone number format. Provide a valid mobile number.',
   });
 
-export const otpPurposeSchema = z.enum(['LOGIN', 'REGISTRATION', 'LINKED_MEMBER']);
+export const otpPurposeSchema = z.enum([
+  'LOGIN',
+  'REGISTRATION',
+  'EXISTING_PATIENT',
+  'LINKED_MEMBER',
+]);
 
 export const sendOtpSchema = z.object({
   phone: phoneSchema,
@@ -39,6 +44,37 @@ export const verifyOtpSchema = z.object({
   deviceInfo: z.string().max(255).optional(),
 });
 
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must use YYYY-MM-DD format.')
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return (
+      Number.isFinite(date.getTime()) &&
+      date.toISOString().slice(0, 10) === value &&
+      date.getTime() <= Date.now()
+    );
+  }, 'Date of birth must be a valid calendar date.');
+
+export const savePatientProfileSchema = z.object({
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().max(100),
+  dob: isoDateSchema,
+  gender: z.string().trim().max(20).optional(),
+  emergencyContact: z
+    .string()
+    .regex(/^\+[1-9]\d{9,14}$/, 'Emergency contact must use E.164 format.'),
+  preferredLanguage: z.enum(['en', 'ta']),
+}).strict();
+
+export const updatePatientProfileSchema = z.object({
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().max(100),
+  dob: isoDateSchema,
+  gender: z.string().trim().max(20).optional(),
+  preferredLanguage: z.enum(['en', 'ta']),
+}).strict();
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required'),
 });
@@ -49,5 +85,11 @@ export const logoutSchema = z.object({
 
 export type SendOtpInput = z.infer<typeof sendOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+export type SavePatientProfileInput = z.infer<
+  typeof savePatientProfileSchema
+>;
+export type UpdatePatientProfileInput = z.infer<
+  typeof updatePatientProfileSchema
+>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 export type LogoutInput = z.infer<typeof logoutSchema>;

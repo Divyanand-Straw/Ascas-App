@@ -145,7 +145,7 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen> {
                   ),
                   const SizedBox(height: 5),
                   LocalizedText(
-                    '${_date(appointment.date)} · ${appointment.time} · ${appointment.appointmentType}',
+                    '${_date(context, appointment.date)} · ${appointment.time}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -154,7 +154,17 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  LocalizedText(
+                    appointment.appointmentType,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  LocalizedText(
                     appointment.consultationMode,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -173,8 +183,26 @@ class _AppointmentHistoryScreenState extends State<AppointmentHistoryScreen> {
     );
   }
 
-  static String _date(DateTime date) =>
-      '${date.day} ${const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1]} ${date.year}';
+  static String _date(BuildContext context, DateTime date) {
+    final month = localizedText(
+      context,
+      const [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ][date.month - 1],
+    );
+    return '${date.day} $month ${date.year}';
+  }
 }
 
 class _HistorySectionHeading extends StatelessWidget {

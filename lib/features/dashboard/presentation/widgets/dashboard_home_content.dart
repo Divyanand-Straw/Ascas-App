@@ -35,6 +35,7 @@ const _fertilityJourneyDustyPink = Color(0xFFC9879D);
 class DashboardHomeContent extends StatelessWidget {
   final String patientName;
   final String mobileNumber;
+  final String dateOfBirth;
   final String patientId;
   final DashboardPatientState patientState;
   final ValueChanged<int> onNavigate;
@@ -45,6 +46,7 @@ class DashboardHomeContent extends StatelessWidget {
     super.key,
     required this.patientName,
     this.mobileNumber = '',
+    this.dateOfBirth = '',
     this.patientId = '',
     required this.patientState,
     required this.onNavigate,
@@ -274,28 +276,31 @@ class _WelcomeSection extends StatelessWidget {
                 ),
                 if (patientId.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: .13),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: CopyablePatientId(
-                      patientId: patientId,
-                      labelStyle: const TextStyle(
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.badge_outlined,
                         color: AppColors.dustyPink,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
+                        size: 14,
                       ),
-                      textStyle: const TextStyle(
-                        color: AppColors.dustyPink,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: CopyablePatientId(
+                          patientId: patientId,
+                          labelStyle: const TextStyle(
+                            color: AppColors.dustyPink,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textStyle: const TextStyle(
+                            color: AppColors.dustyPink,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          showCopyIcon: true,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ],
@@ -723,6 +728,8 @@ class _UpcomingVisitCard extends StatelessWidget {
               children: [
                 Text(
                   '${item.date.day} ${_month(item.date.month)} ${item.date.year}  •  ${item.time}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 14,
@@ -751,12 +758,16 @@ class _UpcomingVisitCard extends StatelessWidget {
           const SizedBox(height: 13),
           SizedBox(
             width: double.infinity,
-            height: 44,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.white,
                 foregroundColor: _fertilityJourneyBurgundy,
                 elevation: 0,
+                minimumSize: const Size.fromHeight(44),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(13),
                 ),
@@ -772,17 +783,126 @@ class _UpcomingVisitCard extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.info_outline_rounded, size: 18),
-              label: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LocalizedText('View Details'),
-                  Text(' & '),
-                  LocalizedText('Instructions'),
-                ],
+              label: const LocalizedText(
+                'View Details',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.white,
+                side: BorderSide(color: AppColors.white.withValues(alpha: .75)),
+                minimumSize: const Size.fromHeight(44),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+              onPressed: () => _showInstructions(context, item),
+              icon: const Icon(Icons.menu_book_outlined, size: 18),
+              label: const LocalizedText(
+                'Instructions',
+                textAlign: TextAlign.center,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showInstructions(
+    BuildContext context,
+    Appointment appointment,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * .65,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: LocalizedText(
+                      'Instructions',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: MaterialLocalizations.of(context)
+                        .closeButtonTooltip,
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const LocalizedText(
+                'Preparation guidance',
+                style: TextStyle(
+                  color: AppColors.burgundy,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: appointment.preparationGuidance.isEmpty
+                    ? const SingleChildScrollView(
+                        child: LocalizedText(
+                          'No preparation guidance has been provided for this visit.',
+                          style: TextStyle(
+                            color: AppColors.secondaryText,
+                            fontSize: 12,
+                            height: 1.45,
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: appointment.preparationGuidance.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) => Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_outline,
+                              color: AppColors.burgundy,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                appointment.preparationGuidance[index],
+                                style: const TextStyle(
+                                  color: AppColors.primaryText,
+                                  fontSize: 12,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

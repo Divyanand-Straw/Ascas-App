@@ -569,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @resetPasswordDescription.
   ///
   /// In en, this message translates to:
-  /// **'Enter the mobile number and email address registered to your account. We will send a verification code to your email to continue with password recovery.'**
+  /// **'Enter the email address registered to your account. If eligible, we will send a verification code to continue with password recovery.'**
   String get resetPasswordDescription;
 
   /// No description provided for @registeredMobileNumber.

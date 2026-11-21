@@ -14,8 +14,9 @@ class AppSecurityScreen extends StatefulWidget {
   final String dateOfBirth;
   final String mobileNumber;
   final String email;
+  final String emergencyContact;
   final String preferredLanguage;
-  final String gender;
+  final String? gender;
   final bool isExistingPatient;
   final String patientId;
   final String accountId;
@@ -26,8 +27,9 @@ class AppSecurityScreen extends StatefulWidget {
     required this.dateOfBirth,
     required this.mobileNumber,
     this.email = '',
+    this.emergencyContact = '',
     required this.preferredLanguage,
-    this.gender = '',
+    this.gender,
     this.isExistingPatient = false,
     this.patientId = '',
     this.accountId = '',
@@ -133,6 +135,8 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentStep = widget.isExistingPatient ? 7 : 8;
+    final totalSteps = widget.isExistingPatient ? 8 : 9;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -150,12 +154,12 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       children: [
                         LocalizedText(
-                          'STEP 7 OF 8',
-                          style: TextStyle(
+                          'STEP $currentStep OF $totalSteps',
+                          style: const TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -190,7 +194,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider, height: 1),
               const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 7),
+              StepProgressBar(currentStep: currentStep, totalSteps: totalSteps),
               const SizedBox(height: 28),
               const LocalizedText(
                 'APP SECURITY',
@@ -328,6 +332,7 @@ class _AppSecurityScreenState extends State<AppSecurityScreen> {
                                 dateOfBirth: widget.dateOfBirth,
                                 email: widget.email,
                                 mobileNumber: widget.mobileNumber,
+                                emergencyContact: widget.emergencyContact,
                                 preferredLanguage: widget.preferredLanguage,
                                 gender: widget.gender,
                                 isExistingPatient: widget.isExistingPatient,

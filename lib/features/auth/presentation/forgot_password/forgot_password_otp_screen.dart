@@ -5,20 +5,31 @@ import 'package:flutter/material.dart';
 import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/otp_input.dart';
+import '../../data/models/auth_models.dart';
 import 'reset_password_screen.dart';
 
 class ForgotPasswordOtpScreen extends StatefulWidget {
-  final String registeredMobile;
+  final String mobileNumber;
   final String emailAddress;
   final String initialMessage;
-  final Future<String> Function(String email) requestOtp;
-  final Future<String> Function(String email, String otp) verifyOtp;
+  final String initialChallengeId;
+  final int initialRetryAfterSeconds;
+  final Future<SendEmailOtpResponse> Function(String phone, String email)
+  requestOtp;
+  final Future<VerifyEmailOtpResponse> Function(
+    String challengeId,
+    String email,
+    String otp,
+  )
+  verifyOtp;
 
   const ForgotPasswordOtpScreen({
     super.key,
-    required this.registeredMobile,
+    required this.mobileNumber,
     required this.emailAddress,
     required this.initialMessage,
+    required this.initialChallengeId,
+    required this.initialRetryAfterSeconds,
     required this.requestOtp,
     required this.verifyOtp,
   });
@@ -35,6 +46,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   late String _successMessage;
+  late String _challengeId;
 
   String get _enteredOtp => _otpInputKey.currentState?.value ?? '';
 
@@ -42,7 +54,8 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
   void initState() {
     super.initState();
     _successMessage = widget.initialMessage;
-    _startCountdown();
+    _challengeId = widget.initialChallengeId;
+    _startCountdown(widget.initialRetryAfterSeconds);
   }
 
   @override
@@ -51,9 +64,10 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
     super.dispose();
   }
 
-  void _startCountdown() {
+  void _startCountdown(int seconds) {
     _countdownTimer?.cancel();
-    _remainingSeconds = 30;
+    _remainingSeconds = seconds < 0 ? 0 : seconds;
+    if (_remainingSeconds == 0) return;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -76,13 +90,17 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
       _successMessage = '';
     });
     try {
-      final message = await widget.requestOtp(widget.emailAddress);
+      final response = await widget.requestOtp(
+        widget.mobileNumber,
+        widget.emailAddress,
+      );
       if (!mounted) return;
       _otpInputKey.currentState?.clear();
+      _challengeId = response.challengeId;
       setState(() {
-        _successMessage = message;
+        _successMessage = 'If this email is eligible, an OTP has been sent.';
       });
-      _startCountdown();
+      _startCountdown(response.retryAfterSeconds);
     } on Exception catch (error) {
       if (!mounted) return;
       setState(() {
@@ -106,14 +124,23 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
       _errorMessage = null;
     });
     try {
-      await widget.verifyOtp(widget.emailAddress, _enteredOtp);
+      final verification = await widget.verifyOtp(
+        _challengeId,
+        widget.emailAddress,
+        _enteredOtp,
+      );
+      if (verification is! PasswordResetOtpVerificationResponse) {
+        throw FormatException(
+          'The server did not return password reset access.',
+        );
+      }
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute<void>(
           builder: (_) => ResetPasswordScreen(
-            registeredMobile: widget.registeredMobile,
             registeredEmail: widget.emailAddress,
+            resetAuthorizationToken: verification.resetGrant,
           ),
         ),
       );
