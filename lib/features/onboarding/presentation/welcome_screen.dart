@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/login_screen.dart';
@@ -49,8 +51,8 @@ class WelcomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Text(
-                      'THAAI SEYAZHI',
+                    const LocalizedText(
+                      'THAAI SEYALI',
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 24,
@@ -59,8 +61,8 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 7),
-                    const Text(
-                      'தாய் செயழி',
+                    const LocalizedText(
+                      'தாய் செயலி',
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 14,

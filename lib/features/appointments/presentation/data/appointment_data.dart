@@ -32,7 +32,7 @@ final sampleAppointments = [
     title: 'Monitoring consultation',
     date: DateTime(2026, 12, 12),
     time: '10:30 AM',
-    clinic: 'Thaai Seyazhi Clinic',
+    clinic: 'Thaai Seyali Clinic',
     status: 'Confirmed',
     doctorName: 'Dr. Meera Sharma',
     specialty: 'Fertility Specialist',
@@ -44,7 +44,7 @@ final sampleAppointments = [
     title: 'Fertility consultation',
     date: DateTime(2026, 12, 18),
     time: '02:00 PM',
-    clinic: 'Thaai Seyazhi Clinic',
+    clinic: 'Thaai Seyali Clinic',
     status: 'Requested',
     doctorName: 'Dr. Ananya Rao',
     specialty: 'Reproductive Medicine',
@@ -56,7 +56,7 @@ final sampleAppointments = [
     title: 'Follow-up consultation',
     date: DateTime(2026, 11, 20),
     time: '11:30 AM',
-    clinic: 'Thaai Seyazhi Clinic',
+    clinic: 'Thaai Seyali Clinic',
     status: 'Rescheduled',
     doctorName: 'Dr. Vikram Kapoor',
     specialty: 'Andrology Specialist',
@@ -71,7 +71,7 @@ final sampleHistory = [
     title: 'Initial consultation',
     date: DateTime(2026, 8, 8),
     time: '10:00 AM',
-    clinic: 'Thaai Seyazhi Clinic',
+    clinic: 'Thaai Seyali Clinic',
     status: 'Completed',
     doctorName: 'Dr. Meera Sharma',
     appointmentType: 'Initial consultation',
@@ -81,7 +81,7 @@ final sampleHistory = [
     title: 'Follow-up consultation',
     date: DateTime(2026, 7, 17),
     time: '03:30 PM',
-    clinic: 'Thaai Seyazhi Clinic',
+    clinic: 'Thaai Seyali Clinic',
     status: 'Cancelled',
     doctorName: 'Dr. Ananya Rao',
     appointmentType: 'Follow-up consultation',
@@ -93,6 +93,22 @@ const _appointmentsKey = 'appointment_records';
 const _historyKey = 'appointment_history';
 
 final appointmentStore = AppointmentStore();
+final _defaultAppointments = sampleAppointments
+    .map((appointment) => Appointment.fromMap(appointment.toMap()))
+    .toList();
+final _defaultHistory = sampleHistory
+    .map((appointment) => Appointment.fromMap(appointment.toMap()))
+    .toList();
+String? _activeAppointmentAccountId;
+final Set<String> _pendingBookingKeys = {};
+
+class DuplicateAppointmentException implements Exception {
+  const DuplicateAppointmentException();
+
+  @override
+  String toString() =>
+      'An appointment already exists for this doctor, date and time.';
+}
 
 class AppointmentStore extends ChangeNotifier {
   List<Appointment> get upcoming => List.unmodifiable(sampleAppointments);
@@ -111,12 +127,47 @@ class AppointmentStore extends ChangeNotifier {
   }
 
   void refresh() => notifyListeners();
+
+  void clearActiveAccount() {
+    _activeAppointmentAccountId = null;
+    sampleAppointments
+      ..clear()
+      ..addAll(
+        _defaultAppointments.map(
+          (appointment) => Appointment.fromMap(appointment.toMap()),
+        ),
+      );
+    sampleHistory
+      ..clear()
+      ..addAll(
+        _defaultHistory.map(
+          (appointment) => Appointment.fromMap(appointment.toMap()),
+        ),
+      );
+    notifyListeners();
+  }
 }
 
-Future<void> initializeAppointmentData() async {
+Future<void> initializeAppointmentData({String? accountId}) async {
+  _activeAppointmentAccountId = accountId;
+  sampleAppointments
+    ..clear()
+    ..addAll(
+      _defaultAppointments.map(
+        (appointment) => Appointment.fromMap(appointment.toMap()),
+      ),
+    );
+  sampleHistory
+    ..clear()
+    ..addAll(
+      _defaultHistory.map(
+        (appointment) => Appointment.fromMap(appointment.toMap()),
+      ),
+    );
   final preferences = await SharedPreferences.getInstance();
-  final appointmentsJson = preferences.getString(_appointmentsKey);
-  final historyJson = preferences.getString(_historyKey);
+  final prefix = accountId == null || accountId.isEmpty ? '' : '${accountId}_';
+  final appointmentsJson = preferences.getString('$prefix$_appointmentsKey');
+  final historyJson = preferences.getString('$prefix$_historyKey');
   if (appointmentsJson != null) {
     sampleAppointments
       ..clear()
@@ -139,35 +190,88 @@ Future<void> scheduleActiveAppointmentReminders() async {
   }
 }
 
-Future<void> addAppointment({
+Future<Appointment> addAppointment({
   required Doctor doctor,
   required DateTime date,
   required String time,
   required String patientName,
   required String appointmentType,
   required String consultationMode,
+  String reason = '',
   required String notes,
 }) async {
-  final id = 'PROTOTYPE-${DateTime.now().microsecondsSinceEpoch}';
-  final appointment = Appointment(
-    title: appointmentType,
-    date: date,
-    time: time,
-    clinic: 'Thaai Seyazhi Clinic',
-    status: 'Requested',
-    doctorName: doctor.name,
-    specialty: doctor.specialty,
-    appointmentType: appointmentType,
-    consultationMode: consultationMode,
-    patientName: patientName,
-    notes: notes.isEmpty ? 'No additional notes.' : notes,
-    reference: id,
+  final bookingKey = jsonEncode([
+    _activeAppointmentAccountId?.trim().toLowerCase() ?? '',
+    patientName.trim().toLowerCase(),
+    doctor.name.trim().toLowerCase(),
+    date.year,
+    date.month,
+    date.day,
+    time.trim().replaceAll(RegExp(r'\s+'), ' ').toUpperCase(),
+  ]);
+  if (!_pendingBookingKeys.add(bookingKey)) {
+    throw const DuplicateAppointmentException();
+  }
+  final alreadyBooked = sampleAppointments.any(
+    (existing) =>
+        existing.status.toLowerCase() != 'cancelled' &&
+        existing.patientName.trim().toLowerCase() ==
+            patientName.trim().toLowerCase() &&
+        existing.doctorName.trim().toLowerCase() ==
+            doctor.name.trim().toLowerCase() &&
+        existing.date.year == date.year &&
+        existing.date.month == date.month &&
+        existing.date.day == date.day &&
+        existing.time.trim().replaceAll(RegExp(r'\s+'), ' ').toUpperCase() ==
+            time.trim().replaceAll(RegExp(r'\s+'), ' ').toUpperCase(),
   );
-  sampleAppointments.add(appointment);
-  await _save();
-  await NotificationService.instance.showBookingSubmitted(appointment);
-  await NotificationService.instance.scheduleReminder(appointment);
-  appointmentStore.refresh();
+  if (alreadyBooked) {
+    _pendingBookingKeys.remove(bookingKey);
+    throw const DuplicateAppointmentException();
+  }
+
+  try {
+    final id = 'PROTOTYPE-${DateTime.now().microsecondsSinceEpoch}';
+    final appointment = Appointment(
+      title: appointmentType,
+      date: date,
+      time: time,
+      clinic: 'Thaai Seyali Clinic',
+      status: 'Requested',
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+      appointmentType: appointmentType,
+      consultationMode: consultationMode,
+      patientName: patientName,
+      reason: reason,
+      notes: notes.isEmpty ? 'No additional notes.' : notes,
+      reference: id,
+    );
+    sampleAppointments.add(appointment);
+    try {
+      await _save();
+    } catch (_) {
+      sampleAppointments.remove(appointment);
+      appointmentStore.refresh();
+      rethrow;
+    }
+    appointmentStore.refresh();
+    try {
+      await NotificationService.instance.showBookingSubmitted(appointment);
+    } on Exception catch (error, stackTrace) {
+      debugPrint('Could not show appointment submission notification: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+    try {
+      await NotificationService.instance.scheduleReminder(appointment);
+    } on Exception catch (error, stackTrace) {
+      debugPrint('Could not schedule appointment reminder: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+    return appointment;
+  } finally {
+    _pendingBookingKeys.remove(bookingKey);
+  }
 }
 
 Future<void> cancelAppointment(Appointment appointment) async {
@@ -216,14 +320,19 @@ List<Appointment> _decode(String value) {
 
 Future<void> _save() async {
   final preferences = await SharedPreferences.getInstance();
+  final prefix =
+      _activeAppointmentAccountId == null ||
+          _activeAppointmentAccountId!.isEmpty
+      ? ''
+      : '${_activeAppointmentAccountId}_';
   await preferences.setString(
-    _appointmentsKey,
+    '$prefix$_appointmentsKey',
     jsonEncode(
       sampleAppointments.map((appointment) => appointment.toMap()).toList(),
     ),
   );
   await preferences.setString(
-    _historyKey,
+    '$prefix$_historyKey',
     jsonEncode(
       sampleHistory.map((appointment) => appointment.toMap()).toList(),
     ),

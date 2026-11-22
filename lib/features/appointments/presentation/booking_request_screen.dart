@@ -28,14 +28,36 @@ class BookingRequestScreen extends StatefulWidget {
 
 class _BookingRequestScreenState extends State<BookingRequestScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _reasonController = TextEditingController();
   final _notesController = TextEditingController();
   String _appointmentType = 'Monitoring consultation';
   String _mode = 'In clinic';
+  String? _reason;
+
+  List<String> get _consultationReasons {
+    final specialty = widget.doctor.specialty.toLowerCase();
+    if (specialty.contains('fertility') ||
+        specialty.contains('reproductive') ||
+        specialty.contains('ivf')) {
+      return const [
+        'General consultation',
+        'Follow-up consultation',
+        'Fertility consultation',
+        'IVF consultation',
+        'IUI consultation',
+        'Treatment review',
+        'Other',
+      ];
+    }
+    return const [
+      'General consultation',
+      'Follow-up consultation',
+      'Treatment review',
+      'Other',
+    ];
+  }
 
   @override
   void dispose() {
-    _reasonController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -67,6 +89,27 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
                   )
                   .toList(),
               onChanged: (value) => setState(() => _appointmentType = value!),
+            ),
+            DropdownButtonFormField<String>(
+              initialValue: _reason,
+              decoration: InputDecoration(
+                labelText: localizedText(context, 'Consultation reason'),
+              ),
+              validator: (value) => value == null
+                  ? localizedText(
+                      context,
+                      'Please select a consultation reason.',
+                    )
+                  : null,
+              items: _consultationReasons
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(localizedText(context, item)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) => setState(() => _reason = value),
             ),
             DropdownButtonFormField<String>(
               initialValue: _mode,
@@ -105,15 +148,6 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
               },
             ),
             TextFormField(
-              controller: _reasonController,
-              decoration: InputDecoration(
-                labelText: localizedText(
-                  context,
-                  'Reason for consultation (optional)',
-                ),
-              ),
-            ),
-            TextFormField(
               controller: _notesController,
               maxLines: 3,
               decoration: InputDecoration(
@@ -134,6 +168,7 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
                         patientName: widget.patientName,
                         appointmentType: _appointmentType,
                         consultationMode: _mode,
+                        reason: _reason!,
                         notes: _notesController.text,
                       ),
                     ),
@@ -182,8 +217,8 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
             style: const TextStyle(color: AppColors.burgundy, fontSize: 11),
           ),
           const SizedBox(height: 8),
-          LocalizedText(
-            '${widget.selectedDate.day} ${_month(widget.selectedDate.month)} · ${widget.selectedTime}',
+          Text(
+            '${_formatDate(context, widget.selectedDate)} · ${widget.selectedTime}',
             style: const TextStyle(
               color: AppColors.secondaryText,
               fontSize: 11,
@@ -197,18 +232,36 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
   String? _required(String? value) =>
       value == null || value.trim().isEmpty ? 'This field is required' : null;
 
-  static String _month(int month) => const [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ][month - 1];
+  static String _formatDate(BuildContext context, DateTime date) {
+    final weekday = localizedText(
+      context,
+      const [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ][date.weekday - 1],
+    );
+    final month = localizedText(
+      context,
+      const [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ][date.month - 1],
+    );
+    return '$weekday, ${date.day} $month ${date.year}';
+  }
 }

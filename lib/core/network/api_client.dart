@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
+
 import 'api_config.dart';
 import 'auth_interceptor.dart';
+import '../storage/secure_storage_service.dart';
 import '../../features/auth/data/models/auth_models.dart';
 
 class ApiClient {
-  ApiClient._() {
+  ApiClient({String? baseUrl, AuthTokenStorage? storage}) {
     _dio = Dio(
       BaseOptions(
-        baseUrl: ApiConfig.baseUrl,
+        baseUrl: baseUrl ?? ApiConfig.baseUrl,
         connectTimeout: ApiConfig.connectTimeout,
         receiveTimeout: ApiConfig.receiveTimeout,
         sendTimeout: ApiConfig.sendTimeout,
@@ -18,11 +20,11 @@ class ApiClient {
       ),
     );
 
-    _authInterceptor = AuthInterceptor(dio: _dio);
+    _authInterceptor = AuthInterceptor(dio: _dio, storage: storage);
     _dio.interceptors.add(_authInterceptor);
   }
 
-  static final ApiClient instance = ApiClient._();
+  static final ApiClient instance = ApiClient();
 
   late final Dio _dio;
   late final AuthInterceptor _authInterceptor;
@@ -42,8 +44,17 @@ class ApiClient {
       final statusCode = response?.statusCode ?? 500;
       final data = response?.data;
 
-      if (data is Map<String, dynamic>) {
+      if (response != null && data is Map<String, dynamic>) {
         return ApiError.fromResponse(statusCode, data);
+      }
+
+      if (response != null) {
+        return ApiError(
+          statusCode: statusCode,
+          errorCode: 'HTTP_ERROR',
+          message:
+              'The server returned an error (HTTP $statusCode). Please try again.',
+        );
       }
 
       if (error.type == DioExceptionType.connectionTimeout ||
@@ -52,7 +63,8 @@ class ApiClient {
         return ApiError(
           statusCode: 408,
           errorCode: 'NETWORK_TIMEOUT',
-          message: 'Connection timed out. Please check your internet connection.',
+          message:
+              'Connection timed out. Please check your internet connection.',
         );
       }
 
@@ -67,7 +79,7 @@ class ApiClient {
       return ApiError(
         statusCode: statusCode,
         errorCode: 'NETWORK_ERROR',
-        message: error.message ?? 'An unexpected network error occurred.',
+        message: 'A network error occurred. Please try again.',
       );
     }
 
@@ -106,6 +118,24 @@ class ApiClient {
   }) async {
     try {
       return await _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } catch (e) {
+      throw handleError(e);
+    }
+  }
+
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      return await _dio.put<T>(
         path,
         data: data,
         queryParameters: queryParameters,

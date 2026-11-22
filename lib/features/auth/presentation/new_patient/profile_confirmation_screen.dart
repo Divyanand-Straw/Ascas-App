@@ -1,5 +1,6 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
 import '../consent_privacy_screen.dart';
 import '../app_security_screen.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
@@ -10,18 +11,26 @@ class ProfileConfirmationScreen extends StatelessWidget {
   final String fullName;
   final String dateOfBirth;
   final String mobileNumber;
+  final String email;
+  final String emergencyContact;
   final String preferredLanguage;
+  final String? gender;
   final bool isExistingPatient;
   final String patientId;
+  final String accountId;
 
   const ProfileConfirmationScreen({
     super.key,
     required this.fullName,
     required this.dateOfBirth,
     required this.mobileNumber,
+    this.email = '',
+    this.emergencyContact = '',
     required this.preferredLanguage,
+    this.gender,
     this.isExistingPatient = false,
     this.patientId = '',
+    this.accountId = '',
   });
 
   String get _initials {
@@ -56,25 +65,32 @@ class ProfileConfirmationScreen extends StatelessWidget {
     return '+91 •••••• ${mobileNumber.substring(6)}';
   }
 
+  String get _maskedEmergencyContact {
+    final digits = emergencyContact.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 4) return 'Provided';
+    return '+91 •••••• ${digits.substring(digits.length - 4)}';
+  }
+
   Widget _detailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 13,
-              ),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 13,
             ),
           ),
           const SizedBox(width: 15),
-          Flexible(
+          Expanded(
             child: Text(
               value,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: const TextStyle(
                 color: AppColors.primaryText,
@@ -90,6 +106,8 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentStep = isExistingPatient ? 5 : 6;
+    final totalSteps = isExistingPatient ? 8 : 9;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -107,12 +125,12 @@ class ProfileConfirmationScreen extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       children: [
-                        Text(
-                          'STEP 5 OF 8',
-                          style: TextStyle(
+                        LocalizedText(
+                          'STEP $currentStep OF $totalSteps',
+                          style: const TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -120,7 +138,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'Profile confirmation',
                           style: TextStyle(
                             color: AppColors.burgundy,
@@ -132,11 +150,9 @@ class ProfileConfirmationScreen extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.popUntil(
-                      context,
-                      (route) => route.isFirst,
-                    ),
-                    child: const Text(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
                       'Exit',
                       style: TextStyle(
                         color: AppColors.secondaryText,
@@ -149,16 +165,13 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              const Divider(
-                color: AppColors.divider,
-                height: 1,
-              ),
+              const Divider(color: AppColors.divider, height: 1),
 
               const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 5),
+              StepProgressBar(currentStep: currentStep, totalSteps: totalSteps),
               const SizedBox(height: 32),
 
-              const Text(
+              const LocalizedText(
                 'IDENTITY VERIFIED',
                 style: TextStyle(
                   color: AppColors.success,
@@ -170,7 +183,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              const Text(
+              const LocalizedText(
                 'Confirm your profile',
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -182,7 +195,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              const Text(
+              const LocalizedText(
                 'Confirm these details before access is linked.',
                 style: TextStyle(
                   color: AppColors.secondaryText,
@@ -199,9 +212,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.divider,
-                  ),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,8 +239,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 fullName,
@@ -240,8 +250,8 @@ class ProfileConfirmationScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 5),
-                              const Text(
-                                'New Thaai Seyazhi patient',
+                              const LocalizedText(
+                                'New Thaai Seyali patient',
                                 style: TextStyle(
                                   color: AppColors.secondaryText,
                                   fontSize: 11,
@@ -255,33 +265,38 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
                     _detailRow('Date of birth', _formattedDate),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
                     _detailRow('Mobile', _maskedMobile),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
+
+                    _detailRow('Email', email.isEmpty ? 'Not provided' : email),
+
+                    const Divider(color: AppColors.divider, height: 1),
+
+                    if (emergencyContact.isNotEmpty) ...[
+                      _detailRow(
+                        'Emergency contact',
+                        _maskedEmergencyContact,
+                      ),
+                      const Divider(color: AppColors.divider, height: 1),
+                    ],
+
+                    if (gender?.isNotEmpty == true) ...[
+                      _detailRow('Gender', gender!),
+                      const Divider(color: AppColors.divider, height: 1),
+                    ],
 
                     _detailRow('Language', preferredLanguage),
 
-                    const Divider(
-                      color: AppColors.divider,
-                      height: 1,
-                    ),
+                    const Divider(color: AppColors.divider, height: 1),
 
-                    _detailRow('Clinic', 'Thaai Seyazhi Clinic'),
+                    _detailRow('Clinic', 'Thaai Seyali Clinic'),
                   ],
                 ),
               ),
@@ -305,7 +320,7 @@ class ProfileConfirmationScreen extends StatelessWidget {
                     ),
                     SizedBox(width: 11),
                     Expanded(
-                      child: Text(
+                      child: LocalizedText(
                         'Clinical information remains protected until you confirm identity and consent.',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -322,29 +337,36 @@ class ProfileConfirmationScreen extends StatelessWidget {
 
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => isExistingPatient
-                        ? AppSecurityScreen(
-                            fullName: fullName,
-                            dateOfBirth: dateOfBirth,
-                            mobileNumber: mobileNumber,
-                            preferredLanguage: preferredLanguage,
-                            isExistingPatient: true,
-                            patientId: patientId,
-                          )
-                        : ConsentPrivacyScreen(
-                            fullName: fullName,
-                            dateOfBirth: dateOfBirth,
-                            mobileNumber: mobileNumber,
-                            preferredLanguage: preferredLanguage,
-                          ),
-                  ),
-                );
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => isExistingPatient
+                            ? AppSecurityScreen(
+                                fullName: fullName,
+                                dateOfBirth: dateOfBirth,
+                                email: email,
+                                mobileNumber: mobileNumber,
+                                emergencyContact: emergencyContact,
+                                preferredLanguage: preferredLanguage,
+                                gender: gender,
+                                isExistingPatient: true,
+                                patientId: patientId,
+                                accountId: accountId,
+                              )
+                            : ConsentPrivacyScreen(
+                                fullName: fullName,
+                                dateOfBirth: dateOfBirth,
+                                mobileNumber: mobileNumber,
+                                email: email,
+                                emergencyContact: emergencyContact,
+                                preferredLanguage: preferredLanguage,
+                                gender: gender,
+                              ),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
@@ -354,12 +376,9 @@ class ProfileConfirmationScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Yes, this is me',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -373,19 +392,14 @@ class ProfileConfirmationScreen extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.burgundy,
-                    side: const BorderSide(
-                      color: AppColors.burgundy,
-                    ),
+                    side: const BorderSide(color: AppColors.burgundy),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: const Text(
+                  child: const LocalizedText(
                     'Details are incorrect',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

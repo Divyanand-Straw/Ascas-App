@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Thaai Seyazhi'**
+  /// **'Thaai Seyali'**
   String get appTitle;
 
   /// No description provided for @welcome.
@@ -227,7 +227,7 @@ abstract class AppLocalizations {
   /// No description provided for @privateConnectedCare.
   ///
   /// In en, this message translates to:
-  /// **'Private, connected care from Thaai Seyazhi Fertility and Women’s Centre.'**
+  /// **'Private, connected care from Thaai Seyali Fertility and Women’s Centre.'**
   String get privateConnectedCare;
 
   /// No description provided for @createAccount.
@@ -332,12 +332,6 @@ abstract class AppLocalizations {
   /// **'Forgot Password?'**
   String get forgotPasswordQuestion;
 
-  /// No description provided for @orLoginWith.
-  ///
-  /// In en, this message translates to:
-  /// **'OR LOGIN WITH'**
-  String get orLoginWith;
-
   /// No description provided for @noAccount.
   ///
   /// In en, this message translates to:
@@ -365,7 +359,7 @@ abstract class AppLocalizations {
   /// No description provided for @howJoining.
   ///
   /// In en, this message translates to:
-  /// **'How are you joining\nThaai Seyazhi?'**
+  /// **'How are you joining\nThaai Seyali?'**
   String get howJoining;
 
   /// No description provided for @relationshipClinic.
@@ -383,13 +377,13 @@ abstract class AppLocalizations {
   /// No description provided for @newPatientDescription.
   ///
   /// In en, this message translates to:
-  /// **'Create a new Thaai Seyazhi patient account.'**
+  /// **'Create a new Thaai Seyali patient account.'**
   String get newPatientDescription;
 
   /// No description provided for @existingPatient.
   ///
   /// In en, this message translates to:
-  /// **'Existing Thaai Seyazhi Patient'**
+  /// **'Existing Thaai Seyali Patient'**
   String get existingPatient;
 
   /// No description provided for @existingPatientDescription.
@@ -575,7 +569,7 @@ abstract class AppLocalizations {
   /// No description provided for @resetPasswordDescription.
   ///
   /// In en, this message translates to:
-  /// **'Enter your registered mobile number and email address. We will help you verify your identity and reset your password.'**
+  /// **'Enter the email address registered to your account. If eligible, we will send a verification code to continue with password recovery.'**
   String get resetPasswordDescription;
 
   /// No description provided for @registeredMobileNumber.
@@ -601,6 +595,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter registered email address'**
   String get enterRegisteredEmail;
+
+  /// No description provided for @partnerAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner Access'**
+  String get partnerAccess;
+
+  /// No description provided for @connectedPartner.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected partner'**
+  String get connectedPartner;
+
+  /// No description provided for @partnerDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner details'**
+  String get partnerDetails;
+
+  /// No description provided for @sharingSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing settings'**
+  String get sharingSettings;
+
+  /// No description provided for @shareMedicationSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Medication Schedule'**
+  String get shareMedicationSchedule;
+
+  /// No description provided for @shareAppointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Appointments'**
+  String get shareAppointments;
+
+  /// No description provided for @shareMedicalReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Medical Reports'**
+  String get shareMedicalReports;
+
+  /// No description provided for @generateInvitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate invitation'**
+  String get generateInvitation;
+
+  /// No description provided for @invitationCodeCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation code copied.'**
+  String get invitationCodeCopied;
+
+  /// No description provided for @securityPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Security PIN'**
+  String get securityPin;
+
+  /// No description provided for @enableAppLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable App Lock'**
+  String get enableAppLock;
+
+  /// No description provided for @changeSecurityPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Security PIN'**
+  String get changeSecurityPin;
+
+  /// No description provided for @resetSecurityPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Security PIN'**
+  String get resetSecurityPin;
+
+  /// No description provided for @timelineInitialConsultationAssessment.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial consultation & assessment'**
+  String get timelineInitialConsultationAssessment;
+
+  /// No description provided for @timelineBaselineScanBloodTests.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline scan & blood tests'**
+  String get timelineBaselineScanBloodTests;
+
+  /// No description provided for @timelineCyclePreparationSuppression.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle preparation / suppression'**
+  String get timelineCyclePreparationSuppression;
+
+  /// No description provided for @timelineSpermCollectionPreparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Sperm collection & preparation'**
+  String get timelineSpermCollectionPreparation;
+
+  /// No description provided for @timelineEmbryoAssessmentSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Embryo assessment & selection'**
+  String get timelineEmbryoAssessmentSelection;
+
+  /// No description provided for @timelineLutealSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Luteal phase support, if prescribed'**
+  String get timelineLutealSupport;
+
+  /// No description provided for @timelinePregnancyConfirmationScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Pregnancy confirmation scan, if positive'**
+  String get timelinePregnancyConfirmationScan;
+
+  /// No description provided for @timelineIuiInitialConsultation.
+  ///
+  /// In en, this message translates to:
+  /// **'IUI initial consultation'**
+  String get timelineIuiInitialConsultation;
+
+  /// No description provided for @timelinePreTreatmentFertilityTests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-treatment fertility tests'**
+  String get timelinePreTreatmentFertilityTests;
+
+  /// No description provided for @timelineMenstrualCycleDayOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Menstrual cycle – Day 1'**
+  String get timelineMenstrualCycleDayOne;
+
+  /// No description provided for @timelineOvulationInduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ovulation induction, if required'**
+  String get timelineOvulationInduction;
+
+  /// No description provided for @timelineOvulationDetectionTrigger.
+  ///
+  /// In en, this message translates to:
+  /// **'Ovulation detection / trigger injection'**
+  String get timelineOvulationDetectionTrigger;
+
+  /// No description provided for @timelineIuiInsemination.
+  ///
+  /// In en, this message translates to:
+  /// **'Insemination (IUI procedure)'**
+  String get timelineIuiInsemination;
+
+  /// No description provided for @timelineTwoWeekWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-week wait'**
+  String get timelineTwoWeekWait;
+
+  /// No description provided for @timelinePregnancyFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Pregnancy follow-up, if positive'**
+  String get timelinePregnancyFollowUp;
+
+  /// No description provided for @timelineCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get timelineCompleted;
+
+  /// No description provided for @timelineInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get timelineInProgress;
+
+  /// No description provided for @timelineUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get timelineUpcoming;
+
+  /// No description provided for @timelineRescheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescheduled'**
+  String get timelineRescheduled;
+
+  /// No description provided for @timelineCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get timelineCancelled;
+
+  /// No description provided for @timelineAwaitingClinicUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting clinic update'**
+  String get timelineAwaitingClinicUpdate;
+
+  /// No description provided for @timelineAboutThisStage.
+  ///
+  /// In en, this message translates to:
+  /// **'About This Stage'**
+  String get timelineAboutThisStage;
+
+  /// No description provided for @timelineWhatHappens.
+  ///
+  /// In en, this message translates to:
+  /// **'What Happens'**
+  String get timelineWhatHappens;
+
+  /// No description provided for @timelineTreatmentInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment Information'**
+  String get timelineTreatmentInformation;
+
+  /// No description provided for @timelineAppointmentsReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointments & Reports'**
+  String get timelineAppointmentsReports;
+
+  /// No description provided for @timelineClinicInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic Instructions'**
+  String get timelineClinicInstructions;
+
+  /// No description provided for @timelineOpenAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Open appointment'**
+  String get timelineOpenAppointment;
+
+  /// No description provided for @timelinePreviousStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Stage'**
+  String get timelinePreviousStage;
+
+  /// No description provided for @timelineNextStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Stage'**
+  String get timelineNextStage;
+
+  /// No description provided for @timelineBackToTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Timeline'**
+  String get timelineBackToTimeline;
+
+  /// No description provided for @timelineGuideOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Guide only. This stage is not confirmed as part of your personal treatment plan.'**
+  String get timelineGuideOnly;
+
+  /// No description provided for @timelineDevelopmentSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Development-only sample: clinic timeline data has not been connected.'**
+  String get timelineDevelopmentSample;
 }
 
 class _AppLocalizationsDelegate

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/step_progress_bar.dart';
 import '../../../l10n/app_localizations.dart';
@@ -18,11 +20,11 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
   static const _options = [
     (
       title: 'New Patient',
-      description: 'Create a new Thaai Seyazhi patient account.',
+      description: 'Create a new Thaai Seyali patient account.',
       icon: Icons.person_outline,
     ),
     (
-      title: 'Existing Thaai Seyazhi Patient',
+      title: 'Existing Thaai Seyali Patient',
       description: 'Securely link an existing clinic record.',
       icon: Icons.verified_user_outlined,
     ),
@@ -49,6 +51,7 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final totalSteps = _selectedOption == 0 ? 9 : 8;
     final options = [
       (
         title: l10n.newPatient,
@@ -86,8 +89,8 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        Text(
-                          'STEP 1 OF 8',
+                        LocalizedText(
+                          'STEP 1 OF $totalSteps',
                           style: TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 8,
@@ -123,7 +126,7 @@ class _PatientTypeScreenState extends State<PatientTypeScreen> {
               const SizedBox(height: 16),
               const Divider(color: AppColors.divider, height: 1),
               const SizedBox(height: 16),
-              const StepProgressBar(currentStep: 1),
+              StepProgressBar(currentStep: 1, totalSteps: totalSteps),
               const SizedBox(height: 28),
               Text(
                 l10n.secureRegistration,

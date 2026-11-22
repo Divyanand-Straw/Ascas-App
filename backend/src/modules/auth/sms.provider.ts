@@ -1,15 +1,40 @@
 import { ISmsProvider } from './sms.provider.interface';
 import { OtpPurpose } from './auth.types';
 import { AppError } from '../../utils/errors';
+import {
+  assertStagingEnvironment,
+  isDevelopmentOtpTerminalLoggingEnabled,
+} from '../../config/runtime';
+import { maskMobileNumber } from './otp.diagnostics';
+
+const maskDevelopmentPhone = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '');
+  if (phone.startsWith('+91') && digits.length >= 4) {
+    return `+91XXXXXXXX${digits.slice(-4)}`;
+  }
+  return maskMobileNumber(phone);
+};
 
 /**
- * Development / Test SMS Provider
- * Displays the verification OTP solely in the local developer console.
- * Strictly prohibited in production environments.
+ * Development / Test SMS Provider. Keeps OTPs in process memory for tests and
+ * logs challenge details only when explicitly enabled in local development.
  */
 export class DevelopmentSmsProvider implements ISmsProvider {
   // Store sent OTPs in memory for automated test assertion
   public sentMessages: Array<{ phone: string; otp: string; purpose: OtpPurpose; sentAt: Date }> = [];
+
+  getLatestMessage(
+    phone: string,
+    purpose: OtpPurpose
+  ): { otp: string; sentAt: Date } | null {
+    for (let index = this.sentMessages.length - 1; index >= 0; index -= 1) {
+      const message = this.sentMessages[index];
+      if (message.phone === phone && message.purpose === purpose) {
+        return { otp: message.otp, sentAt: new Date(message.sentAt) };
+      }
+    }
+    return null;
+  }
 
   constructor() {
     if (process.env.NODE_ENV === 'production') {
@@ -18,8 +43,7 @@ export class DevelopmentSmsProvider implements ISmsProvider {
   }
 
   async sendOtp(phone: string, otp: string, purpose: OtpPurpose): Promise<boolean> {
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction) {
+    if (process.env.NODE_ENV === 'production') {
       throw new AppError(
         'Development SMS provider cannot be used in production.',
         500,
@@ -34,9 +58,11 @@ export class DevelopmentSmsProvider implements ISmsProvider {
       sentAt: new Date(),
     });
 
-    console.log(
-      `📱 [DEV SMS LOGGER] To: ${phone} | Purpose: ${purpose} | Code: ${otp} | (Expires in 5 minutes)`
-    );
+    if (isDevelopmentOtpTerminalLoggingEnabled()) {
+      console.info(`Purpose: ${purpose}`);
+      console.info(`Phone: ${maskDevelopmentPhone(phone)}`);
+      console.info(`OTP: ${otp}`);
+    }
 
     return true;
   }
@@ -44,8 +70,9 @@ export class DevelopmentSmsProvider implements ISmsProvider {
 
 /**
  * Production SMS Provider
- * Enforces production SMS gateway configuration (e.g. MSG91, Fast2SMS, Twilio, or generic HTTP REST gateway).
- * Fails safely if required gateway credentials are not present.
+ * Enforces an HTTPS gateway URL and credentials (e.g. MSG91, Fast2SMS, Twilio,
+ * or a generic HTTP REST gateway).
+ * Fails safely if required gateway configuration is not present.
  * NEVER outputs or logs the plaintext OTP to stdout, logs, or error traces.
  */
 export class ProductionSmsProvider implements ISmsProvider {
@@ -54,6 +81,7 @@ export class ProductionSmsProvider implements ISmsProvider {
   private readonly senderId?: string;
   private readonly templateId?: string;
   private readonly timeoutMs: number;
+  private readonly fetchImpl: typeof fetch;
 
   constructor(options?: {
     gatewayUrl?: string;
@@ -61,94 +89,140 @@ export class ProductionSmsProvider implements ISmsProvider {
     senderId?: string;
     templateId?: string;
     timeoutMs?: number;
+    fetchImpl?: typeof fetch;
   }) {
     this.gatewayUrl = options?.gatewayUrl ?? process.env.SMS_GATEWAY_URL;
     this.apiKey = options?.apiKey ?? process.env.SMS_API_KEY;
     this.senderId = options?.senderId ?? process.env.SMS_SENDER_ID ?? 'ASCASI';
     this.templateId = options?.templateId ?? process.env.SMS_TEMPLATE_ID;
     this.timeoutMs = options?.timeoutMs ?? 5000;
+    this.fetchImpl = options?.fetchImpl ?? fetch;
   }
 
   async sendOtp(phone: string, otp: string, purpose: OtpPurpose): Promise<boolean> {
-    if (!this.apiKey) {
+    if (!this.apiKey || !this.gatewayUrl) {
       throw new AppError(
-        'Production SMS Gateway is not configured. Please configure SMS_API_KEY in production.',
+        'Production SMS Gateway is not fully configured.',
         500,
         'SMS_GATEWAY_UNCONFIGURED'
       );
     }
 
-    // If an external REST gateway endpoint is configured, dispatch via HTTPS POST
-    if (this.gatewayUrl) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
-
-      try {
-        const payload = {
-          recipient: phone,
-          code: otp,
-          purpose,
-          sender: this.senderId,
-          templateId: this.templateId,
-        };
-
-        const response = await fetch(this.gatewayUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.apiKey}`,
-            'X-Api-Key': this.apiKey,
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          console.error(
-            `❌ [SMS Gateway] Failed delivery to ${phone.slice(0, 4)}*** with HTTP status ${response.status}`
-          );
-          throw new AppError(
-            'SMS delivery failed at gateway.',
-            502,
-            'SMS_GATEWAY_DELIVERY_FAILURE'
-          );
-        }
-
-        return true;
-      } catch (err: unknown) {
-        if ((err as Error)?.name === 'AbortError') {
-          console.error(`⏱️ [SMS Gateway] Request timed out after ${this.timeoutMs}ms.`);
-          throw new AppError(
-            'SMS gateway request timed out.',
-            504,
-            'SMS_GATEWAY_TIMEOUT'
-          );
-        }
-
-        if (err instanceof AppError) {
-          throw err;
-        }
-
-        console.error('❌ [SMS Gateway] Unexpected error during OTP dispatch.');
-        throw new AppError(
-          'Failed to send verification SMS via production gateway.',
-          500,
-          'SMS_GATEWAY_ERROR'
-        );
-      } finally {
-        clearTimeout(timeoutId);
-      }
+    let gatewayUrl: URL;
+    try {
+      gatewayUrl = new URL(this.gatewayUrl);
+    } catch {
+      throw new AppError(
+        'Production SMS Gateway URL is invalid.',
+        500,
+        'SMS_GATEWAY_UNCONFIGURED'
+      );
+    }
+    if (gatewayUrl.protocol !== 'https:') {
+      throw new AppError(
+        'Production SMS Gateway must use HTTPS.',
+        500,
+        'SMS_GATEWAY_UNCONFIGURED'
+      );
     }
 
-    // If API key is present without an explicit custom HTTP URL (mock gateway validation test)
-    return true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const payload = {
+        recipient: phone,
+        code: otp,
+        purpose,
+        sender: this.senderId,
+        templateId: this.templateId,
+      };
+
+      const response = await this.fetchImpl(gatewayUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+          'X-Api-Key': this.apiKey,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        console.error(
+          `❌ [SMS Gateway] Failed delivery to ${maskMobileNumber(phone)} with HTTP status ${response.status}`
+        );
+        throw new AppError(
+          'SMS delivery failed at gateway.',
+          502,
+          'SMS_GATEWAY_DELIVERY_FAILURE'
+        );
+      }
+
+      return true;
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.error(`⏱️ [SMS Gateway] Request timed out after ${this.timeoutMs}ms.`);
+        throw new AppError(
+          'SMS gateway request timed out.',
+          504,
+          'SMS_GATEWAY_TIMEOUT'
+        );
+      }
+
+      if (err instanceof AppError) {
+        throw err;
+      }
+
+      console.error('❌ [SMS Gateway] Unexpected error during OTP dispatch.');
+      throw new AppError(
+        'Failed to send verification SMS via production gateway.',
+        500,
+        'SMS_GATEWAY_ERROR'
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 }
 
 /**
  * Factory that selects the appropriate SMS provider based on environment.
  */
-export const createSmsProvider = (): ISmsProvider => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  return isProduction ? new ProductionSmsProvider() : new DevelopmentSmsProvider();
+type SmsProviderSelection = 'development' | 'production';
+
+type Environment = Readonly<Record<string, string | undefined>>;
+
+const getSmsProviderSelection = (
+  env: Environment = process.env
+): SmsProviderSelection => {
+  if (env.APP_ENV === 'staging') {
+    assertStagingEnvironment(env);
+    return 'development';
+  }
+
+  const environment = env.NODE_ENV;
+  if (environment === 'production') {
+    return 'production';
+  }
+  if (environment === 'staging') {
+    throw new Error(
+      'NODE_ENV=staging is ambiguous; use APP_ENV=staging for mock SMS.'
+    );
+  }
+  if (environment === 'development' || environment === 'test') {
+    return 'development';
+  }
+  return 'production';
 };
+
+export const getSmsProviderName = (env: Environment = process.env): string =>
+  getSmsProviderSelection(env) === 'development'
+    ? 'DevelopmentSmsProvider'
+    : 'ProductionSmsProvider';
+
+export const createSmsProvider = (): ISmsProvider =>
+  getSmsProviderSelection(process.env) === 'development'
+    ? new DevelopmentSmsProvider()
+    : new ProductionSmsProvider();

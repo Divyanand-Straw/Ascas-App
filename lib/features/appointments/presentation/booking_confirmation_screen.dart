@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/theme/app_colors.dart';
+import 'appointment_detail_screen.dart';
 import 'models/appointment_models.dart';
 
 class BookingConfirmationScreen extends StatelessWidget {
@@ -10,6 +11,9 @@ class BookingConfirmationScreen extends StatelessWidget {
   final DateTime date;
   final String time;
   final String patientName;
+  final String status;
+  final String reason;
+  final Appointment? appointment;
 
   const BookingConfirmationScreen({
     super.key,
@@ -17,6 +21,9 @@ class BookingConfirmationScreen extends StatelessWidget {
     required this.date,
     required this.time,
     required this.patientName,
+    this.reason = '',
+    this.status = 'Requested',
+    this.appointment,
   });
 
   @override
@@ -33,18 +40,22 @@ class BookingConfirmationScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 34,
                 backgroundColor: AppColors.blushPink,
                 child: Icon(
-                  Icons.pending_actions,
+                  status.toLowerCase() == 'confirmed'
+                      ? Icons.check_circle_outline
+                      : Icons.task_alt,
                   color: AppColors.burgundy,
                   size: 32,
                 ),
               ),
               const SizedBox(height: 18),
               LocalizedText(
-                'REQUESTED',
+                status.toLowerCase() == 'confirmed'
+                    ? 'CONFIRMED'
+                    : 'DEMO BOOKING SAVED',
                 style: TextStyle(
                   color: AppColors.burgundy,
                   fontSize: 12,
@@ -54,7 +65,9 @@ class BookingConfirmationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               LocalizedText(
-                'Your appointment request has been submitted. The clinic will confirm the appointment after checking availability.',
+                status.toLowerCase() == 'confirmed'
+                    ? 'Your appointment is confirmed.'
+                    : 'Your demo booking was saved on this device. It has not been sent to or confirmed by the clinic.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.primaryText,
@@ -63,30 +76,56 @@ class BookingConfirmationScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              LocalizedText(
-                '${doctor.name}\n${date.day} ${_month(date.month)} · $time\nFor $patientName',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 12,
-                  height: 1.6,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: Column(
+                  children: [
+                    _detail('Doctor', doctor.name),
+                    _detail('Date', _formatDate(context, date)),
+                    _detail('Time', time),
+                    if (reason.isNotEmpty) _detail('Consultation reason', reason),
+                    if (appointment?.reference.isNotEmpty == true)
+                      _detail('Appointment ID', appointment!.reference),
+                    _detail('Booking status', status),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              LocalizedText(
-                'This request is awaiting clinic confirmation. It is not a confirmed appointment yet.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 11,
-                  height: 1.4,
-                ),
-              ),
+              const SizedBox(height: 10),
+              _detail('Patient', patientName),
               const SizedBox(height: 26),
-              OutlinedButton(
-                onPressed: () =>
-                    Navigator.popUntil(context, (route) => route.isFirst),
-                child: LocalizedText('Done'),
+              if (appointment != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AppointmentDetailsScreen(
+                          appointment: appointment!,
+                          patientName: patientName,
+                        ),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.burgundy,
+                      foregroundColor: AppColors.white,
+                    ),
+                    child: const LocalizedText('View Appointment'),
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () =>
+                      Navigator.popUntil(context, (route) => route.isFirst),
+                  child: const LocalizedText('Back to Home'),
+                ),
               ),
             ],
           ),
@@ -95,18 +134,66 @@ class BookingConfirmationScreen extends StatelessWidget {
     );
   }
 
-  static String _month(int month) => const [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ][month - 1];
+  Widget _detail(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: LocalizedText(
+            label,
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 11,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: LocalizedText(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              color: AppColors.primaryText,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  static String _formatDate(BuildContext context, DateTime date) {
+    final weekday = localizedText(
+      context,
+      const [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ][date.weekday - 1],
+    );
+    final month = localizedText(
+      context,
+      const [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ][date.month - 1],
+    );
+    return '$weekday, ${date.day} $month ${date.year}';
+  }
 }

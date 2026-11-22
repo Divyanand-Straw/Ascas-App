@@ -12,7 +12,14 @@ import '../../medical_records/presentation/medical_records_screen.dart';
 import '../../medication/presentation/medication_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  final bool isLinkedPartner;
+  final Map<String, bool> partnerPermissions;
+
+  const NotificationsScreen({
+    super.key,
+    this.isLinkedPartner = false,
+    this.partnerPermissions = const {},
+  });
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -20,6 +27,7 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _service = NotificationService.instance;
+  NotificationCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -37,9 +45,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (mounted) setState(() {});
   }
 
+  bool _isAllowed(InAppNotification notification) {
+    if (!widget.isLinkedPartner) return true;
+    return switch (notification.category) {
+      NotificationCategory.appointment ||
+      NotificationCategory.appointmentConfirmation ||
+      NotificationCategory.appointmentUpdated =>
+        widget.partnerPermissions['Appointments'] == true,
+      NotificationCategory.medication =>
+        widget.partnerPermissions['Medication schedules'] == true ||
+            widget.partnerPermissions['Prescriptions'] == true,
+      NotificationCategory.journey =>
+        widget.partnerPermissions['Treatment Journey'] == true,
+      NotificationCategory.medicalRecord =>
+        widget.partnerPermissions['Medical Reports'] == true ||
+            widget.partnerPermissions['Discharge Summary'] == true ||
+            widget.partnerPermissions['Prescriptions'] == true,
+      NotificationCategory.payment =>
+        widget.partnerPermissions['Bills and Payments'] == true ||
+            widget.partnerPermissions['IP Billing'] == true,
+      NotificationCategory.clinicMessage =>
+        widget.partnerPermissions['Notifications and clinic updates'] == true,
+      NotificationCategory.general => false,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    final notifications = _service.inbox;
+    final notifications = _service.inbox.where(_isAllowed).toList()
+      ..sort((first, second) => second.createdAt.compareTo(first.createdAt));
+    final visibleNotifications = _selectedCategory == null
+        ? notifications
+        : notifications
+              .where((item) => item.category == _selectedCategory)
+              .toList();
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(
@@ -72,9 +111,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       : ListView(
                           padding: const EdgeInsets.fromLTRB(18, 22, 18, 30),
                           children: [
-                            _actions(context),
+                            _actions(context, visibleNotifications),
+                            const SizedBox(height: 8),
+                            _categoryFilters(),
                             const SizedBox(height: 14),
-                            ...notifications.map(_notificationCard),
+                            if (visibleNotifications.isEmpty)
+                              _filteredEmptyState()
+                            else
+                              ...visibleNotifications.map(_notificationCard),
                           ],
                         ),
                 ),
@@ -131,14 +175,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _actions(BuildContext context) {
+  Widget _actions(
+    BuildContext context,
+    List<InAppNotification> visibleNotifications,
+  ) {
+    final unreadCount = visibleNotifications
+        .where((notification) => !notification.isRead)
+        .length;
     return Row(
       children: [
         Expanded(
           child: LocalizedText(
-            _service.unreadCount == 0
+            unreadCount == 0
                 ? 'All notifications read'
-                : '${_service.unreadCount} unread notifications',
+                : '$unreadCount unread notifications',
             style: const TextStyle(
               color: AppColors.primaryText,
               fontSize: 13,
@@ -147,23 +197,104 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
         TextButton(
-          onPressed: _service.unreadCount == 0 ? null : _service.markAllRead,
+          onPressed: widget.isLinkedPartner || unreadCount == 0
+              ? null
+              : _service.markAllRead,
           child: const LocalizedText('Mark all as read'),
         ),
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'clear') _confirmClear(context);
-          },
-          itemBuilder: (_) => [
-            const PopupMenuItem(
-              value: 'clear',
-              child: LocalizedText('Clear notifications'),
-            ),
-          ],
-        ),
+        if (!widget.isLinkedPartner)
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'clear') _confirmClear(context);
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'clear',
+                child: LocalizedText('Clear notifications'),
+              ),
+            ],
+          ),
       ],
     );
   }
+
+  Widget _categoryFilters() {
+    const categories = [
+      null,
+      NotificationCategory.appointment,
+      NotificationCategory.medication,
+      NotificationCategory.journey,
+      NotificationCategory.medicalRecord,
+      NotificationCategory.payment,
+      NotificationCategory.clinicMessage,
+      NotificationCategory.general,
+    ];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: categories.map((category) {
+          final selected = category == _selectedCategory;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: LocalizedText(
+                category == null ? 'All' : _categoryLabel(category),
+              ),
+              selected: selected,
+              onSelected: (_) => setState(() => _selectedCategory = category),
+              selectedColor: AppColors.burgundy,
+              backgroundColor: AppColors.white,
+              labelStyle: TextStyle(
+                color: selected ? AppColors.white : AppColors.primaryText,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+              side: const BorderSide(color: AppColors.divider),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  String _categoryLabel(NotificationCategory category) => switch (category) {
+    NotificationCategory.appointment ||
+    NotificationCategory.appointmentConfirmation ||
+    NotificationCategory.appointmentUpdated => 'Appointments',
+    NotificationCategory.medication => 'Medications',
+    NotificationCategory.journey => 'Treatment updates',
+    NotificationCategory.medicalRecord => 'Reports & records',
+    NotificationCategory.payment => 'Payments',
+    NotificationCategory.clinicMessage => 'Clinic updates',
+    NotificationCategory.general => 'General',
+  };
+
+  Widget _filteredEmptyState() => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.filter_alt_off_outlined,
+          color: AppColors.dustyPink,
+          size: 46,
+        ),
+        const SizedBox(height: 12),
+        const LocalizedText(
+          'No notifications in this category.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        TextButton(
+          onPressed: () => setState(() => _selectedCategory = null),
+          child: const LocalizedText('Show all notifications'),
+        ),
+      ],
+    ),
+  );
 
   Widget _notificationCard(InAppNotification notification) {
     final category = notification.category;
@@ -220,6 +351,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           height: 1.4,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          LocalizedText(
+                            _categoryLabel(category),
+                            style: const TextStyle(
+                              color: AppColors.burgundy,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            _dateTime(notification.createdAt),
+                            style: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -250,6 +404,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       NotificationCategory.clinicMessage => Icons.chat_bubble_outline_rounded,
       NotificationCategory.journey => Icons.timeline_rounded,
       NotificationCategory.medicalRecord => Icons.description_outlined,
+      NotificationCategory.payment => Icons.receipt_long_outlined,
       NotificationCategory.general => Icons.notifications_none_rounded,
     };
     return Container(
@@ -264,7 +419,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _openNotification(InAppNotification notification) async {
-    await _service.markRead(notification);
+    if (!_isAllowed(notification)) return;
+    if (!widget.isLinkedPartner) await _service.markRead(notification);
     if (!mounted) return;
     final appointment = findAppointmentById(notification.appointmentId);
     if (appointment != null) {
@@ -277,13 +433,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return;
     }
     final page = switch (notification.category) {
-      NotificationCategory.medication => const MedicationScreen(),
+      NotificationCategory.medication => MedicationScreen(
+        isLinkedPartner: widget.isLinkedPartner,
+        canViewMedicationSchedule:
+            !widget.isLinkedPartner ||
+            widget.partnerPermissions['Medication schedules'] == true,
+        canViewPrescriptions:
+            !widget.isLinkedPartner ||
+            widget.partnerPermissions['Prescriptions'] == true,
+      ),
       NotificationCategory.clinicMessage => const CommunicationScreen(),
       NotificationCategory.journey => const TreatmentOverviewScreen(
-        treatmentName: 'IVF Treatment',
-        currentStage: 'Current stage',
+        treatmentName: 'Treatment pathway',
       ),
-      NotificationCategory.medicalRecord => const MedicalRecordsScreen(),
+      NotificationCategory.medicalRecord => MedicalRecordsScreen(
+        isLinkedPartner: widget.isLinkedPartner,
+        partnerPermissions: widget.partnerPermissions,
+      ),
+      NotificationCategory.payment =>
+        widget.isLinkedPartner &&
+                widget.partnerPermissions['Bills and Payments'] != true
+            ? const IpBillingScreen()
+            : const BillsPaymentsScreen(),
       _ => null,
     };
     if (page != null) {
@@ -422,4 +593,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
     return '$hour:${now.minute.toString().padLeft(2, '0')}';
   }
+
+  String _dateTime(DateTime value) =>
+      '${value.day}/${value.month}/${value.year} · ${TimeOfDay.fromDateTime(value).format(context)}';
 }

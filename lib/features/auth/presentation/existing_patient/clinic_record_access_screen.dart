@@ -1,34 +1,33 @@
-
 import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
+
 import 'package:flutter/services.dart';
+
+import '../../data/account_identity_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/widgets/date_of_birth_picker.dart';
 import '../new_patient/profile_confirmation_screen.dart';
 
 class ClinicRecordAccessScreen extends StatefulWidget {
   final String mobileNumber;
 
-  const ClinicRecordAccessScreen({
-    super.key,
-    required this.mobileNumber,
-  });
+  const ClinicRecordAccessScreen({super.key, required this.mobileNumber});
 
   @override
   State<ClinicRecordAccessScreen> createState() =>
       _ClinicRecordAccessScreenState();
 }
 
-class _ClinicRecordAccessScreenState
-    extends State<ClinicRecordAccessScreen> {
+class _ClinicRecordAccessScreenState extends State<ClinicRecordAccessScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _patientIdController =
-      TextEditingController();
+  final TextEditingController _patientIdController = TextEditingController();
   late final TextEditingController _mobileController;
   final TextEditingController _dobController = TextEditingController();
 
-  static const _mockPatientId = 'AS-20481';
-  static const _mockDateOfBirth = '14/08/1992';
+  final _accounts = AccountIdentityService();
 
   @override
   void initState() {
@@ -45,32 +44,14 @@ class _ClinicRecordAccessScreenState
   }
 
   Future<void> _selectDate() async {
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime(1992, 8, 14),
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.burgundy,
-              onPrimary: AppColors.white,
-              surface: AppColors.white,
-              onSurface: AppColors.primaryText,
-            ),
-          ),
-          child: child!,
-        );
-      },
+    final selectedDate = await showDateOfBirthPicker(
+      context,
+      initialDate: parseDateOfBirth(_dobController.text),
     );
 
     if (selectedDate != null) {
       setState(() {
-        _dobController.text =
-            '${selectedDate.day.toString().padLeft(2, '0')}/'
-            '${selectedDate.month.toString().padLeft(2, '0')}/'
-            '${selectedDate.year}';
+        _dobController.text = formatDateOfBirth(selectedDate);
       });
     }
   }
@@ -78,16 +59,10 @@ class _ClinicRecordAccessScreenState
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppColors.secondaryText,
-        fontSize: 13,
-      ),
+      hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
       filled: true,
       fillColor: AppColors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -98,10 +73,7 @@ class _ClinicRecordAccessScreenState
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: AppColors.burgundy,
-          width: 1.4,
-        ),
+        borderSide: const BorderSide(color: AppColors.burgundy, width: 1.4),
       ),
     );
   }
@@ -150,7 +122,8 @@ class _ClinicRecordAccessScreenState
           readOnly: readOnly,
           enabled: enabled,
           onTap: onTap,
-          validator: validator ??
+          validator:
+              validator ??
               (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter $label.';
@@ -158,47 +131,47 @@ class _ClinicRecordAccessScreenState
                 return null;
               },
           decoration: _inputDecoration(hint),
-          style: const TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.primaryText, fontSize: 14),
         ),
       ],
     );
   }
 
-  void _verifyClinicAccess() {
+  Future<void> _verifyClinicAccess() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     final patientId = _patientIdController.text.trim().toUpperCase();
     final dateOfBirth = _dobController.text.trim();
-    if (patientId != _mockPatientId || dateOfBirth != _mockDateOfBirth) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'These details do not match our prototype clinic record. '
-            'Use Patient ID AS-20481 and date of birth 14/08/1992.',
+    try {
+      final identity = await _accounts.resolveExistingPatient(
+        mobileNumber: _mobileController.text,
+        patientId: patientId,
+        dateOfBirth: dateOfBirth,
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ProfileConfirmationScreen(
+            fullName: identity.fullName,
+            dateOfBirth: identity.dateOfBirth,
+            mobileNumber: identity.mobileNumber,
+            email: identity.email,
+            preferredLanguage: identity.preferredLanguage,
+            gender: identity.gender,
+            isExistingPatient: true,
+            patientId: identity.patientId,
+            accountId: identity.accountId,
           ),
         ),
       );
-      return;
+    } on StateError catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
     }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProfileConfirmationScreen(
-          fullName: 'Ananya Iyer',
-          dateOfBirth: dateOfBirth,
-          mobileNumber: _mobileController.text.trim(),
-          preferredLanguage: 'English',
-          isExistingPatient: true,
-          patientId: patientId,
-        ),
-      ),
-    );
   }
 
   @override
@@ -225,7 +198,7 @@ class _ClinicRecordAccessScreenState
                     const Expanded(
                       child: Column(
                         children: [
-                          Text(
+                          LocalizedText(
                             'STEP 4 OF 8',
                             style: TextStyle(
                               color: AppColors.dustyPink,
@@ -235,7 +208,7 @@ class _ClinicRecordAccessScreenState
                             ),
                           ),
                           SizedBox(height: 4),
-                          Text(
+                          LocalizedText(
                             'Patient ID / MRN',
                             style: TextStyle(
                               color: AppColors.burgundy,
@@ -247,11 +220,9 @@ class _ClinicRecordAccessScreenState
                       ),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.popUntil(
-                        context,
-                        (route) => route.isFirst,
-                      ),
-                      child: const Text(
+                      onPressed: () =>
+                          Navigator.popUntil(context, (route) => route.isFirst),
+                      child: const LocalizedText(
                         'Exit',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -264,10 +235,7 @@ class _ClinicRecordAccessScreenState
 
                 const SizedBox(height: 16),
 
-                const Divider(
-                  color: AppColors.divider,
-                  height: 1,
-                ),
+                const Divider(color: AppColors.divider, height: 1),
 
                 const SizedBox(height: 16),
 
@@ -275,7 +243,7 @@ class _ClinicRecordAccessScreenState
 
                 const SizedBox(height: 30),
 
-                const Text(
+                const LocalizedText(
                   'PATIENT ID / MRN',
                   style: TextStyle(
                     color: AppColors.burgundy,
@@ -287,7 +255,7 @@ class _ClinicRecordAccessScreenState
 
                 const SizedBox(height: 14),
 
-                const Text(
+                const LocalizedText(
                   'Enter your Patient ID',
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -299,7 +267,7 @@ class _ClinicRecordAccessScreenState
 
                 const SizedBox(height: 10),
 
-                const Text(
+                const LocalizedText(
                   'Enter the Patient ID or MRN from your existing hospital record.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -315,9 +283,7 @@ class _ClinicRecordAccessScreenState
                   hint: 'Enter your Patient ID / MRN',
                   controller: _patientIdController,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[A-Za-z0-9-]'),
-                    ),
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9-]')),
                   ],
                   validator: (value) {
                     if (value == null ||
@@ -366,7 +332,7 @@ class _ClinicRecordAccessScreenState
 
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _verifyClinicAccess,
                     style: ElevatedButton.styleFrom(
@@ -377,10 +343,10 @@ class _ClinicRecordAccessScreenState
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
+                    child: const LocalizedText(
                       'Continue',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

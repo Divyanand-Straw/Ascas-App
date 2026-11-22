@@ -4,7 +4,7 @@
   "description": "IVF Patient Mobile Application Backend",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "node scripts/dev.cjs",
     "build": "tsc",
     "start": "node dist/server.js",
     "migrate": "tsx database/migrate.ts",

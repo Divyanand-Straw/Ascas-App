@@ -7,6 +7,7 @@ import {
   IRefreshTokenRepository,
 } from './auth.repository.interface';
 import { ISmsProvider } from './sms.provider.interface';
+import { DevelopmentSmsProvider } from './sms.provider';
 import {
   User,
   PatientProfile,
@@ -14,15 +15,19 @@ import {
   AuthTokens,
   AuthSession,
   TokenPayload,
+  PreferredLanguage,
+  serializeDateOfBirth,
 } from './auth.types';
 import {
   AppError,
   ValidationError,
   UnauthorizedError,
-  ForbiddenError,
   NotFoundError,
   ConflictError,
 } from '../../utils/errors';
+import {
+  requiresConfiguredAuthSecrets,
+} from '../../config/runtime';
 
 export interface AuthServiceConfig {
   jwtAccessSecret: string;
@@ -36,6 +41,10 @@ export interface AuthServiceConfig {
   maxRequestsPerHourPerIp?: number;
 }
 
+export type OtpVerificationTransactionRunner = (
+  verify: (transactionalService: AuthService) => Promise<AuthSession>
+) => Promise<AuthSession>;
+
 export class AuthService {
   private userRepo: IUserRepository;
   private profileRepo: IPatientProfileRepository;
@@ -43,6 +52,7 @@ export class AuthService {
   private refreshTokenRepo: IRefreshTokenRepository;
   private smsProvider: ISmsProvider;
   private config: Required<AuthServiceConfig>;
+  private readonly otpVerificationTransactionRunner?: OtpVerificationTransactionRunner;
 
   constructor(
     userRepo: IUserRepository,
@@ -50,25 +60,37 @@ export class AuthService {
     otpRepo: IOtpRepository,
     refreshTokenRepo: IRefreshTokenRepository,
     smsProvider: ISmsProvider,
-    config?: Partial<AuthServiceConfig>
+    config?: Partial<AuthServiceConfig>,
+    otpVerificationTransactionRunner?: OtpVerificationTransactionRunner
   ) {
     this.userRepo = userRepo;
     this.profileRepo = profileRepo;
     this.otpRepo = otpRepo;
     this.refreshTokenRepo = refreshTokenRepo;
     this.smsProvider = smsProvider;
+    this.otpVerificationTransactionRunner =
+      otpVerificationTransactionRunner;
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    const requiresConfiguredSecrets = requiresConfiguredAuthSecrets(
+      process.env
+    );
     const fallbackSecret = 'ascas_dev_fallback_secret_32_characters_minimum_length!';
 
     const accessSecret = config?.jwtAccessSecret || process.env.JWT_ACCESS_SECRET;
     const otpSec = config?.otpSecret || process.env.OTP_SECRET;
 
-    if (isProduction && (!accessSecret || accessSecret.length < 32)) {
-      throw new Error('JWT_ACCESS_SECRET must be at least 32 characters in production.');
+    if (
+      requiresConfiguredSecrets &&
+      (!accessSecret || accessSecret.length < 32)
+    ) {
+      throw new Error(
+        'JWT_ACCESS_SECRET must be at least 32 characters in production or staging.'
+      );
     }
-    if (isProduction && (!otpSec || otpSec.length < 32)) {
-      throw new Error('OTP_SECRET must be at least 32 characters in production.');
+    if (requiresConfiguredSecrets && (!otpSec || otpSec.length < 32)) {
+      throw new Error(
+        'OTP_SECRET must be at least 32 characters in production or staging.'
+      );
     }
 
     this.config = {
@@ -100,6 +122,53 @@ export class AuthService {
       .digest('hex');
   }
 
+  get usesDevelopmentSmsProvider(): boolean {
+    return this.smsProvider instanceof DevelopmentSmsProvider;
+  }
+
+  async getActiveDevelopmentOtp(
+    phone: string,
+    purpose: OtpPurpose
+  ): Promise<string | null> {
+    if (!(this.smsProvider instanceof DevelopmentSmsProvider)) {
+      return null;
+    }
+
+    const message = this.smsProvider.getLatestMessage(phone, purpose);
+    if (!message) return null;
+
+    const challenge = await this.otpRepo.findLatestActiveChallenge(
+      phone,
+      purpose
+    );
+    if (
+      !challenge ||
+      challenge.phone !== phone ||
+      challenge.purpose !== purpose ||
+      challenge.consumedAt != null ||
+      challenge.attemptsCount >= challenge.maxAttempts ||
+      challenge.expiresAt.getTime() <= Date.now() ||
+      message.sentAt.getTime() < challenge.createdAt.getTime()
+    ) {
+      return null;
+    }
+
+    const storedHash = Buffer.from(challenge.otpHash, 'hex');
+    const candidateHash = Buffer.from(
+      this.hashOtp(phone, purpose, message.otp),
+      'hex'
+    );
+    if (
+      storedHash.length !== candidateHash.length ||
+      storedHash.length === 0 ||
+      !crypto.timingSafeEqual(storedHash, candidateHash)
+    ) {
+      return null;
+    }
+
+    return message.otp;
+  }
+
   private hashToken(rawToken: string): string {
     return crypto.createHash('sha256').update(rawToken).digest('hex');
   }
@@ -113,87 +182,147 @@ export class AuthService {
     purpose: OtpPurpose,
     ipAddress?: string
   ): Promise<{ challengeId: string; expiresInSeconds: number; retryAfterSeconds: number }> {
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-
-    // 1. IP Rate Limiting (15 requests/hour per IP)
-    if (ipAddress) {
-      const ipCount = await this.otpRepo.getRecentRequestCountByIp(ipAddress, oneHourAgo);
-      if (ipCount >= this.config.maxRequestsPerHourPerIp) {
-        throw new AppError(
-          'Too many verification requests from this network. Please try again later.',
-          429,
-          'RATE_LIMIT_EXCEEDED'
-        );
-      }
-    }
-
-    // 2. Phone Hourly Rate Limiting (5 requests/hour per phone)
-    const phoneCount = await this.otpRepo.getRecentRequestCountByPhone(phone, oneHourAgo);
-    if (phoneCount >= this.config.maxRequestsPerHourPerPhone) {
-      throw new AppError(
-        'Too many verification attempts for this phone number. Please try again later.',
-        429,
-        'PHONE_RATE_LIMIT_EXCEEDED'
-      );
-    }
-
-    // 3. Phone Resend Cooldown (45 seconds)
-    const lastRequest = await this.otpRepo.getLastRequestTime(phone);
-    if (lastRequest) {
-      const elapsedSeconds = Math.floor((now.getTime() - lastRequest.getTime()) / 1000);
-      if (elapsedSeconds < this.config.resendCooldownSeconds) {
-        const remainingCooldown = this.config.resendCooldownSeconds - elapsedSeconds;
-        throw new AppError(
-          `Please wait ${remainingCooldown} seconds before requesting another verification code.`,
-          429,
-          'COOLDOWN_ACTIVE',
-          { retryAfterSeconds: remainingCooldown }
-        );
-      }
-    }
-
-    // 4. Check user existence for anti-enumeration behavior
+    // Check user existence for anti-enumeration behavior.
     const existingUser = await this.userRepo.findByPhone(phone);
 
     // Anti-enumeration:
-    // If LOGIN is requested for an unknown account, or REGISTRATION for an existing account:
+    // Login and Existing Patient requests for unknown accounts are decoys.
     // We create a decoy challenge record or standard challenge so verifyOtp returns the appropriate
     // structured error only after OTP challenge verification, without leaking account status on send.
     // If the account does not exist for LOGIN, do not dispatch real SMS to save cost,
     // but still track challenge to respond identically.
     let shouldDispatchSms = true;
 
-    if (purpose === 'LOGIN' && (!existingUser || existingUser.status === 'SUSPENDED')) {
+    if (
+      (purpose === 'LOGIN' || purpose === 'EXISTING_PATIENT') &&
+      (!existingUser || existingUser.status === 'SUSPENDED')
+    ) {
       shouldDispatchSms = false;
     }
 
-    // Invalidate active predecessors for this phone and purpose
-    await this.otpRepo.invalidatePredecessors(phone, purpose);
+    let generatedOtp: string | null = null;
+    const issuance = await this.otpRepo.createOrReuseForCooldown(
+      {
+        phone,
+        purpose,
+        maxAttempts: this.config.maxOtpAttempts,
+        ipAddress,
+      },
+      {
+        resendCooldownSeconds: this.config.resendCooldownSeconds,
+        maxRequestsPerHourPerPhone: this.config.maxRequestsPerHourPerPhone,
+        maxRequestsPerHourPerIp: this.config.maxRequestsPerHourPerIp,
+      },
+      () => {
+        generatedOtp = this.generateOtp();
+        return {
+          otpHash: this.hashOtp(phone, purpose, generatedOtp),
+          expiresAt: new Date(
+            Date.now() + this.config.otpExpiresInMinutes * 60 * 1000
+          ),
+        };
+      }
+    );
+    if (issuance.rateLimit === 'ip') {
+      throw new AppError(
+        'Too many verification requests from this network. Please try again later.',
+        429,
+        'RATE_LIMIT_EXCEEDED'
+      );
+    }
+    if (issuance.rateLimit === 'phone') {
+      throw new AppError(
+        'Too many verification attempts for this phone number. Please try again later.',
+        429,
+        'PHONE_RATE_LIMIT_EXCEEDED'
+      );
+    }
+    if (!issuance.challenge) {
+      throw new AppError(
+        `Please wait ${issuance.retryAfterSeconds} seconds before requesting another verification code.`,
+        429,
+        'COOLDOWN_ACTIVE',
+        { retryAfterSeconds: issuance.retryAfterSeconds }
+      );
+    }
 
-    // Generate cryptographically secure 6-digit OTP
-    const otp = this.generateOtp();
-    const otpHash = this.hashOtp(phone, purpose, otp);
-    const expiresAt = new Date(now.getTime() + this.config.otpExpiresInMinutes * 60 * 1000);
-
-    const challenge = await this.otpRepo.create({
-      phone,
-      otpHash,
-      purpose,
-      maxAttempts: this.config.maxOtpAttempts,
-      expiresAt,
-      ipAddress,
-    });
-
-    if (shouldDispatchSms) {
-      await this.smsProvider.sendOtp(phone, otp, purpose);
+    if (issuance.created && shouldDispatchSms) {
+      if (generatedOtp === null) {
+        throw new AppError(
+          'Unable to create the verification challenge.',
+          500,
+          'OTP_CHALLENGE_CREATION_FAILED'
+        );
+      }
+      await this.smsProvider.sendOtp(phone, generatedOtp, purpose);
     }
 
     return {
-      challengeId: challenge.id,
-      expiresInSeconds: this.config.otpExpiresInMinutes * 60,
-      retryAfterSeconds: this.config.resendCooldownSeconds,
+      challengeId: issuance.challenge.id,
+      expiresInSeconds: Math.max(
+        0,
+        Math.ceil((issuance.challenge.expiresAt.getTime() - Date.now()) / 1000)
+      ),
+      retryAfterSeconds: issuance.retryAfterSeconds,
     };
+  }
+
+  async createOrGetPatientProfile(
+    userId: string,
+    data: {
+      firstName: string;
+      lastName: string;
+      dob: Date;
+      gender?: string;
+      emergencyContact?: string;
+      preferredLanguage: PreferredLanguage;
+    }
+  ): Promise<PatientProfile> {
+    const current = await this.getCurrentUser(userId);
+    if (current.profile) return current.profile;
+    if (current.user.emailPasswordEligibility !== 'NEW_PATIENT_ELIGIBLE') {
+      throw new AppError(
+        'Patient profile setup is not available for this account.',
+        403,
+        'PROFILE_SETUP_NOT_ALLOWED'
+      );
+    }
+    if (
+      data.emergencyContact &&
+      data.emergencyContact === current.user.phone
+    ) {
+      throw new AppError(
+        'Emergency contact must differ from the verified mobile number.',
+        400,
+        'INVALID_EMERGENCY_CONTACT'
+      );
+    }
+
+    return this.profileRepo.createOrGet({
+      userId,
+      ...data,
+    });
+  }
+
+  async updatePatientProfile(
+    userId: string,
+    data: {
+      firstName: string;
+      lastName: string;
+      dob: Date;
+      gender?: string;
+      preferredLanguage: PreferredLanguage;
+    }
+  ): Promise<PatientProfile> {
+    const current = await this.getCurrentUser(userId);
+    if (!current.profile) {
+      throw new AppError(
+        'Patient profile setup is not available for this account.',
+        403,
+        'PROFILE_SETUP_NOT_ALLOWED'
+      );
+    }
+    return this.profileRepo.update(userId, data);
   }
 
   // ==========================================================================
@@ -208,6 +337,19 @@ export class AuthService {
     deviceInfo?: string,
     ipAddress?: string
   ): Promise<AuthSession> {
+    if (this.otpVerificationTransactionRunner) {
+      return this.otpVerificationTransactionRunner((transactionalService) =>
+        transactionalService.verifyOtp(
+          challengeId,
+          phone,
+          purpose,
+          otp,
+          deviceInfo,
+          ipAddress
+        )
+      );
+    }
+
     const challenge = await this.otpRepo.findActiveChallenge(challengeId, phone, purpose);
 
     if (!challenge) {
@@ -257,8 +399,10 @@ export class AuthService {
     // ------------------------------------------------------------------------
     let user: User | null = await this.userRepo.findByPhone(phone);
     let isNewUser = false;
+    let profile: PatientProfile | null = null;
+    let profileLoaded = false;
 
-    if (purpose === 'LOGIN') {
+    if (purpose === 'LOGIN' || purpose === 'EXISTING_PATIENT') {
       if (!user) {
         throw new AppError('No active account found for this mobile number. Please register.', 404, 'USER_NOT_FOUND');
       }
@@ -267,26 +411,47 @@ export class AuthService {
       }
     } else if (purpose === 'REGISTRATION') {
       if (user) {
-        throw new AppError('An account with this mobile number already exists. Please log in.', 409, 'USER_ALREADY_EXISTS');
+        const credentials = await this.userRepo.findByIdWithPasswordHash(
+          user.id
+        );
+        profile = await this.profileRepo.findByUserId(user.id);
+        profileLoaded = true;
+        const canResumeRegistration =
+          credentials?.user.status === 'ACTIVE' &&
+          credentials.user.emailPasswordEligibility ===
+            'NEW_PATIENT_ELIGIBLE' &&
+          credentials.user.email === null &&
+          credentials.passwordHash === null &&
+          profile === null &&
+          !(await this.userRepo.isPartnerAccount(user.id));
+        if (!canResumeRegistration) {
+          throw new AppError('An account with this mobile number already exists. Please log in.', 409, 'USER_ALREADY_EXISTS');
+        }
+        isNewUser = true;
+      } else {
+        user = await this.userRepo.create({
+          phone,
+          role: 'PATIENT',
+          status: 'ACTIVE',
+          emailPasswordEligibility: 'NEW_PATIENT_ELIGIBLE',
+        });
+        isNewUser = true;
       }
-      // Create new user record
-      user = await this.userRepo.create({
-        phone,
-        role: 'PATIENT',
-        status: 'ACTIVE',
-      });
-      isNewUser = true;
     } else if (purpose === 'LINKED_MEMBER') {
       if (!user) {
         user = await this.userRepo.create({
           phone,
           role: 'PATIENT',
           status: 'ACTIVE',
+          emailPasswordEligibility: 'PARTNER_INELIGIBLE',
         });
         isNewUser = true;
       }
       if (user.status === 'SUSPENDED') {
         throw new AppError('Account is suspended. Please contact clinic support.', 403, 'ACCOUNT_SUSPENDED');
+      }
+      if (!isNewUser) {
+        await this.userRepo.markLinkedMemberIneligible(user.id);
       }
     }
 
@@ -294,8 +459,12 @@ export class AuthService {
       throw new AppError('Failed to establish user identity', 500);
     }
 
+    await this.userRepo.markPhoneVerified(user.id);
+
     // Fetch existing patient profile (if any)
-    const profile = await this.profileRepo.findByUserId(user.id);
+    if (!profileLoaded) {
+      profile = await this.profileRepo.findByUserId(user.id);
+    }
     const hasCompletedProfile = Boolean(profile);
 
     // Generate JWT access & refresh tokens
@@ -305,15 +474,19 @@ export class AuthService {
       user: {
         id: user.id,
         phone: user.phone,
+        email: user.email,
         role: user.role,
         status: user.status,
       },
       profile: profile
         ? {
             id: profile.id,
+            userId: profile.userId,
             firstName: profile.firstName,
             lastName: profile.lastName,
-            dob: profile.dob ? profile.dob.toISOString().split('T')[0] : null,
+            dob: serializeDateOfBirth(profile.dob),
+            gender: profile.gender,
+            emergencyContact: profile.emergencyContact,
             clinicMrn: profile.clinicMrn,
             preferredLanguage: profile.preferredLanguage,
             linkingStatus: profile.linkingStatus as any,
@@ -325,6 +498,68 @@ export class AuthService {
     };
   }
 
+  async createEmailPasswordSession(
+    userId: string,
+    expectedPasswordHash: string,
+    deviceInfo?: string,
+    ipAddress?: string
+  ): Promise<AuthSession> {
+    const credentials = await this.userRepo.findByIdWithPasswordHash(userId);
+    if (
+      !credentials ||
+      credentials.user.role !== 'PATIENT' ||
+      credentials.user.status !== 'ACTIVE' ||
+      credentials.user.emailPasswordEligibility !== 'NEW_PATIENT_ELIGIBLE' ||
+      !credentials.user.email ||
+      !credentials.passwordHash ||
+      credentials.passwordHash !== expectedPasswordHash ||
+      (await this.userRepo.isPartnerAccount(userId))
+    ) {
+      throw new AppError(
+        'Email or password is incorrect.',
+        401,
+        'EMAIL_PASSWORD_INVALID_CREDENTIALS'
+      );
+    }
+
+    const user = credentials.user;
+    const profile = await this.profileRepo.findByUserId(user.id);
+    const tokens = await this.generateTokenPair(
+      user,
+      profile,
+      deviceInfo,
+      ipAddress,
+      expectedPasswordHash
+    );
+
+    return {
+      user: {
+        id: user.id,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      },
+      profile: profile
+        ? {
+            id: profile.id,
+            userId: profile.userId,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            dob: serializeDateOfBirth(profile.dob),
+            gender: profile.gender,
+            emergencyContact: profile.emergencyContact,
+            clinicMrn: profile.clinicMrn,
+            preferredLanguage: profile.preferredLanguage,
+            linkingStatus: profile.linkingStatus as any,
+          }
+        : null,
+      tokens,
+      isNewUser: false,
+      hasCompletedProfile: Boolean(profile),
+    };
+  }
+
   // ==========================================================================
   // 3. Token Generation & Refresh
   // ==========================================================================
@@ -333,7 +568,8 @@ export class AuthService {
     user: User,
     profile?: PatientProfile | null,
     deviceInfo?: string,
-    ipAddress?: string
+    ipAddress?: string,
+    expectedPasswordHash?: string
   ): Promise<AuthTokens> {
     const hasCompletedProfile = Boolean(profile);
 
@@ -367,6 +603,7 @@ export class AuthService {
       deviceInfo,
       ipAddress,
       expiresAt,
+      expectedPasswordHash,
     });
 
     return {

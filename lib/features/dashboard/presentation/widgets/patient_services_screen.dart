@@ -6,31 +6,36 @@ import '../../../../core/localization/localized_text.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/services/locale_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/copyable_patient_id.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../notifications/presentation/notifications_screen.dart';
 import '../../../medication/presentation/medication_screen.dart';
 import '../../../communication/presentation/communication_screen.dart';
 import '../../../education/presentation/education_screen.dart';
+import 'dashboard_card.dart';
 import 'dashboard_home_content.dart';
-import 'patient_profile_screen.dart';
 import 'treatment_overview_screen.dart';
+import '../../../partner_access/presentation/patient_partner_access_screen.dart';
 
 class PatientServicesScreen extends StatelessWidget {
   final String patientName;
+  final String patientId;
   final String mobileNumber;
   final String dateOfBirth;
   final String preferredLanguage;
   final DashboardPatientState patientState;
+  final String accountId;
 
   const PatientServicesScreen({
     super.key,
     required this.patientName,
+    this.patientId = '',
     required this.mobileNumber,
     required this.dateOfBirth,
     required this.preferredLanguage,
     required this.patientState,
+    this.accountId = '',
   });
 
   String get _initials {
@@ -45,8 +50,12 @@ class PatientServicesScreen extends StatelessWidget {
     switch (patientState) {
       case DashboardPatientState.ivf:
         return 'IVF Cycle 1';
+      case DashboardPatientState.icsi:
+        return 'ICSI Treatment';
       case DashboardPatientState.iui:
         return 'IUI Treatment';
+      case DashboardPatientState.fet:
+        return 'Frozen Embryo Transfer (FET)';
       case DashboardPatientState.embryoTransfer:
         return 'Embryo Transfer';
       case DashboardPatientState.twoWeekWait:
@@ -56,7 +65,7 @@ class PatientServicesScreen extends StatelessWidget {
       case DashboardPatientState.postProcedureRecovery:
         return 'Follow-up Care';
       case DashboardPatientState.newPatient:
-        return 'Follow-up Care';
+        return 'Care pathway pending';
     }
   }
 
@@ -70,17 +79,17 @@ class PatientServicesScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionTitle(String title) => Padding(
+  Widget _sectionTitle(BuildContext context, String title) => Padding(
     padding: const EdgeInsets.only(top: 23, bottom: 9),
     child: Align(
       alignment: Alignment.centerLeft,
-      child: Text(
-        title.toUpperCase(),
+      child: LocalizedText(
+        localizedText(context, title).toUpperCase(),
         style: const TextStyle(
           color: AppColors.burgundy,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w800,
-          letterSpacing: 1.3,
+          letterSpacing: 1.1,
         ),
       ),
     ),
@@ -93,123 +102,164 @@ class PatientServicesScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.blushPink,
-          borderRadius: BorderRadius.circular(12),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+        minVerticalPadding: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.blushPink,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Icon(icon, color: AppColors.burgundy, size: 21),
         ),
-        child: Icon(icon, color: AppColors.burgundy, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.primaryText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
+        title: LocalizedText(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.primaryText,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 3),
-        child: Text(
-          subtitle,
-          style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: LocalizedText(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 12,
+              height: 1.3,
+            ),
+          ),
         ),
-      ),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-        color: AppColors.secondaryText,
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.secondaryText,
+          size: 21,
+        ),
       ),
     );
   }
 
-  Widget _card(List<Widget> children) => Container(
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.divider),
-    ),
+  Widget _card(List<Widget> children) => DashboardCard(
+    padding: EdgeInsets.zero,
     child: Column(children: children),
   );
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final language = LocaleService.locale.value.languageCode;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.primaryText,
-        title: Text(
-          l10n.patientServices,
-          style: TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
+        titleSpacing: 8,
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(9),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                l10n.patientServices,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CircleAvatar(
-              radius: 36,
-              backgroundColor: AppColors.blushPink,
-              child: Text(
-                _initials,
-                style: const TextStyle(
-                  color: AppColors.burgundy,
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
-                ),
+            DashboardCard(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.dustyPink,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppColors.blushPink,
+                      child: Text(
+                        _initials,
+                        style: const TextStyle(
+                          color: AppColors.burgundy,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          patientName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.primaryText,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (patientId.isNotEmpty)
+                          CopyablePatientId(
+                            patientId: patientId,
+                            labelStyle: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 10,
+                            ),
+                            textStyle: const TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 10,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              patientName,
-              style: const TextStyle(
-                color: AppColors.primaryText,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            LocalizedText(
-              'Patient ID: AS-20481',
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
-            ),
-            _sectionTitle(l10n.appLanguage),
-            _card([
-              ListTile(
-                title: Text(l10n.english),
-                trailing: Icon(
-                  language == 'en'
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: AppColors.burgundy,
-                ),
-                onTap: () => LocaleService.setLanguage('en'),
-              ),
-              ListTile(
-                title: Text(l10n.tamil),
-                trailing: Icon(
-                  language == 'ta'
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: AppColors.burgundy,
-                ),
-                onTap: () => LocaleService.setLanguage('ta'),
-              ),
-            ]),
-            _sectionTitle(l10n.treatmentCare),
+            _sectionTitle(context, l10n.treatmentCare),
             _card([
               _tile(
                 context: context,
@@ -254,15 +304,13 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => TreatmentOverviewScreen(
-                      treatmentName: _treatmentName,
-                      currentStage: 'Ovarian stimulation',
-                    ),
+                    builder: (_) =>
+                        TreatmentOverviewScreen(treatmentName: _treatmentName),
                   ),
                 ),
               ),
             ]),
-            _sectionTitle(l10n.planningSupport),
+            _sectionTitle(context, l10n.planningSupport),
             _card([
               _tile(
                 context: context,
@@ -292,16 +340,19 @@ class PatientServicesScreen extends StatelessWidget {
                 context: context,
                 icon: Icons.people_outline_rounded,
                 title: 'Partner Access',
-                subtitle: 'Permission-based sharing.',
+                subtitle:
+                    'Invite a partner, review requests, and manage sharing.',
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const PartnerPermissionsScreen(
-                      permissions: {
-                        'Appointments': false,
-                        'Treatment overview': false,
-                        'Health records': false,
-                      },
+                    builder: (_) => PatientPartnerAccessScreen(
+                      patientUserId: accountId.isEmpty
+                          ? mobileNumber
+                          : accountId,
+                      patientId: patientId,
+                      patientName: patientName,
+                      patientMobile: mobileNumber,
+                      patientState: patientState,
                     ),
                   ),
                 ),
@@ -315,12 +366,13 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const QuestionNotebookScreen(),
+                    builder: (_) =>
+                        QuestionNotebookScreen(accountId: accountId),
                   ),
                 ),
               ),
             ]),
-            _sectionTitle(l10n.learnSupported),
+            _sectionTitle(context, l10n.learnSupported),
             _card([
               _tile(
                 context: context,
@@ -341,7 +393,7 @@ class PatientServicesScreen extends StatelessWidget {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const WellnessJournalScreen(),
+                    builder: (_) => WellnessJournalScreen(accountId: accountId),
                   ),
                 ),
               ),
@@ -361,16 +413,16 @@ class PatientServicesScreen extends StatelessWidget {
               _tile(
                 context: context,
                 icon: Icons.groups_outlined,
-                title: 'ASCAS Circle',
+                title: 'Thaai Seyali Circle',
                 subtitle: 'General community support.',
                 onTap: () => _open(
                   context,
-                  'ASCAS Circle',
+                  'Thaai Seyali Circle',
                   'Community services are coming soon and require secure moderation.',
                 ),
               ),
             ]),
-            _sectionTitle(l10n.accountClinic),
+            _sectionTitle(context, l10n.accountClinic),
             _card([
               _tile(
                 context: context,
@@ -397,43 +449,10 @@ class PatientServicesScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const Divider(height: 1, color: AppColors.divider),
-              _tile(
-                context: context,
-                icon: Icons.lock_outline_rounded,
-                title: 'Privacy & Consent',
-                subtitle: 'Security and permissions.',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ConsentManagementScreen(),
-                  ),
-                ),
-              ),
-              const Divider(height: 1, color: AppColors.divider),
-              _tile(
-                context: context,
-                icon: Icons.person_outline_rounded,
-                title: 'Profile & Settings',
-                subtitle: 'Personal details and preferences.',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PatientProfileScreen(
-                      patientName: patientName,
-                      patientInitials: _initials,
-                      patientState: patientState,
-                      mobileNumber: mobileNumber,
-                      dateOfBirth: dateOfBirth,
-                      preferredLanguage: preferredLanguage,
-                    ),
-                  ),
-                ),
-              ),
             ]),
             const SizedBox(height: 22),
             LocalizedText(
-              'Medical information and instructions are provided from authorized Thaai Seyazhi clinic records.',
+              'Medical information and instructions are provided from authorized Thaai Seyali clinic records.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.secondaryText,
@@ -464,7 +483,7 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
     appBar: AppBar(
       backgroundColor: AppColors.background,
       elevation: 0,
-      title: Text(title),
+      title: LocalizedText(title),
     ),
     body: Center(
       child: Padding(
@@ -478,7 +497,7 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
               size: 48,
             ),
             const SizedBox(height: 14),
-            Text(
+            LocalizedText(
               subtitle,
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -495,14 +514,16 @@ class PatientServicePlaceholderScreen extends StatelessWidget {
 }
 
 class QuestionNotebookScreen extends StatefulWidget {
-  const QuestionNotebookScreen({super.key});
+  final String accountId;
+
+  const QuestionNotebookScreen({super.key, this.accountId = ''});
 
   @override
   State<QuestionNotebookScreen> createState() => _QuestionNotebookScreenState();
 }
 
 class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
-  static const _storageKey = 'patient_question_notebook';
+  String get _storageKey => 'patient_question_notebook_${widget.accountId}';
   List<Map<String, dynamic>> _questions = [];
 
   @override
@@ -536,7 +557,7 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
     final text = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(index == null ? 'Add question' : 'Edit question'),
+        title: LocalizedText(index == null ? 'Add question' : 'Edit question'),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -604,7 +625,7 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
                 color: AppColors.white,
                 child: ListTile(
                   title: Text(question['text'] as String),
-                  subtitle: Text(
+                  subtitle: LocalizedText(
                     question['discussed'] as bool
                         ? 'Marked as discussed'
                         : 'Not discussed',
@@ -638,14 +659,16 @@ class _QuestionNotebookScreenState extends State<QuestionNotebookScreen> {
 }
 
 class WellnessJournalScreen extends StatefulWidget {
-  const WellnessJournalScreen({super.key});
+  final String accountId;
+
+  const WellnessJournalScreen({super.key, this.accountId = ''});
 
   @override
   State<WellnessJournalScreen> createState() => _WellnessJournalScreenState();
 }
 
 class _WellnessJournalScreenState extends State<WellnessJournalScreen> {
-  static const _storageKey = 'patient_wellness_journal';
+  String get _storageKey => 'patient_wellness_journal_${widget.accountId}';
   List<Map<String, dynamic>> _entries = [];
 
   @override
@@ -682,7 +705,9 @@ class _WellnessJournalScreenState extends State<WellnessJournalScreen> {
     final result = await showDialog<List<String>>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(index == null ? 'New journal entry' : 'Edit journal entry'),
+        title: LocalizedText(
+          index == null ? 'New journal entry' : 'Edit journal entry',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

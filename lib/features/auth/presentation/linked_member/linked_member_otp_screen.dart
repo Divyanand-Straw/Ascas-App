@@ -1,8 +1,11 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import 'package:flutter/material.dart';
+
+import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/widgets/otp_input.dart';
 import '../../data/models/auth_models.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'linked_member_access_screen.dart';
@@ -24,10 +27,7 @@ class LinkedMemberOtpScreen extends StatefulWidget {
 }
 
 class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes =
-      List.generate(6, (_) => FocusNode());
+  final _otpInputKey = GlobalKey<OtpInputState>();
 
   Timer? _timer;
   late int _remainingSeconds;
@@ -56,14 +56,23 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
         phone: widget.mobileNumber,
         purpose: OtpPurpose.linkedMember,
       );
-      if (mounted) {
-        setState(() {
-          _currentChallengeId = res.challengeId;
-          _remainingSeconds = res.retryAfterSeconds;
-        });
-        _startTimer();
-      }
-    } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _currentChallengeId = res.challengeId;
+        _remainingSeconds = res.retryAfterSeconds;
+      });
+      _startTimer();
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Failed to request verification code: $error';
+      });
+    }
   }
 
   void _startTimer() {
@@ -79,8 +88,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
     });
   }
 
-  String get _enteredOtp =>
-      _controllers.map((controller) => controller.text).join();
+  String get _enteredOtp => _otpInputKey.currentState?.value ?? '';
 
   String get _formattedTime {
     final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
@@ -92,18 +100,6 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
     final mobile = widget.mobileNumber;
     if (mobile.length < 4) return mobile;
     return '${mobile.substring(0, 2)}XXXXXX${mobile.substring(mobile.length - 2)}';
-  }
-
-  void _onOtpChanged(String value, int index) {
-    setState(() {
-      _errorMessage = null;
-    });
-
-    if (value.isNotEmpty && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    } else if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
   }
 
   Future<void> _verifyOtp() async {
@@ -136,9 +132,8 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => LinkedMemberAccessScreen(
-            mobileNumber: widget.mobileNumber,
-          ),
+          builder: (context) =>
+              LinkedMemberAccessScreen(mobileNumber: widget.mobileNumber),
         ),
       );
     } on ApiError catch (e) {
@@ -190,11 +185,8 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
         purpose: OtpPurpose.linkedMember,
       );
 
-      for (final controller in _controllers) {
-        controller.clear();
-      }
-
-      _focusNodes[0].requestFocus();
+      if (!mounted) return;
+      _otpInputKey.currentState?.clear();
 
       setState(() {
         _currentChallengeId = res.challengeId;
@@ -212,14 +204,12 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
       );
     } on ApiError catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to resend code: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to resend code: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -233,14 +223,6 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
   void dispose() {
     _timer?.cancel();
 
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-
-    for (final node in _focusNodes) {
-      node.dispose();
-    }
-
     super.dispose();
   }
 
@@ -251,7 +233,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(26, 12, 26, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,7 +248,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                   const Expanded(
                     child: Column(
                       children: [
-                        Text(
+                        LocalizedText(
                           'STEP 3 OF 8',
                           style: TextStyle(
                             color: AppColors.dustyPink,
@@ -276,7 +258,7 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                           ),
                         ),
                         SizedBox(height: 4),
-                        Text(
+                        LocalizedText(
                           'Mobile verification',
                           style: TextStyle(
                             color: AppColors.primaryText,
@@ -287,12 +269,37 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                       ],
                     ),
                   ),
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.popUntil(context, (route) => route.isFirst),
+                    child: const LocalizedText(
+                      'Exit',
+                      style: TextStyle(
+                        color: AppColors.secondaryText,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 48),
                 ],
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Verify your mobile',
+              const SizedBox(height: 16),
+              const Divider(color: AppColors.divider, height: 1),
+              const SizedBox(height: 16),
+              const StepProgressBar(currentStep: 3),
+              const SizedBox(height: 32),
+              const LocalizedText(
+                'SECURE VERIFICATION',
+                style: TextStyle(
+                  color: AppColors.burgundy,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.3,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const LocalizedText(
+                'Verify your mobile number',
                 style: TextStyle(
                   color: AppColors.primaryText,
                   fontSize: 22,
@@ -300,60 +307,34 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Enter the 6-digit verification code sent to $_maskedMobile',
+              LocalizedText(
+                'Enter the 6-digit verification code sent to +91 $_maskedMobile.',
                 style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 13,
                   height: 1.45,
                 ),
               ),
-              const SizedBox(height: 28),
-              Row(
+              const SizedBox(height: 30),
+              OtpInput(
+                key: _otpInputKey,
+                boxWidth: 54,
+                boxHeight: 68,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(
-                  6,
-                  (index) => SizedBox(
-                    width: 46,
-                    height: 54,
-                    child: TextField(
-                      controller: _controllers[index],
-                      focusNode: _focusNodes[index],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      maxLength: 1,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryText,
-                      ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: AppColors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                            color: AppColors.burgundy,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      onChanged: (value) => _onOtpChanged(value, index),
-                    ),
-                  ),
+                textStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
+                fillColor: AppColors.white,
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                borderColor: AppColors.divider,
+                focusedBorderColor: AppColors.burgundy,
+                onChanged: (_) {
+                  if (_errorMessage != null) {
+                    setState(() => _errorMessage = null);
+                  }
+                },
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 12),
@@ -384,8 +365,8 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                         : null,
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.burgundy,
-                      disabledForegroundColor:
-                          AppColors.secondaryText.withValues(alpha: 0.5),
+                      disabledForegroundColor: AppColors.secondaryText
+                          .withValues(alpha: 0.5),
                     ),
                     child: _isResending
                         ? const SizedBox(
@@ -403,12 +384,19 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: isLockedOut || _isVerifying ? null : _verifyOtp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.burgundy,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
                   child: _isVerifying
                       ? const SizedBox(
                           width: 22,
@@ -418,9 +406,16 @@ class _LinkedMemberOtpScreenState extends State<LinkedMemberOtpScreen> {
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Text('Verify and proceed'),
+                      : const LocalizedText(
+                          'Verify OTP',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),

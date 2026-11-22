@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../storage/secure_storage_service.dart';
 import 'api_config.dart';
 
@@ -7,13 +8,13 @@ typedef AccountSuspendedCallback = void Function();
 
 class AuthInterceptor extends QueuedInterceptor {
   final Dio dio;
-  final SecureStorageService storage;
+  final AuthTokenStorage storage;
   AuthSessionExpiredCallback? onSessionExpired;
   AccountSuspendedCallback? onAccountSuspended;
 
   AuthInterceptor({
     required this.dio,
-    SecureStorageService? storage,
+    AuthTokenStorage? storage,
     this.onSessionExpired,
     this.onAccountSuspended,
   }) : storage = storage ?? SecureStorageService.instance;
@@ -24,9 +25,19 @@ class AuthInterceptor extends QueuedInterceptor {
     RequestInterceptorHandler handler,
   ) async {
     // Skip injecting auth token for public authentication routes
-    final isPublicAuthPath = options.path.contains('/auth/otp/send') ||
+    final requestPurpose = options.data is Map
+        ? (options.data as Map)['purpose']
+        : null;
+    final isPublicAuthPath =
+        options.path.contains('/auth/otp/send') ||
         options.path.contains('/auth/otp/verify') ||
-        options.path.contains('/auth/token/refresh');
+        options.path.contains('/auth/token/refresh') ||
+        options.path.contains('/auth/email/password/login') ||
+        options.path.contains('/auth/email/password/reset') ||
+        options.path.contains('/auth/email/developer-test/otp/send') ||
+        options.path.contains('/auth/email/developer-test/otp/verify') ||
+        (requestPurpose == 'PASSWORD_RESET' &&
+            options.path.contains('/auth/email/otp/'));
 
     if (!isPublicAuthPath) {
       final token = await storage.getAccessToken();
@@ -58,18 +69,24 @@ class AuthInterceptor extends QueuedInterceptor {
     }
 
     // 2. Token expired: attempt automatic silent refresh
-    final isRefreshRoute = err.requestOptions.path.contains('/auth/token/refresh');
+    final isRefreshRoute = err.requestOptions.path.contains(
+      '/auth/token/refresh',
+    );
     final isLogoutRoute = err.requestOptions.path.contains('/auth/logout');
     final isVerifyRoute = err.requestOptions.path.contains('/auth/otp/verify');
 
-    if (statusCode == 401 && !isRefreshRoute && !isLogoutRoute && !isVerifyRoute) {
+    if (statusCode == 401 &&
+        !isRefreshRoute &&
+        !isLogoutRoute &&
+        !isVerifyRoute) {
       if (errorCode == 'TOKEN_EXPIRED' || errorCode == 'UNAUTHORIZED') {
         try {
           // Check if another concurrent request already refreshed the access token
           final currentAccessToken = await storage.getAccessToken();
           final requestAuthHeader =
               err.requestOptions.headers['Authorization'] as String?;
-          final requestToken = requestAuthHeader != null &&
+          final requestToken =
+              requestAuthHeader != null &&
                   requestAuthHeader.startsWith('Bearer ')
               ? requestAuthHeader.substring(7)
               : null;
@@ -109,7 +126,8 @@ class AuthInterceptor extends QueuedInterceptor {
           );
 
           if (refreshResponse.statusCode == 200) {
-            final payload = refreshResponse.data['data'] as Map<String, dynamic>;
+            final payload =
+                refreshResponse.data['data'] as Map<String, dynamic>;
             final newAccessToken = payload['accessToken'] as String;
             final newRefreshToken = payload['refreshToken'] as String;
 

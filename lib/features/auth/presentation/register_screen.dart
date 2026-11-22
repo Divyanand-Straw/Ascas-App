@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/localization/localized_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -37,7 +38,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please agree to the terms and privacy policy.'),
+          content: LocalizedText(
+            'Please agree to the terms and privacy policy.',
+          ),
         ),
       );
       return;
@@ -45,9 +48,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
+        content: LocalizedText(
           'Registration UI completed. Backend integration pending.',
         ),
+      ),
+    );
+  }
+
+  void _showPolicyUnavailable(String policy) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: LocalizedText('$policy information is not available yet.'),
       ),
     );
   }
@@ -55,6 +66,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _showPendingMessage(String provider) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$provider sign-in integration is coming soon.')),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required Widget icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryText,
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: AppColors.divider),
+          minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            icon,
+            const SizedBox(width: 9),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -95,38 +138,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required Widget icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Expanded(
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryText,
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: AppColors.divider),
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 9),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ],
         ),
       ),
     );
@@ -220,7 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: EdgeInsets.only(left: 14, right: 8),
                       child: Center(
                         widthFactor: 1,
-                        child: Text(
+                        child: LocalizedText(
                           '+91',
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
@@ -305,13 +316,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         padding: const EdgeInsets.only(top: 11),
                         child: Wrap(
                           children: [
-                            const Text(
+                            const LocalizedText(
                               'I agree to the ',
                               style: TextStyle(fontSize: 12),
                             ),
                             GestureDetector(
-                              onTap: () => _showPendingMessage('Terms'),
-                              child: const Text(
+                              onTap: () => _showPolicyUnavailable('Terms'),
+                              child: const LocalizedText(
                                 'Terms',
                                 style: TextStyle(
                                   color: AppColors.burgundy,
@@ -319,11 +330,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ),
                             ),
-                            const Text(', '),
+                            const LocalizedText(', '),
                             GestureDetector(
                               onTap: () =>
-                                  _showPendingMessage('Privacy Policy'),
-                              child: const Text(
+                                  _showPolicyUnavailable('Privacy Policy'),
+                              child: const LocalizedText(
                                 'Privacy Policy',
                                 style: TextStyle(
                                   color: AppColors.burgundy,
@@ -331,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ),
                             ),
-                            const Text(
+                            const LocalizedText(
                               ', and required patient consent.',
                               style: TextStyle(fontSize: 12),
                             ),
@@ -356,7 +367,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
+                    child: const LocalizedText(
                       'Create Account',
                       style: TextStyle(
                         fontSize: 16,
@@ -404,7 +415,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Wrap(
                     alignment: WrapAlignment.center,
                     children: [
-                      const Text(
+                      const LocalizedText(
                         'Already have an account? ',
                         style: TextStyle(
                           fontSize: 13,
@@ -413,7 +424,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Text(
+                        child: const LocalizedText(
                           'Login',
                           style: TextStyle(
                             fontSize: 13,

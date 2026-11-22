@@ -1,22 +1,37 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import 'reset_password_screen.dart';
-
+import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/otp_input.dart';
+import '../../data/models/auth_models.dart';
+import 'reset_password_screen.dart';
 
 class ForgotPasswordOtpScreen extends StatefulWidget {
   final String mobileNumber;
   final String emailAddress;
-  final VoidCallback? onVerified;
+  final String initialMessage;
+  final String initialChallengeId;
+  final int initialRetryAfterSeconds;
+  final Future<SendEmailOtpResponse> Function(String phone, String email)
+  requestOtp;
+  final Future<VerifyEmailOtpResponse> Function(
+    String challengeId,
+    String email,
+    String otp,
+  )
+  verifyOtp;
 
   const ForgotPasswordOtpScreen({
     super.key,
     required this.mobileNumber,
     required this.emailAddress,
-    this.onVerified,
+    required this.initialMessage,
+    required this.initialChallengeId,
+    required this.initialRetryAfterSeconds,
+    required this.requestOtp,
+    required this.verifyOtp,
   });
 
   @override
@@ -25,167 +40,136 @@ class ForgotPasswordOtpScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (_) => TextEditingController(),
-  );
+  final _otpInputKey = GlobalKey<OtpInputState>();
+  Timer? _countdownTimer;
+  int _remainingSeconds = 30;
+  bool _isLoading = false;
+  String? _errorMessage;
+  late String _successMessage;
+  late String _challengeId;
 
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  String get _enteredOtp => _otpInputKey.currentState?.value ?? '';
 
-  final bool _isVerifying = false;
-  int _remainingSeconds = 0;
-  Timer? _resendTimer;
-
-  String get _enteredOtp =>
-      _controllers.map((controller) => controller.text).join();
-
-  String get _formattedTime {
-    final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+  @override
+  void initState() {
+    super.initState();
+    _successMessage = widget.initialMessage;
+    _challengeId = widget.initialChallengeId;
+    _startCountdown(widget.initialRetryAfterSeconds);
   }
 
   @override
   void dispose() {
-    _resendTimer?.cancel();
-
-    for (final controller in _controllers) {
-      controller.dispose();
-    }
-
-    for (final node in _focusNodes) {
-      node.dispose();
-    }
-
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
-  void _startResendTimer() {
-    _resendTimer?.cancel();
-
-    setState(() {
-      _remainingSeconds = 30;
-    });
-
-    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+  void _startCountdown(int seconds) {
+    _countdownTimer?.cancel();
+    _remainingSeconds = seconds < 0 ? 0 : seconds;
+    if (_remainingSeconds == 0) return;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-
       if (_remainingSeconds <= 1) {
         timer.cancel();
-        setState(() {
-          _remainingSeconds = 0;
-        });
+        setState(() => _remainingSeconds = 0);
       } else {
-        setState(() {
-          _remainingSeconds--;
-        });
+        setState(() => _remainingSeconds--);
       }
     });
   }
 
-  void _onOtpChanged(String value, int index) {
-    if (value.isNotEmpty) {
-      if (index < 5) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-      }
-    } else if (index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-
-    setState(() {});
-  }
-
-  void _verifyOtp() {
-    if (_enteredOtp.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the complete 6-digit OTP.')),
+  Future<void> _resendOtp() async {
+    if (_isLoading || _remainingSeconds > 0) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _successMessage = '';
+    });
+    try {
+      final response = await widget.requestOtp(
+        widget.mobileNumber,
+        widget.emailAddress,
       );
+      if (!mounted) return;
+      _otpInputKey.currentState?.clear();
+      _challengeId = response.challengeId;
+      setState(() {
+        _successMessage = 'If this email is eligible, an OTP has been sent.';
+      });
+      _startCountdown(response.retryAfterSeconds);
+    } on Exception catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _verifyOtp() async {
+    if (_isLoading) return;
+    if (_enteredOtp.length != 6 ||
+        !RegExp(r'^[0-9]{6}$').hasMatch(_enteredOtp)) {
+      setState(() => _errorMessage = 'Enter the six-digit OTP.');
       return;
     }
 
-    // In Phone OTP authentication, password reset is superseded by mobile OTP login.
-    // If accessed, reject hardcoded mock OTP and require mobile login.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Password authentication has been replaced by secure Phone OTP login.'),
-      ),
-    );
-    Navigator.pop(context);
-    return;
-
-    if (widget.onVerified != null) {
-      widget.onVerified!();
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ResetPasswordScreen(
-          registeredMobile: widget.mobileNumber,
-          registeredEmail: widget.emailAddress,
-        ),
-      ),
-    );
-  }
-
-  void _resendOtp() {
-    if (_remainingSeconds > 0) return;
-
-    for (final controller in _controllers) {
-      controller.clear();
-    }
-
-    _focusNodes[0].requestFocus();
-
-    _startResendTimer();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('A new verification code has been requested.'),
-      ),
-    );
-  }
-
-  Widget _buildOtpField(int index) {
-    return SizedBox(
-      width: 46,
-      height: 55,
-      child: TextField(
-        controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(
-          fontSize: 21,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
-        onChanged: (value) => _onOtpChanged(value, index),
-        decoration: InputDecoration(
-          counterText: '',
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.divider),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.burgundy, width: 1.5),
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final verification = await widget.verifyOtp(
+        _challengeId,
+        widget.emailAddress,
+        _enteredOtp,
+      );
+      if (verification is! PasswordResetOtpVerificationResponse) {
+        throw FormatException(
+          'The server did not return password reset access.',
+        );
+      }
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => ResetPasswordScreen(
+            registeredEmail: widget.emailAddress,
+            resetAuthorizationToken: verification.resetGrant,
           ),
         ),
-      ),
-    );
+      );
+    } on Exception catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
+
+  Widget _buildOtpInput() => OtpInput(
+    key: _otpInputKey,
+    fieldKeyPrefix: 'forgot-password-otp',
+    boxWidth: 48,
+    boxHeight: 60,
+    textStyle: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.bold,
+      color: AppColors.primaryText,
+    ),
+    fillColor: AppColors.white,
+    borderRadius: const BorderRadius.all(Radius.circular(12)),
+    borderColor: AppColors.divider,
+    focusedBorderColor: AppColors.burgundy,
+    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +182,6 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 18),
-
               IconButton(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(
@@ -206,10 +189,8 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                   color: AppColors.primaryText,
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              const Text(
+              const LocalizedText(
                 'STEP 2 OF 3',
                 style: TextStyle(
                   color: AppColors.dustyPink,
@@ -218,9 +199,7 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                   letterSpacing: 1.4,
                 ),
               ),
-
-              const SizedBox(height: 38),
-
+              const SizedBox(height: 30),
               Center(
                 child: Container(
                   width: 76,
@@ -230,32 +209,16 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                     borderRadius: BorderRadius.circular(22),
                   ),
                   child: const Icon(
-                    Icons.sms_outlined,
+                    Icons.mark_email_read_outlined,
                     color: AppColors.burgundy,
                     size: 38,
                   ),
                 ),
               ),
-
-              const SizedBox(height: 30),
-
+              const SizedBox(height: 25),
               const Center(
-                child: Text(
-                  'VERIFY OTP',
-                  style: TextStyle(
-                    color: AppColors.dustyPink,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 13),
-
-              const Center(
-                child: Text(
-                  'Enter verification code',
+                child: LocalizedText(
+                  'Verify your email',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -264,85 +227,81 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              Text(
-                'Enter the 6-digit verification code for your mobile number +91 ${widget.mobileNumber}.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 13,
-                  height: 1.6,
+              const Center(
+                child: LocalizedText(
+                  'Enter the six-digit code sent to:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 38),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _buildOtpField(index)),
-              ),
-
-              const SizedBox(height: 25),
-
+              const SizedBox(height: 5),
               Center(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: [
-                    const Text(
-                      "Didn't receive the code? ",
-                      style: TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 13,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _remainingSeconds == 0 ? _resendOtp : null,
-                      child: Text(
-                        _remainingSeconds > 0
-                            ? 'Resend OTP in $_formattedTime'
-                            : 'Resend OTP',
-                        style: TextStyle(
-                          color: _remainingSeconds > 0
-                              ? AppColors.secondaryText
-                              : AppColors.burgundy,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  widget.emailAddress,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.primaryText,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 35),
-
+              if (_successMessage.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    _successMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 28),
+              _buildOtpInput(),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 53,
                 child: ElevatedButton(
-                  onPressed: _isVerifying ? null : _verifyOtp,
+                  onPressed: _isLoading ? null : _verifyOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.burgundy,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.dustyPink,
-                    elevation: 0,
+                    foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(13),
                     ),
                   ),
-                  child: _isVerifying
+                  child: _isLoading
                       ? const SizedBox(
-                          width: 22,
-                          height: 22,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
                             strokeWidth: 2,
+                            color: AppColors.white,
                           ),
                         )
-                      : const Text(
-                          'Verify & Continue',
+                      : const LocalizedText(
+                          'Verify OTP',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -350,18 +309,25 @@ class _ForgotPasswordOtpScreenState extends State<ForgotPasswordOtpScreen> {
                         ),
                 ),
               ),
-
-              const SizedBox(height: 25),
-
-              const Center(
-                child: Text(
-                  'Your account security matters to us.',
-                  style: TextStyle(
-                    color: AppColors.secondaryText,
-                    fontSize: 12,
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: _isLoading || _remainingSeconds > 0
+                      ? null
+                      : _resendOtp,
+                  child: Text(
+                    _remainingSeconds > 0
+                        ? 'Resend OTP in ${_remainingSeconds}s'
+                        : 'Resend OTP',
+                    style: const TextStyle(
+                      color: AppColors.burgundy,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

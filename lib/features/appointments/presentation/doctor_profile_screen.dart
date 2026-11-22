@@ -33,14 +33,19 @@ class DoctorProfileScreen extends StatelessWidget {
           CircleAvatar(
             radius: 39,
             backgroundColor: AppColors.blushPink,
-            child: Text(
-              doctor.initials,
-              style: const TextStyle(
-                color: AppColors.burgundy,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            foregroundImage: doctor.profileImageUrl == null
+                ? null
+                : NetworkImage(doctor.profileImageUrl!),
+            child: doctor.profileImageUrl == null
+                ? Text(
+                    doctor.initials,
+                    style: const TextStyle(
+                      color: AppColors.burgundy,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: 12),
           Center(
@@ -74,6 +79,12 @@ class DoctorProfileScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (doctor.qualifications?.isNotEmpty == true)
+            Center(
+              child: LocalizedText('Qualifications: ${doctor.qualifications}'),
+            ),
+          if (doctor.experience?.isNotEmpty == true)
+            Center(child: LocalizedText('Experience: ${doctor.experience}')),
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(16),
@@ -83,7 +94,7 @@ class DoctorProfileScreen extends StatelessWidget {
               border: Border.all(color: AppColors.divider),
             ),
             child: LocalizedText(
-              'Consultation information is sample data for this prototype. Live availability will be supplied by Thaai Seyazhi.',
+              'Consultation information is sample data for this prototype. Live availability will be supplied by Thaai Seyali.',
               style: TextStyle(
                 color: AppColors.secondaryText,
                 fontSize: 12,
@@ -113,7 +124,7 @@ class DoctorProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(13),
                 ),
               ),
-              child: LocalizedText('Request appointment'),
+              child: LocalizedText('Book Visit'),
             ),
           ),
         ],

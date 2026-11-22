@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/localized_text.dart';
+
 import '../../../../core/services/locale_service.dart';
 
 import 'package:flutter/services.dart';
@@ -7,11 +9,17 @@ import 'package:flutter/services.dart';
 import 'profile_confirmation_screen.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/widgets/date_of_birth_picker.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
   final String mobileNumber;
+  final String email;
 
-  const PatientDetailsScreen({super.key, required this.mobileNumber});
+  const PatientDetailsScreen({
+    super.key,
+    required this.mobileNumber,
+    required this.email,
+  });
 
   @override
   State<PatientDetailsScreen> createState() => _PatientDetailsScreenState();
@@ -22,7 +30,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _emergencyController = TextEditingController();
 
   String _selectedLanguage = 'English';
@@ -31,38 +38,19 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   void dispose() {
     _nameController.dispose();
     _dobController.dispose();
-    _emailController.dispose();
     _emergencyController.dispose();
     super.dispose();
   }
 
   Future<void> _selectDate() async {
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.burgundy,
-              onPrimary: AppColors.white,
-              surface: AppColors.white,
-              onSurface: AppColors.primaryText,
-            ),
-          ),
-          child: child!,
-        );
-      },
+    final selectedDate = await showDateOfBirthPicker(
+      context,
+      initialDate: parseDateOfBirth(_dobController.text),
     );
 
     if (selectedDate != null) {
       setState(() {
-        _dobController.text =
-            '${selectedDate.day.toString().padLeft(2, '0')}/'
-            '${selectedDate.month.toString().padLeft(2, '0')}/'
-            '${selectedDate.year}';
+        _dobController.text = formatDateOfBirth(selectedDate);
       });
     }
   }
@@ -150,7 +138,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -158,6 +145,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
           fullName: _nameController.text.trim(),
           dateOfBirth: _dobController.text.trim(),
           mobileNumber: widget.mobileNumber,
+          email: widget.email,
+          emergencyContact: '+91${_emergencyController.text.trim()}',
           preferredLanguage: _selectedLanguage,
         ),
       ),
@@ -188,8 +177,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     const Expanded(
                       child: Column(
                         children: [
-                          Text(
-                            'STEP 4 OF 8',
+                          LocalizedText(
+                            'STEP 5 OF 9',
                             style: TextStyle(
                               color: AppColors.dustyPink,
                               fontSize: 9,
@@ -198,7 +187,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                             ),
                           ),
                           SizedBox(height: 4),
-                          Text(
+                          LocalizedText(
                             'New patient registration',
                             style: TextStyle(
                               color: AppColors.burgundy,
@@ -212,7 +201,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     TextButton(
                       onPressed: () =>
                           Navigator.popUntil(context, (route) => route.isFirst),
-                      child: const Text(
+                      child: const LocalizedText(
                         'Exit',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -228,10 +217,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                 const Divider(color: AppColors.divider, height: 1),
 
                 const SizedBox(height: 16),
-                const StepProgressBar(currentStep: 4),
+                const StepProgressBar(currentStep: 5, totalSteps: 9),
                 const SizedBox(height: 30),
 
-                const Text(
+                const LocalizedText(
                   'PATIENT DETAILS',
                   style: TextStyle(
                     color: AppColors.burgundy,
@@ -243,7 +232,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 14),
 
-                const Text(
+                const LocalizedText(
                   'New patient registration',
                   style: TextStyle(
                     color: AppColors.primaryText,
@@ -255,7 +244,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 10),
 
-                const Text(
+                const LocalizedText(
                   'Complete the required identity and contact details.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
@@ -284,27 +273,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 const SizedBox(height: 20),
 
-                _buildTextField(
-                  label: 'Email',
-                  hint: 'Enter your email address',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email address.';
-                    }
-
-                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                        .hasMatch(value.trim())) {
-                      return 'Please enter a valid email address.';
-                    }
-
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
                 _buildLabel('Mobile'),
 
                 Container(
@@ -317,7 +285,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Text(
+                      const LocalizedText(
                         '+91',
                         style: TextStyle(
                           color: AppColors.primaryText,
@@ -401,7 +369,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _reviewProfile,
                     style: ElevatedButton.styleFrom(
@@ -412,10 +380,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                         borderRadius: BorderRadius.circular(13),
                       ),
                     ),
-                    child: const Text(
+                    child: const LocalizedText(
                       'Review profile',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

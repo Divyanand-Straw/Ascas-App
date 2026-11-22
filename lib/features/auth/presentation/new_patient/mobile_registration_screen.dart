@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/widgets/step_progress_bar.dart';
+import '../../../../core/localization/localized_text.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/step_progress_bar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/models/auth_models.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -12,8 +15,13 @@ import '../linked_member/linked_member_otp_screen.dart';
 
 class MobileRegistrationScreen extends StatefulWidget {
   final String patientType;
+  final AuthRepository? authRepository;
 
-  const MobileRegistrationScreen({super.key, required this.patientType});
+  const MobileRegistrationScreen({
+    super.key,
+    required this.patientType,
+    this.authRepository,
+  });
 
   @override
   State<MobileRegistrationScreen> createState() =>
@@ -23,9 +31,15 @@ class MobileRegistrationScreen extends StatefulWidget {
 class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
   final TextEditingController _mobileController = TextEditingController();
   bool _isLoading = false;
+  Timer? _cooldownTimer;
+  int _retryAfterSeconds = 0;
+
+  AuthRepository get _authRepository =>
+      widget.authRepository ?? AuthRepository.instance;
 
   @override
   void dispose() {
+    _cooldownTimer?.cancel();
     _mobileController.dispose();
     super.dispose();
   }
@@ -35,7 +49,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
     if (type.contains('new patient')) {
       return OtpPurpose.registration;
     } else if (type.contains('existing')) {
-      return OtpPurpose.login;
+      return OtpPurpose.existingPatient;
     } else if (type.contains('linked member')) {
       return OtpPurpose.linkedMember;
     }
@@ -45,10 +59,13 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
   Future<void> _continue() async {
     final mobile = _mobileController.text.trim();
     final purpose = _resolvePurpose();
+    if (purpose == OtpPurpose.registration && _retryAfterSeconds > 0) return;
 
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid 10-digit mobile number.')),
+        const SnackBar(
+          content: LocalizedText('Enter a valid 10-digit mobile number.'),
+        ),
       );
       return;
     }
@@ -58,7 +75,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
     });
 
     try {
-      final response = await AuthRepository.instance.sendOtp(
+      final response = await _authRepository.sendOtp(
         phone: mobile,
         purpose: purpose,
       );
@@ -85,19 +102,24 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
               challengeId: response.challengeId,
               initialCountdownSeconds: response.retryAfterSeconds,
               purpose: purpose,
-              fromExistingPatient: purpose == OtpPurpose.login,
+              fromExistingPatient: purpose == OtpPurpose.existingPatient,
+              authRepository: _authRepository,
             ),
           ),
         );
       }
     } on ApiError catch (e) {
       if (!mounted) return;
+      if (purpose == OtpPurpose.registration) {
+        _startCooldown(e.retryAfterSeconds);
+      }
 
       if (e.errorCode == 'USER_ALREADY_EXISTS') {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
-                'An account already exists for this mobile number. Please log in.'),
+              'An account already exists for this mobile number. Please log in.',
+            ),
             action: SnackBarAction(
               label: 'Log In',
               textColor: Colors.amber,
@@ -114,13 +136,13 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'No existing account found. Please register as a New Patient.'),
+              'No existing account found. Please register as a New Patient.',
+            ),
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
       }
     } catch (e) {
       if (!mounted) return;
@@ -136,9 +158,33 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
     }
   }
 
+  void _startCooldown(int? seconds) {
+    if (seconds == null || seconds <= 0) return;
+    _cooldownTimer?.cancel();
+    setState(() {
+      _retryAfterSeconds = seconds;
+    });
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _retryAfterSeconds <= 1) {
+        timer.cancel();
+        if (mounted) setState(() => _retryAfterSeconds = 0);
+        return;
+      }
+      setState(() => _retryAfterSeconds--);
+    });
+  }
+
+  String get _formattedRetryAfter {
+    final minutes = (_retryAfterSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_retryAfterSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final purpose = _resolvePurpose();
+    final totalSteps = purpose == OtpPurpose.registration ? 9 : 8;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -159,8 +205,8 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                   Expanded(
                     child: Column(
                       children: [
-                        const Text(
-                          'STEP 2 OF 8',
+                        LocalizedText(
+                          'STEP 2 OF $totalSteps',
                           style: TextStyle(
                             color: AppColors.dustyPink,
                             fontSize: 9,
@@ -170,7 +216,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          l10n.mobileVerification,
+                          l10n.otpVerification,
                           style: const TextStyle(
                             color: AppColors.primaryText,
                             fontSize: 16,
@@ -184,7 +230,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              const StepProgressBar(currentStep: 2, totalSteps: 8),
+              StepProgressBar(currentStep: 2, totalSteps: totalSteps),
               const SizedBox(height: 24),
               Text(
                 l10n.enterMobileNumber,
@@ -196,7 +242,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                l10n.verificationDescription,
+                l10n.sendOneTimeCode,
                 style: const TextStyle(
                   color: AppColors.secondaryText,
                   fontSize: 13,
@@ -204,8 +250,8 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Mobile Number',
+              Text(
+                l10n.mobileNumber,
                 style: TextStyle(
                   color: AppColors.primaryText,
                   fontSize: 14,
@@ -233,10 +279,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                       ),
                       child: const Row(
                         children: [
-                          Text(
-                            '🇮🇳',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                          Text('🇮🇳', style: TextStyle(fontSize: 16)),
                           SizedBox(width: 8),
                           Text(
                             '+91',
@@ -257,8 +300,8 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        decoration: const InputDecoration(
-                          hintText: 'Enter 10-digit number',
+                        decoration: InputDecoration(
+                          hintText: l10n.enterTenDigitMobile,
                           hintStyle: TextStyle(
                             color: AppColors.secondaryText,
                             fontSize: 14,
@@ -293,7 +336,7 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                     ),
                     SizedBox(width: 11),
                     Expanded(
-                      child: Text(
+                      child: LocalizedText(
                         'No medical information is shown until identity and record access are verified.',
                         style: TextStyle(
                           color: AppColors.secondaryText,
@@ -308,9 +351,14 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 48,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _continue,
+                  onPressed:
+                      _isLoading ||
+                          (purpose == OtpPurpose.registration &&
+                              _retryAfterSeconds > 0)
+                      ? null
+                      : _continue,
                   child: _isLoading
                       ? const SizedBox(
                           width: 22,
@@ -320,7 +368,10 @@ class _MobileRegistrationScreenState extends State<MobileRegistrationScreen> {
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Text('Continue'),
+                      : purpose == OtpPurpose.registration &&
+                            _retryAfterSeconds > 0
+                      ? Text('Try again in $_formattedRetryAfter')
+                      : const LocalizedText('Continue'),
                 ),
               ),
               const SizedBox(height: 12),

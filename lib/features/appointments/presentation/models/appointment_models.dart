@@ -3,12 +3,34 @@ class Doctor {
   final String initials;
   final String specialty;
   final String languages;
+  final String? qualifications;
+  final String? experience;
+  final String? profileImageUrl;
+  final String? description;
+  final String? expertise;
+  final String? workingDays;
+  final String? morningHours;
+  final String? eveningHours;
+  final String? breakHours;
+  final List<String>? availableTimeSlots;
+  final List<String>? unavailableTimeSlots;
 
   const Doctor({
     required this.name,
     required this.initials,
     required this.specialty,
     required this.languages,
+    this.qualifications,
+    this.experience,
+    this.profileImageUrl,
+    this.description,
+    this.expertise,
+    this.workingDays,
+    this.morningHours,
+    this.eveningHours,
+    this.breakHours,
+    this.availableTimeSlots,
+    this.unavailableTimeSlots,
   });
 }
 
@@ -25,6 +47,10 @@ class Appointment {
   final String patientName;
   final String notes;
   final String reference;
+  final String reason;
+  final String? clinicAddress;
+  final String? room;
+  final List<String> preparationGuidance;
 
   Appointment({
     required this.title,
@@ -32,13 +58,17 @@ class Appointment {
     required this.time,
     required this.clinic,
     required this.status,
-    this.doctorName = 'Thaai Seyazhi Clinic',
+    this.doctorName = 'Thaai Seyali Clinic',
     this.specialty = 'Fertility care',
     this.appointmentType = 'Monitoring consultation',
     this.consultationMode = 'In clinic',
     this.patientName = 'Registered patient',
     this.notes = 'Prototype appointment data.',
     this.reference = 'PROTOTYPE-001',
+    this.reason = '',
+    this.clinicAddress,
+    this.room,
+    this.preparationGuidance = const [],
   });
 
   Map<String, Object?> toMap() => {
@@ -54,6 +84,10 @@ class Appointment {
     'patientName': patientName,
     'notes': notes,
     'reference': reference,
+    'reason': reason,
+    'clinicAddress': clinicAddress,
+    'room': room,
+    'preparationGuidance': preparationGuidance,
   };
 
   factory Appointment.fromMap(Map<String, dynamic> map) {
@@ -70,6 +104,14 @@ class Appointment {
       patientName: map['patientName'] as String,
       notes: map['notes'] as String,
       reference: map['reference'] as String,
+      reason: map['reason'] as String? ?? '',
+      clinicAddress: map['clinicAddress'] as String?,
+      room: map['room'] as String?,
+      preparationGuidance:
+          (map['preparationGuidance'] as List<dynamic>?)
+              ?.whereType<String>()
+              .toList(growable: false) ??
+          const [],
     );
   }
 }

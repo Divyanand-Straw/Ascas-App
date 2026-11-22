@@ -8,9 +8,16 @@ import {
   MockOtpRepository,
   MockRefreshTokenRepository,
 } from '../src/modules/auth/mock.auth.repository';
-import { DevelopmentSmsProvider } from '../src/modules/auth/sms.provider';
+import {
+  createSmsProvider,
+  DevelopmentSmsProvider,
+  ProductionSmsProvider,
+} from '../src/modules/auth/sms.provider';
 import { AppError } from '../src/utils/errors';
 import { createAuthRouter, getDefaultAuthService } from '../src/modules/auth/auth.routes';
+import { AuthController } from '../src/modules/auth/auth.controller';
+import { isDevelopmentOtpTerminalLoggingEnabled } from '../src/config/runtime';
+import type { NextFunction, Request, Response } from 'express';
 
 describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
   let userRepo: MockUserRepository;
@@ -31,6 +38,9 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
   };
 
   beforeEach(() => {
+    process.env.NODE_ENV = 'test';
+    delete process.env.APP_ENV;
+    delete process.env.DEV_SMS_LOG_OTP;
     userRepo = new MockUserRepository();
     profileRepo = new MockPatientProfileRepository();
     otpRepo = new MockOtpRepository();
@@ -86,6 +96,7 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
     assert.equal(sendResult.retryAfterSeconds, 45);
 
     const sentOtp = smsProvider.sentMessages[0].otp;
+    assert.equal(JSON.stringify(sendResult).includes(sentOtp), false);
     const session = await authService.verifyOtp(
       sendResult.challengeId,
       phone,
@@ -101,6 +112,50 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
     assert.equal(session.hasCompletedProfile, false);
     assert.ok(session.tokens.accessToken, 'Access token must be present');
     assert.ok(session.tokens.refreshToken, 'Refresh token must be present');
+    assert.equal(
+      (await userRepo.findByPhone(phone))?.emailPasswordEligibility,
+      'NEW_PATIENT_ELIGIBLE'
+    );
+    assert.equal(userRepo.isPhoneVerifiedForTesting(session.user.id), true);
+  });
+
+  it('creates a registered patient profile once and keeps it available to the account', async () => {
+    const phone = '+919876543210';
+    const challenge = await authService.sendOtp(phone, 'REGISTRATION');
+    const otp = smsProvider.sentMessages[0].otp;
+    const session = await authService.verifyOtp(
+      challenge.challengeId,
+      phone,
+      'REGISTRATION',
+      otp
+    );
+
+    const profileData = {
+      firstName: 'Priya',
+      lastName: 'Sharma',
+      dob: new Date('1994-06-15T00:00:00.000Z'),
+      gender: 'Female',
+      emergencyContact: '+919123456789',
+      preferredLanguage: 'ta' as const,
+    };
+    const [saved, retried] = await Promise.all([
+      authService.createOrGetPatientProfile(session.user.id, profileData),
+      authService.createOrGetPatientProfile(session.user.id, {
+        ...profileData,
+        firstName: 'Changed',
+      }),
+    ]);
+
+    assert.equal(saved.id, retried.id);
+    assert.equal(saved.userId, session.user.id);
+    assert.equal(saved.firstName, 'Priya');
+    assert.equal(saved.gender, 'Female');
+    assert.equal(saved.emergencyContact, '+919123456789');
+    assert.equal(saved.clinicMrn, null);
+    const login = await authService.getCurrentUser(session.user.id);
+    assert.equal(login.profile?.id, saved.id);
+    assert.equal(login.profile?.firstName, 'Priya');
+    assert.equal(login.profile?.emergencyContact, '+919123456789');
   });
 
   it('should successfully log in an existing active patient upon valid OTP verification', async () => {
@@ -128,6 +183,24 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
     assert.equal(session.hasCompletedProfile, true);
     assert.equal(session.profile?.firstName, 'Priya');
     assert.equal(session.profile?.lastName, 'Sharma');
+  });
+
+  it('keeps LINKED_MEMBER users ineligible while preserving their mobile OTP session', async () => {
+    const phone = '+919876500100';
+    const request = await authService.sendOtp(phone, 'LINKED_MEMBER');
+    const otp = smsProvider.sentMessages[0].otp;
+    const session = await authService.verifyOtp(
+      request.challengeId,
+      phone,
+      'LINKED_MEMBER',
+      otp
+    );
+    const user = await userRepo.findById(session.user.id);
+
+    assert.equal(session.user.phone, phone);
+    assert.ok(session.tokens.accessToken);
+    assert.ok(session.tokens.refreshToken);
+    assert.equal(user?.emailPasswordEligibility, 'PARTNER_INELIGIBLE');
   });
 
   // --------------------------------------------------------------------------
@@ -239,20 +312,193 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
   // --------------------------------------------------------------------------
   // 8. Resend Cooldown
   // --------------------------------------------------------------------------
-  it('should enforce 45-second resend cooldown before allowing another OTP send', async () => {
+  it('returns the active challenge and actual 45-second cooldown when resuming the same flow', async () => {
     const phone = '+919876543210';
-    await authService.sendOtp(phone, 'REGISTRATION');
+    const first = await authService.sendOtp(phone, 'REGISTRATION');
+    const resumed = await authService.sendOtp(phone, 'REGISTRATION');
 
-    // Immediate second send fails with COOLDOWN_ACTIVE
-    await assert.rejects(
-      async () => {
-        await authService.sendOtp(phone, 'REGISTRATION');
-      },
-      (err: AppError) => {
-        assert.equal(err.statusCode, 429);
-        assert.equal(err.errorCode, 'COOLDOWN_ACTIVE');
-        return true;
+    assert.equal(resumed.challengeId, first.challengeId);
+    assert.ok(resumed.retryAfterSeconds > 0);
+    assert.ok(resumed.retryAfterSeconds <= 45);
+    assert.equal(smsProvider.sentMessages.length, 1);
+  });
+
+  it('logs masked OTP details only for a newly issued challenge', async () => {
+    const previousEnvironment = {
+      APP_ENV: process.env.APP_ENV,
+      NODE_ENV: process.env.NODE_ENV,
+      DEV_OTP_TERMINAL_LOG_ENABLED:
+        process.env.DEV_OTP_TERMINAL_LOG_ENABLED,
+    };
+    const originalConsoleInfo = console.info;
+    const logLines: string[] = [];
+
+    try {
+      process.env.APP_ENV = 'development';
+      process.env.NODE_ENV = 'development';
+      process.env.DEV_OTP_TERMINAL_LOG_ENABLED = 'true';
+      console.info = (...args: unknown[]) => logLines.push(args.join(' '));
+
+      const phone = '+919876543210';
+      await authService.sendOtp(phone, 'REGISTRATION');
+      await authService.sendOtp(phone, 'REGISTRATION');
+
+      assert.deepEqual(logLines, [
+        'Purpose: REGISTRATION',
+        'Phone: +91XXXXXXXX3210',
+        `OTP: ${smsProvider.sentMessages[0].otp}`,
+      ]);
+      assert.equal(logLines.join('\n').includes(phone), false);
+      assert.equal(smsProvider.sentMessages.length, 1);
+    } finally {
+      console.info = originalConsoleInfo;
+      for (const [key, value] of Object.entries(previousEnvironment)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
       }
+    }
+  });
+
+  it('does not generate a second OTP when a challenge is reused during cooldown', async () => {
+    let generatedCount = 0;
+    const generateOtp = authService.generateOtp.bind(authService);
+    authService.generateOtp = () => {
+      generatedCount += 1;
+      return generateOtp();
+    };
+
+    const first = await authService.sendOtp('+919876543210', 'REGISTRATION');
+    const reused = await authService.sendOtp('+919876543210', 'REGISTRATION');
+
+    assert.equal(first.challengeId, reused.challengeId);
+    assert.equal(generatedCount, 1);
+    assert.equal(smsProvider.sentMessages.length, 1);
+  });
+
+  it('does not log OTP diagnostics when the provider fails', async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalAppEnv = process.env.APP_ENV;
+    const originalLogFlag = process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+    const originalConsoleInfo = console.info;
+    const logLines: string[] = [];
+    process.env.NODE_ENV = 'development';
+    process.env.APP_ENV = 'development';
+    process.env.DEV_OTP_TERMINAL_LOG_ENABLED = 'true';
+    console.info = (...args: unknown[]) => logLines.push(args.join(' '));
+
+    const failingProvider = {
+      sendOtp: async () => {
+        throw new AppError('SMS provider failed.', 502, 'TEST_PROVIDER_FAILURE');
+      },
+    };
+    const failingService = new AuthService(
+      userRepo,
+      profileRepo,
+      otpRepo,
+      tokenRepo,
+      failingProvider,
+      testConfig
+    );
+
+    try {
+      await assert.rejects(
+        () => failingService.sendOtp('+919876543210', 'REGISTRATION'),
+        (error: AppError) => error.errorCode === 'TEST_PROVIDER_FAILURE'
+      );
+      assert.deepEqual(logLines, []);
+    } finally {
+      console.info = originalConsoleInfo;
+      if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = originalNodeEnv;
+      if (originalAppEnv === undefined) delete process.env.APP_ENV;
+      else process.env.APP_ENV = originalAppEnv;
+      if (originalLogFlag === undefined) {
+        delete process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+      } else {
+        process.env.DEV_OTP_TERMINAL_LOG_ENABLED = originalLogFlag;
+      }
+    }
+  });
+
+  it('does not send duplicate OTPs for concurrent requests in the same purpose', async () => {
+    const phone = '+919876543210';
+    const [first, second] = await Promise.all([
+      authService.sendOtp(phone, 'REGISTRATION'),
+      authService.sendOtp(phone, 'REGISTRATION'),
+    ]);
+
+    assert.equal(first.challengeId, second.challengeId);
+    assert.equal(smsProvider.sentMessages.length, 1);
+  });
+
+  it('keeps Login, Existing Patient, Registration, and Linked Member challenges purpose-bound', async () => {
+    const phone = '+919876543210';
+    await userRepo.create({ phone, role: 'PATIENT', status: 'ACTIVE' });
+
+    const purposes = [
+      'LOGIN',
+      'EXISTING_PATIENT',
+      'REGISTRATION',
+      'LINKED_MEMBER',
+    ] as const;
+    const challenges = new Map<string, string>();
+    for (const purpose of purposes) {
+      const request = await authService.sendOtp(phone, purpose);
+      challenges.set(purpose, request.challengeId);
+    }
+
+    assert.equal(new Set(challenges.values()).size, purposes.length);
+    assert.deepEqual(
+      smsProvider.sentMessages.map((message) => message.purpose),
+      purposes
+    );
+
+    const existingPatientMessage = smsProvider.sentMessages.find(
+      (message) => message.purpose === 'EXISTING_PATIENT'
+    );
+    assert.ok(existingPatientMessage);
+    await assert.rejects(
+      () =>
+        authService.verifyOtp(
+          challenges.get('EXISTING_PATIENT')!,
+          phone,
+          'LOGIN',
+          existingPatientMessage.otp
+        ),
+      (error: AppError) => error.errorCode === 'INVALID_CHALLENGE'
+    );
+
+    const session = await authService.verifyOtp(
+      challenges.get('EXISTING_PATIENT')!,
+      phone,
+      'EXISTING_PATIENT',
+      existingPatientMessage.otp
+    );
+    assert.equal(session.user.phone, phone);
+  });
+
+  it('keeps phone hourly limits global across mobile OTP purposes', async () => {
+    const phone = '+919876543210';
+    const purposes = [
+      'LOGIN',
+      'REGISTRATION',
+      'EXISTING_PATIENT',
+      'LINKED_MEMBER',
+      'LOGIN',
+    ] as const;
+    for (let index = 0; index < purposes.length; index += 1) {
+      await otpRepo.create({
+        phone,
+        otpHash: 'dummy_hash',
+        purpose: purposes[index],
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        createdAt: new Date(Date.now() - (60 + index * 10) * 1000),
+      });
+    }
+
+    await assert.rejects(
+      () => authService.sendOtp(phone, 'REGISTRATION'),
+      (error: AppError) => error.errorCode === 'PHONE_RATE_LIMIT_EXCEEDED'
     );
   });
 
@@ -262,12 +508,12 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
   it('should block OTP send when phone hourly limit (5 requests) is exceeded', async () => {
     const phone = '+919876543210';
 
-    // Seed 5 requests within the past hour, but older than the 45-second cooldown
+    // Seed requests across purposes within the past hour, older than cooldown.
     for (let i = 0; i < 5; i++) {
       await otpRepo.create({
         phone,
         otpHash: 'dummy_hash',
-        purpose: 'REGISTRATION',
+        purpose: (['LOGIN', 'REGISTRATION', 'EXISTING_PATIENT', 'LINKED_MEMBER', 'LOGIN'] as const)[i],
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         createdAt: new Date(Date.now() - (60 + i * 10) * 1000), // 60s+ ago
       });
@@ -296,7 +542,9 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
       await otpRepo.create({
         phone: `+9198765432${i.toString().padStart(2, '0')}`,
         otpHash: 'dummy_hash',
-        purpose: 'REGISTRATION',
+        purpose: (
+          ['LOGIN', 'REGISTRATION', 'EXISTING_PATIENT', 'LINKED_MEMBER'] as const
+        )[i % 4],
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         ipAddress: ip,
       });
@@ -337,6 +585,26 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
     );
   });
 
+  it('does not dispatch Existing Patient OTP for an unknown account', async () => {
+    const phone = '+919999900001';
+    const request = await authService.sendOtp(phone, 'EXISTING_PATIENT');
+
+    assert.ok(request.challengeId);
+    assert.equal(smsProvider.sentMessages.length, 0);
+    await assert.rejects(
+      () =>
+        authService.verifyOtp(
+          request.challengeId,
+          phone,
+          'EXISTING_PATIENT',
+          '123456'
+        ),
+      (error: AppError) =>
+        error.errorCode === 'INVALID_OTP' ||
+        error.errorCode === 'USER_NOT_FOUND'
+    );
+  });
+
   // --------------------------------------------------------------------------
   // 12. REGISTRATION with Existing Account
   // --------------------------------------------------------------------------
@@ -357,6 +625,31 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
         return true;
       }
     );
+  });
+
+  it('resumes an incomplete new-patient registration without creating a duplicate account', async () => {
+    const phone = '+919876543210';
+    const existingUser = await userRepo.create({
+      phone,
+      role: 'PATIENT',
+      status: 'ACTIVE',
+      emailPasswordEligibility: 'NEW_PATIENT_ELIGIBLE',
+    });
+    const sendResult = await authService.sendOtp(phone, 'REGISTRATION');
+    const sentOtp = smsProvider.sentMessages[0].otp;
+
+    const session = await authService.verifyOtp(
+      sendResult.challengeId,
+      phone,
+      'REGISTRATION',
+      sentOtp
+    );
+
+    assert.equal(session.user.id, existingUser.id);
+    assert.equal(session.isNewUser, true);
+    assert.equal(session.hasCompletedProfile, false);
+    assert.equal((await userRepo.findByPhone(phone))?.id, existingUser.id);
+    assert.equal(userRepo.isPhoneVerifiedForTesting(existingUser.id), true);
   });
 
   // --------------------------------------------------------------------------
@@ -578,16 +871,327 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
   // --------------------------------------------------------------------------
   it('should prevent instantiation of mock repositories in production', () => {
     const prevEnv = process.env.NODE_ENV;
+    const prevAppEnv = process.env.APP_ENV;
     try {
+      delete process.env.APP_ENV;
       process.env.NODE_ENV = 'production';
       assert.throws(() => new MockUserRepository(), /cannot be used in production/);
       assert.throws(() => new MockPatientProfileRepository(), /cannot be used in production/);
       assert.throws(() => new MockOtpRepository(), /cannot be used in production/);
       assert.throws(() => new MockRefreshTokenRepository(), /cannot be used in production/);
       assert.throws(() => new DevelopmentSmsProvider(), /cannot be instantiated in production/);
+      assert.ok(createSmsProvider() instanceof ProductionSmsProvider);
+      process.env.NODE_ENV = 'staging';
+      assert.throws(
+        () => createSmsProvider(),
+        /APP_ENV=staging for mock SMS/
+      );
+      process.env.NODE_ENV = 'development';
+      process.env.APP_ENV = 'staging';
+      assert.ok(createSmsProvider() instanceof DevelopmentSmsProvider);
     } finally {
-      process.env.NODE_ENV = prevEnv;
+      if (prevEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = prevEnv;
+      if (prevAppEnv === undefined) delete process.env.APP_ENV;
+      else process.env.APP_ENV = prevAppEnv;
     }
+  });
+
+  it('prints OTP details only as separate masked lines in local development', async () => {
+    const previousEnv = process.env.NODE_ENV;
+    const previousAppEnv = process.env.APP_ENV;
+    const previousLogFlag = process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+    const previousLegacyLogFlag = process.env.DEV_SMS_LOG_OTP;
+    const originalConsoleInfo = console.info;
+    const logLines: string[] = [];
+    console.info = (...args: unknown[]) => logLines.push(args.join(' '));
+
+    try {
+      delete process.env.APP_ENV;
+      process.env.NODE_ENV = 'test';
+      process.env.DEV_SMS_LOG_OTP = 'true';
+      await new DevelopmentSmsProvider().sendOtp(
+        '+919876543210',
+        '123456',
+        'LOGIN'
+      );
+      assert.equal(logLines.length, 0);
+
+      process.env.APP_ENV = 'development';
+      process.env.NODE_ENV = 'development';
+      delete process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+      await new DevelopmentSmsProvider().sendOtp(
+        '+919876543210',
+        '123456',
+        'LOGIN'
+      );
+      assert.equal(logLines.length, 0);
+
+      process.env.DEV_OTP_TERMINAL_LOG_ENABLED = 'true';
+      const provider = new DevelopmentSmsProvider();
+      await provider.sendOtp(
+        '+919876543210',
+        '123456',
+        'REGISTRATION'
+      );
+      assert.deepEqual(logLines, [
+        'Purpose: REGISTRATION',
+        'Phone: +91XXXXXXXX3210',
+        'OTP: 123456',
+      ]);
+      assert.equal(logLines.join('\n').includes('+919876543210'), false);
+      assert.equal(provider.sentMessages[0].otp, '123456');
+
+      process.env.APP_ENV = 'staging';
+      await new DevelopmentSmsProvider().sendOtp(
+        '+919876543210',
+        '654321',
+        'REGISTRATION'
+      );
+      assert.equal(logLines.length, 3);
+      assert.equal(logLines.join('\n').includes('654321'), false);
+      assert.equal(
+        isDevelopmentOtpTerminalLoggingEnabled({
+          APP_ENV: 'staging',
+          NODE_ENV: 'production',
+          DEV_OTP_TERMINAL_LOG_ENABLED: 'true',
+        }),
+        false
+      );
+      assert.equal(
+        isDevelopmentOtpTerminalLoggingEnabled({
+          APP_ENV: 'production',
+          NODE_ENV: 'development',
+          DEV_OTP_TERMINAL_LOG_ENABLED: 'true',
+        }),
+        false
+      );
+    } finally {
+      console.info = originalConsoleInfo;
+      if (previousEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previousEnv;
+      if (previousAppEnv === undefined) delete process.env.APP_ENV;
+      else process.env.APP_ENV = previousAppEnv;
+      if (previousLogFlag === undefined) {
+        delete process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+      } else {
+        process.env.DEV_OTP_TERMINAL_LOG_ENABLED = previousLogFlag;
+      }
+      if (previousLegacyLogFlag === undefined) {
+        delete process.env.DEV_SMS_LOG_OTP;
+      } else {
+        process.env.DEV_SMS_LOG_OTP = previousLegacyLogFlag;
+      }
+    }
+  });
+
+  it('never selects or emits development OTPs in production', () => {
+    const previousEnv = process.env.NODE_ENV;
+    const previousAppEnv = process.env.APP_ENV;
+    const previousLogFlag = process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+    const originalConsoleInfo = console.info;
+    const logLines: string[] = [];
+    console.info = (...args: unknown[]) => logLines.push(args.join(' '));
+
+    try {
+      process.env.NODE_ENV = 'production';
+      delete process.env.APP_ENV;
+      process.env.DEV_OTP_TERMINAL_LOG_ENABLED = 'true';
+
+      assert.ok(createSmsProvider() instanceof ProductionSmsProvider);
+      assert.equal(
+        isDevelopmentOtpTerminalLoggingEnabled(process.env),
+        false
+      );
+      assert.throws(
+        () => new DevelopmentSmsProvider(),
+        /cannot be instantiated in production/
+      );
+      assert.equal(logLines.length, 0);
+    } finally {
+      console.info = originalConsoleInfo;
+      if (previousEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previousEnv;
+      if (previousAppEnv === undefined) delete process.env.APP_ENV;
+      else process.env.APP_ENV = previousAppEnv;
+      if (previousLogFlag === undefined) {
+        delete process.env.DEV_OTP_TERMINAL_LOG_ENABLED;
+      } else {
+        process.env.DEV_OTP_TERMINAL_LOG_ENABLED = previousLogFlag;
+      }
+    }
+  });
+
+  it('does not claim the development SMS provider dispatched an SMS', async () => {
+    let responseBody: unknown;
+    const controller = new AuthController(authService);
+    const request = {
+      body: { phone: '+919876543210', purpose: 'REGISTRATION' },
+      ip: '127.0.0.1',
+    } as unknown as Request;
+    const response = {
+      status() {
+        return this;
+      },
+      json(body: unknown) {
+        responseBody = body;
+        return this;
+      },
+    } as unknown as Response;
+    const next: NextFunction = (error) => {
+      if (error) throw error;
+    };
+
+    await controller.sendOtp(request, response, next);
+
+    assert.ok(responseBody && typeof responseBody === 'object');
+    const payload = responseBody as {
+      message: string;
+      data: Record<string, unknown>;
+    };
+    assert.equal(payload.message, 'Development verification challenge is ready.');
+    assert.equal(Object.hasOwn(payload.data, 'otp'), false);
+  });
+
+  it('associates profile saves with the authenticated token subject', async () => {
+    let receivedUserId: string | undefined;
+    let receivedEmergencyContact: string | undefined;
+    let responseBody: unknown;
+    const controller = new AuthController({
+      createOrGetPatientProfile: async (
+        userId: string,
+        data: { emergencyContact?: string }
+      ) => {
+        receivedUserId = userId;
+        receivedEmergencyContact = data.emergencyContact;
+        return {
+          id: 'profile-1',
+          userId,
+          dob: new Date('1994-06-15T00:00:00.000Z'),
+          emergencyContact: data.emergencyContact,
+        };
+      },
+    } as unknown as AuthService);
+    const request = {
+      body: {
+        firstName: 'Patient',
+        lastName: 'Example',
+        dob: '1994-06-15',
+        gender: 'Female',
+        emergencyContact: '+919123456789',
+        preferredLanguage: 'en',
+        userId: 'untrusted-user',
+      },
+      user: { sub: 'authenticated-user' },
+    } as unknown as Request;
+    const response = {
+      status() {
+        return this;
+      },
+      json(body: unknown) {
+        responseBody = body;
+        return this;
+      },
+    } as unknown as Response;
+    const next: NextFunction = (error) => {
+      if (error) throw error;
+    };
+
+    await controller.savePatientProfile(request, response, next);
+
+    assert.equal(receivedUserId, 'authenticated-user');
+    assert.equal(receivedEmergencyContact, '+919123456789');
+    assert.equal(
+      (responseBody as { data: { userId: string; dob: string } }).data
+        .userId,
+      'authenticated-user'
+    );
+    assert.equal(
+      (responseBody as { data: { dob: string } }).data.dob,
+      '1994-06-15'
+    );
+    assert.equal(
+      (responseBody as { data: { emergencyContact: string } }).data
+        .emergencyContact,
+      '+919123456789'
+    );
+  });
+
+  it('serializes current patient DOB as a date-only value', async () => {
+    let responseBody: unknown;
+    const controller = new AuthController({
+      getCurrentUser: async () => ({
+        user: { id: 'user-1' },
+        profile: { id: 'profile-1', dob: new Date('1994-06-15T00:00:00.000Z') },
+        hasCompletedProfile: true,
+      }),
+    } as unknown as AuthService);
+    const request = { user: { sub: 'user-1' } } as unknown as Request;
+    const response = {
+      status() {
+        return this;
+      },
+      json(body: unknown) {
+        responseBody = body;
+        return this;
+      },
+    } as unknown as Response;
+    const next: NextFunction = (error) => {
+      if (error) throw error;
+    };
+
+    await controller.getMe(request, response, next);
+
+    assert.equal(
+      (
+        responseBody as {
+          data: { profile: { dob: string } };
+        }
+      ).data.profile.dob,
+      '1994-06-15'
+    );
+  });
+
+  it('should ignore untrusted forwarded IP headers for OTP rate limiting', async () => {
+    let capturedIp: string | undefined;
+    const controller = new AuthController({
+      sendOtp: async (
+        _phone: string,
+        _purpose:
+          | 'LOGIN'
+          | 'REGISTRATION'
+          | 'EXISTING_PATIENT'
+          | 'LINKED_MEMBER',
+        ipAddress?: string
+      ) => {
+        capturedIp = ipAddress;
+        return {
+          challengeId: 'challenge-1',
+          expiresInSeconds: 300,
+          retryAfterSeconds: 30,
+        };
+      },
+    } as unknown as AuthService);
+    const request = {
+      body: { phone: '+919876543210', purpose: 'REGISTRATION' },
+      headers: { 'x-forwarded-for': '203.0.113.99' },
+      ip: '127.0.0.1',
+    } as unknown as Request;
+    const response = {
+      status(_status: number) {
+        return this;
+      },
+      json(_body: unknown) {
+        return this;
+      },
+    } as unknown as Response;
+    const next: NextFunction = (error) => {
+      if (error) throw error;
+    };
+
+    await controller.sendOtp(request, response, next);
+
+    assert.equal(capturedIp, '127.0.0.1');
   });
 
   it('should fail application startup in production without injected persistent repositories', () => {
@@ -597,7 +1201,8 @@ describe('ASCAS Phase 1 Backend Phone OTP Authentication Tests', () => {
       assert.throws(() => getDefaultAuthService(), /cannot be used in production/);
       assert.throws(() => createAuthRouter(), /cannot be used in production/);
     } finally {
-      process.env.NODE_ENV = prevEnv;
+      if (prevEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = prevEnv;
     }
   });
 

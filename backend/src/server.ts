@@ -1,18 +1,37 @@
-import dotenv from 'dotenv';
+import { loadBackendEnvironment } from './config/environment';
 
 // Load environment variables before importing app and database modules
-dotenv.config();
+loadBackendEnvironment();
 
 import app from './app';
 import { checkDatabaseConnection, pool } from './config/database';
+import {
+  getConfiguredDatabaseName,
+  isDevelopmentOtpTerminalLoggingEnabled,
+} from './config/runtime';
+import { getSmsProviderName } from './modules/auth/sms.provider';
 
 const PORT = Number(process.env.PORT) || 5000;
+
+const logStartupDiagnostic = (): void => {
+  console.info('[Startup Diagnostic]');
+  console.info(`APP_ENV: ${process.env.APP_ENV || 'unset'}`);
+  console.info(`NODE_ENV: ${process.env.NODE_ENV || 'unset'}`);
+  console.info(
+    `OTP terminal logging: ${
+      isDevelopmentOtpTerminalLoggingEnabled() ? 'enabled' : 'disabled'
+    }`
+  );
+  console.info(`SMS provider: ${getSmsProviderName()}`);
+  console.info(`Database: ${getConfiguredDatabaseName()}`);
+};
 
 /**
  * Boots the HTTP server and checks database connectivity
  */
 const startServer = async (): Promise<void> => {
   try {
+    logStartupDiagnostic();
     console.log('🔄 [Server] Checking PostgreSQL database connection...');
 
     try {

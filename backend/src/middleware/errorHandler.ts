@@ -3,6 +3,13 @@ import { sendError } from '../utils/apiResponse';
 import { AppError } from '../utils/errors';
 import { sanitizeErrorMessage } from '../config/database';
 
+const getPostgresErrorCode = (error: Error): string | null => {
+  const code = (error as Error & { code?: unknown }).code;
+  return typeof code === 'string' && /^[0-9A-Z]{5}$/.test(code)
+    ? code
+    : null;
+};
+
 /**
  * Centralized error-handling middleware.
  * Intercepts AppErrors and uncaught exceptions, returning a clean, consistent JSON response.
@@ -25,12 +32,33 @@ export const errorHandler = (
     );
   }
 
+  const postgresErrorCode = getPostgresErrorCode(err);
+  if (postgresErrorCode || err.name === 'DatabaseError') {
+    const schemaError =
+      postgresErrorCode === '42703' || postgresErrorCode === '42P01';
+    console.error(
+      '[Database Error]:',
+      postgresErrorCode ? `SQLSTATE ${postgresErrorCode}` : 'database operation failed'
+    );
+    return sendError(
+      res,
+      'The request could not be completed. Please try again later.',
+      503,
+      schemaError ? 'DATABASE_SCHEMA_OUT_OF_DATE' : 'DATABASE_ERROR'
+    );
+  }
+
   // Unexpected or unhandled runtime errors
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    process.env.APP_ENV === 'staging';
   const rawMessage = err.message || 'Internal server error';
   const sanitizedMessage = sanitizeErrorMessage(rawMessage);
 
-  console.error('[Unhandled Error]:', sanitizedMessage);
+  console.error(
+    '[Unhandled Error]:',
+    isProduction ? err.constructor.name : sanitizedMessage
+  );
 
   const clientMessage = isProduction ? 'Internal server error' : sanitizedMessage;
 
